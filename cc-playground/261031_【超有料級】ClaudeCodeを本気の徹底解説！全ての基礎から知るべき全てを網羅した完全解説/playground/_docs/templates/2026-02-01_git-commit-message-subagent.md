@@ -1,0 +1,21 @@
+機能名: Git Commit Message サブエージェント
+
+- 日付: 2026-02-01 15:24:23
+- 概要: Gitコミットメッセージ作成専用のカスタムサブエージェントを作成。ユーザーが「コミットメッセージを作成して」や「git commit」と依頼した際に自動起動し、適切なprefixと日本語メッセージを生成する。
+- 実装内容:
+  - `~/.claude/agents/git-commit-message.md` を新規作成
+  - YAMLフロントマター設定（name, description, tools: Bash, model: haiku）
+  - 17種類のcommit prefix定義（fix, hotfix, add, feat, update, change, clean, disable, refactor, remove, upgrade, revert, docs, style, perf, test, chore）
+  - 日本語メッセージ生成ルール（50文字以内）
+  - 複数変更時のグループ化と分割コミット提案機能
+  - 禁止事項の明記（Co-Authored-By等の自動追加禁止）
+- 設計意図:
+  - model: haiku を採用し、高速・低コストで処理
+  - 読み取り専用エージェントとして責任を分離（コミット実行は行わない）
+  - description に日本語キーワード「コミットメッセージ」を含め、自動起動しやすく
+  - camone指定のgit-commit-message-rules.mdに準拠し、禁止メッセージを追加しない設計
+- 副作用:
+  - 特になし。既存のエージェントや設定への影響なし
+- 関連ファイル:
+  - ~/.claude/agents/git-commit-message.md
+  - ~/.claude/rules/git-commit-message-rules.md（参照ルール）

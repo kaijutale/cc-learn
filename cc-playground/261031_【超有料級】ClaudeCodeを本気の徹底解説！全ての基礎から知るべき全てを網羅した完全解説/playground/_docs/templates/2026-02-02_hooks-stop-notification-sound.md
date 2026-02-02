@@ -1,0 +1,34 @@
+機能名: Hooks Stop通知バナー + サウンド設定
+
+- セッション名: claude-code-guide調査
+- 日付: 2026-02-02 10:27:32
+- 概要: Stop Hookに通知バナーとFunk.aiffサウンドを組み合わせた設定を追加。セッション終了時に視覚的な通知と聴覚的なフィードバックの両方を提供する。
+- 実装内容:
+  - `~/.claude/settings.json` のStop Hookを更新
+    - `afplay /System/Library/Sounds/Funk.aiff` で確実に音を鳴らす
+    - `osascript -e 'display notification ...'` で通知バナーとメッセージを表示
+    - 既存の `hook_stop_words.sh` はそのまま維持
+  - 試行錯誤の過程:
+    - 最初は両方の音（Funk + Hero）を重ねて鳴らす設定をテスト
+    - osascriptの `sound name "Hero"` が鳴らないことを確認
+    - afplayで直接Hero.aiffを再生テストし、音は存在することを確認
+    - 最終的にafplay（音担当）とosascript（通知バナー担当）の役割分担に決定
+- 設計意図:
+  - **役割分担設計**: afplayとosascriptで責任を分離
+    - afplay: 確実に音を鳴らす（サウンドの再生保証）
+    - osascript: 通知バナーとメッセージを表示（視覚的フィードバック）
+  - osascriptの `sound name` パラメータは環境によって動作が不安定なため使用しない
+  - camoneがFunk.aiffの音色を好むため、Hero.aiffではなくFunk.aiffを採用
+  - セッション終了時に「タスクが完了したよ！」というメッセージで作業完了を明確に通知
+- 副作用:
+  - 通知バナーはmacOSの通知設定に依存するため、通知を無効にしている場合は表示されない
+  - afplayとosascriptが順次実行されるため、わずかなタイムラグが発生する可能性あり
+- 関連ファイル:
+  - ~/.claude/settings.json（Stop Hook設定）
+  - /System/Library/Sounds/Funk.aiff（システムサウンド）
+- 学習メモ:
+  - osascriptの `sound name` パラメータは動作が不安定
+  - 確実な音再生が必要な場合はafplayを使用
+  - 通知バナーと音は別々のコマンドで制御する方が安定
+  - Stop Hookは「セッション終了時」に発火するHooks
+  - 複数のhooksを配列で設定すると順次実行される

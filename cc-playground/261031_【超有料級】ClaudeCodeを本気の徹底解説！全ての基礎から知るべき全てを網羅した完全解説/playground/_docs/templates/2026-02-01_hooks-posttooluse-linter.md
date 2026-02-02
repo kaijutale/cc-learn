@@ -1,0 +1,32 @@
+機能名: Hooks PostToolUse Linter自動実行
+
+- セッション名: claude-code-guide調査
+- 日付: 2026-02-01 21:38:01
+- 概要: Claude CodeのHooks機能を使用し、ファイル編集後に自動でPrettierとESLintを実行する設定を追加。Edit/Writeツール使用後に自動でコードフォーマットとLintチェックが走るようになった。
+- 実装内容:
+  - `~/.claude/hooks/hook_post_lint.sh` を新規作成
+    - 編集されたファイルパスを受け取る
+    - 親ディレクトリを辿ってpackage.jsonを探しプロジェクトルートを特定
+    - JS/TS/JSX/TSX/MJS/CJSファイルのみ対象
+    - Prettier → ESLint の順で実行
+    - ESLintエラーがあればClaudeにadditionalContextとして報告
+  - `~/.claude/settings.json` にPostToolUse Hookを追加
+    - matcher: "Edit|Write" でファイル編集時のみ発火
+    - timeout: 30秒
+- 設計意図:
+  - グローバル設定（~/.claude/）に配置し、全プロジェクトで有効に
+  - Hookは「いつ実行するか」のみを担当し、ルール自体は各プロジェクトの設定ファイル（.prettierrc.json, eslint.config.mjs）に従う設計
+  - package.jsonを目印にプロジェクトルートを探すことで、深いディレクトリのファイル編集でも正しく動作
+  - node_modulesにprettier/eslintがない場合はスキップ（エラー回避）
+- 副作用:
+  - 全プロジェクトで有効になるため、Linter未導入プロジェクトでも発火する（ただしスキップされる）
+  - 30秒タイムアウト設定のため、非常に大きなファイルでは処理が中断される可能性あり
+- 関連ファイル:
+  - ~/.claude/hooks/hook_post_lint.sh（新規作成）
+  - ~/.claude/settings.json（PostToolUse追加）
+- 学習メモ:
+  - Linter = ESLint（コード品質チェック）
+  - Formatter = Prettier（コード見た目整形）
+  - Hooksは「自動起動トリガー」であり、ルール自体はプロジェクト設定に依存
+  - PostToolUseはツール実行成功後に発火、PreToolUseは実行前に発火
+  - Stop Hookはセッション終了時なのでLinterには不向き（どのファイルを編集したか情報がない）
