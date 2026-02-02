@@ -1,8 +1,7 @@
 ---
 name: commit
 description: Conventional Commits形式でコミットメッセージを生成し、コミットを実行する
-argument-hint: [コミットメッセージのヒントや追加指示（省略可）]
-disable-model-invocation: true
+argument-hint: [scope] [message]
 allowed-tools: Bash(git *), Read
 ---
 
