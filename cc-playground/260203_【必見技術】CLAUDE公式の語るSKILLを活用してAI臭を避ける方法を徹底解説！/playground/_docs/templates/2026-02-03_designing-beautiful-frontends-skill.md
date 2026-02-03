@@ -1,0 +1,32 @@
+機能名: Designing Beautiful Frontends Skill作成
+
+- セッション名: 美しいフロントエンドデザインSkill作成
+- 日付: 2026-02-03 16:10:56
+- 概要: Anthropic公式ブログ「Improving Frontend Design Through Skills」の内容を元に、汎用的なUIデザイン（AIスロップ）を避け、記憶に残る美しいフロントエンドを構築するためのAgent Skillを作成した。
+- 実装内容:
+  - `~/.claude/skills/designing-beautiful-frontends/` ディレクトリ作成
+  - SKILL.md（メインファイル）- デザイン思考の4つの質問、極端な美学の選択、タイポグラフィ、カラー&テーマ、モーション、空間構成、アンチパターン、チェックリスト
+  - design-principles.md - 6種類の美学スタイル詳細（ブルータルミニマリズム、ネオブルータリズム、マキシマリストカオス、レトロフューチャリズム、オーガニックフロー、エディトリアル）
+  - typography-guide.md - 推奨フォント一覧、フォントペアリング5パターン、Next.js実装例
+  - color-palette.md - 6つの推奨カラーパレット（ネオンテック、アースウォーム、モノクロームインパクト等）、Tailwind CSS実装例
+  - examples.md - 9つの実装例（ネオブルータルヒーロー、グラスモーフィズムカード、アニメーションボタン、ナビゲーション、フィーチャーセクション、ノイズ背景、グラデーションメッシュ、引用ブロック、カスタムカーソル）
+  - anti-patterns.md - 7つの避けるべきパターン（使い古されたフォント、SaaS汎用デザイン、意味のないアニメーション、Bootstrap/Materialデフォルト、予測可能すぎるレイアウト、中途半端なカスタマイズ、アクセシビリティ無視）
+- 設計意図:
+  - Anthropic公式のfrontend-design Skillを参考にしつつ、日本語で使いやすいように全面翻訳・拡張
+  - Progressive Disclosureパターンを採用し、SKILL.mdはナビゲーションハブとして機能、詳細は別ファイルに分離
+  - 具体的なコード例を多数用意し、すぐに使えるようにした
+  - Skillsのコンテキスト効率（使用時のみロード）を活かし、必要な時だけ詳細ファイルを参照する構造
+- 副作用:
+  - 特になし
+  - Skillは`~/.claude/skills/`（グローバル）に配置したため、全プロジェクトで利用可能
+- 関連ファイル:
+  - ~/.claude/skills/designing-beautiful-frontends/SKILL.md
+  - ~/.claude/skills/designing-beautiful-frontends/design-principles.md
+  - ~/.claude/skills/designing-beautiful-frontends/typography-guide.md
+  - ~/.claude/skills/designing-beautiful-frontends/color-palette.md
+  - ~/.claude/skills/designing-beautiful-frontends/examples.md
+  - ~/.claude/skills/designing-beautiful-frontends/anti-patterns.md
+- 参照情報:
+  - https://claude.com/blog/improving-frontend-design-through-skills
+  - https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md
+  - https://github.com/anthropics/skills/blob/main/skills/web-artifacts-builder/SKILL.md

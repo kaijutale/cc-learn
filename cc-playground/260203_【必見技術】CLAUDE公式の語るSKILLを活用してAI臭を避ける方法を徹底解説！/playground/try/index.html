@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>camone | Developer Portfolio</title>
+
+  <!-- Fonts: Space Grotesk + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* CSS Variables - Neobrutalism Color Palette */
+    :root {
+      --primary: #000;
+      --accent: #ff3366;
+      --accent-secondary: #00e5ff;
+      --bg: #f5f5dc;
+      --bg-card: #fff;
+      --text: #1a1a1a;
+      --border: 4px solid #000;
+      --shadow: 6px 6px 0 #000;
+      --shadow-hover: 10px 10px 0 #000;
+    }
+
+    /* Reset & Base */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      cursor: none;
+      overflow-x: hidden;
+    }
+
+    /* Custom Cursor */
+    .cursor {
+      width: 20px;
+      height: 20px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      mix-blend-mode: difference;
+      transition: transform 0.1s ease;
+    }
+
+    .cursor-trail {
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.15s ease;
+    }
+
+    /* Noise Texture Overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.03;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      z-index: 1000;
+    }
+
+    /* Typography */
+    h1, h2, h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+    }
+
+    code, .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: transparent;
+      mix-blend-mode: difference;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transition: color 0.3s ease;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 6rem 4rem 4rem;
+      position: relative;
+    }
+
+    /* Decorative Elements */
+    .deco-box {
+      position: absolute;
+      border: var(--border);
+      z-index: -1;
+    }
+
+    .deco-1 {
+      width: 200px;
+      height: 200px;
+      background: var(--accent);
+      top: 15%;
+      right: 10%;
+      transform: rotate(12deg);
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .deco-2 {
+      width: 120px;
+      height: 120px;
+      background: var(--accent-secondary);
+      bottom: 20%;
+      right: 25%;
+      transform: rotate(-8deg);
+      animation: float 8s ease-in-out infinite reverse;
+    }
+
+    .deco-3 {
+      width: 80px;
+      height: 80px;
+      background: #ffeb3b;
+      top: 30%;
+      left: 5%;
+      transform: rotate(25deg);
+      animation: float 7s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(12deg); }
+      50% { transform: translateY(-20px) rotate(15deg); }
+    }
+
+    .hero-content {
+      max-width: 900px;
+    }
+
+    .hero-greeting {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: var(--primary);
+      border: var(--border);
+    }
+
+    .hero-name {
+      font-size: clamp(4rem, 15vw, 12rem);
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .hero-name span {
+      color: var(--accent);
+    }
+
+    .hero-title {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 300;
+      margin-bottom: 2rem;
+      max-width: 600px;
+      border-left: 6px solid var(--primary);
+      padding-left: 1.5rem;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 1rem 2rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-decoration: none;
+      border: var(--border);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .btn-primary:hover {
+      transform: translate(-4px, -4px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* Section Base */
+    section {
+      padding: 6rem 4rem;
+    }
+
+    .section-header {
+      margin-bottom: 4rem;
+    }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .section-title {
+      font-size: clamp(2.5rem, 8vw, 5rem);
+    }
+
+    /* About Section */
+    .about {
+      background: var(--primary);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .about::before {
+      content: 'ABOUT';
+      position: absolute;
+      font-size: 20vw;
+      font-weight: 700;
+      opacity: 0.03;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .about-text {
+      font-size: 1.25rem;
+      line-height: 1.8;
+    }
+
+    .about-text p {
+      margin-bottom: 1.5rem;
+    }
+
+    .about-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      transform: translateY(-8px);
+    }
+
+    .stat-number {
+      font-size: 3rem;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.8;
+    }
+
+    /* Skills Section */
+    .skills {
+      background: var(--bg);
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .skill-card {
+      background: var(--bg-card);
+      border: var(--border);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .skill-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .skill-card:hover {
+      transform: translate(-6px, -6px);
+      box-shadow: 12px 12px 0 var(--primary);
+    }
+
+    .skill-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .skill-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .skill-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .skill-desc {
+      font-size: 0.95rem;
+      opacity: 0.8;
+      line-height: 1.6;
+    }
+
+    /* Projects Section */
+    .projects {
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    .projects-grid {
+      display: grid;
+      gap: 4rem;
+    }
+
+    .project-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      padding: 3rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .project-card:nth-child(even) {
+      direction: rtl;
+    }
+
+    .project-card:nth-child(even) > * {
+      direction: ltr;
+    }
+
+    .project-card:hover {
+      border-color: var(--accent);
+      background: rgba(255, 51, 102, 0.05);
+    }
+
+    .project-image {
+      aspect-ratio: 16/10;
+      background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+      border: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.5rem;
+      color: #fff;
+    }
+
+    .project-info h3 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .project-info p {
+      font-size: 1.1rem;
+      opacity: 0.8;
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    .project-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      padding: 0.4rem 0.8rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      text-transform: uppercase;
+    }
+
+    /* Contact Section */
+    .contact {
+      background: var(--accent);
+      color: #fff;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .contact::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(0, 0, 0, 0.03) 10px,
+        rgba(0, 0, 0, 0.03) 20px
+      );
+    }
+
+    .contact-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .contact .section-title {
+      color: #fff;
+      margin-bottom: 2rem;
+    }
+
+    .contact-text {
+      font-size: 1.25rem;
+      max-width: 600px;
+      margin: 0 auto 3rem;
+      opacity: 0.9;
+    }
+
+    .contact-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .contact-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      background: #fff;
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+      border: var(--border);
+      box-shadow: var(--shadow);
+      transition: all 0.2s ease;
+    }
+
+    .contact-link:hover {
+      transform: translate(-4px, -4px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    /* Footer */
+    footer {
+      background: var(--primary);
+      color: #fff;
+      padding: 2rem 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      section {
+        padding: 4rem 2rem;
+      }
+
+      nav {
+        padding: 1rem;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding: 4rem 2rem;
+      }
+
+      .deco-1, .deco-2, .deco-3 {
+        display: none;
+      }
+
+      .about-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .project-card {
+        grid-template-columns: 1fr;
+      }
+
+      .project-card:nth-child(even) {
+        direction: ltr;
+      }
+
+      .cursor, .cursor-trail {
+        display: none;
+      }
+
+      body {
+        cursor: auto;
+      }
+    }
+
+    /* Page Load Animation */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(60px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      animation: slideUp 0.8s ease forwards;
+    }
+
+    .delay-1 { animation-delay: 0.1s; opacity: 0; }
+    .delay-2 { animation-delay: 0.2s; opacity: 0; }
+    .delay-3 { animation-delay: 0.3s; opacity: 0; }
+    .delay-4 { animation-delay: 0.4s; opacity: 0; }
+    .delay-5 { animation-delay: 0.5s; opacity: 0; }
+  </style>
+</head>
+<body>
+  <!-- Custom Cursor -->
+  <div class="cursor"></div>
+  <div class="cursor-trail"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <a href="#" class="logo mono">camone.dev</a>
+    <div class="nav-links">
+      <a href="#about">About</a>
+      <a href="#skills">Skills</a>
+      <a href="#projects">Projects</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="deco-box deco-1"></div>
+    <div class="deco-box deco-2"></div>
+    <div class="deco-box deco-3"></div>
+
+    <div class="hero-content">
+      <span class="hero-greeting animate-in delay-1">// Hello, World!</span>
+      <h1 class="hero-name animate-in delay-2">cam<span>one</span></h1>
+      <p class="hero-title animate-in delay-3">
+        AIとともにプロダクトを創る<br>フルスタックエンジニア
+      </p>
+      <div class="hero-cta animate-in delay-4">
+        <a href="#projects" class="btn btn-primary">View Projects</a>
+        <a href="#contact" class="btn btn-outline">Get in Touch</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section class="about" id="about">
+    <div class="section-header">
+      <span class="section-label">01 // About</span>
+      <h2 class="section-title">Who I Am</h2>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-text">
+        <p>
+          コードを書くことが好きで、AIの力を最大限に活用した
+          開発スタイルを追求しています。
+        </p>
+        <p>
+          Claude Code、GitHub Copilot、Cursor などの
+          AIツールを駆使し、より効率的で創造的な
+          ソフトウェア開発を実践中。
+        </p>
+        <p>
+          <strong>「人間とAIの協働」</strong>が
+          次世代の開発スタンダードになると信じています。
+        </p>
+      </div>
+
+      <div class="about-stats">
+        <div class="stat-card">
+          <span class="stat-number">5+</span>
+          <span class="stat-label">Years Exp</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">50+</span>
+          <span class="stat-label">Projects</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">∞</span>
+          <span class="stat-label">Curiosity</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">24/7</span>
+          <span class="stat-label">Learning</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Skills Section -->
+  <section class="skills" id="skills">
+    <div class="section-header">
+      <span class="section-label">02 // Skills</span>
+      <h2 class="section-title">What I Do</h2>
+    </div>
+
+    <div class="skills-grid">
+      <div class="skill-card">
+        <div class="skill-icon">{ }</div>
+        <h3 class="skill-name">Frontend</h3>
+        <p class="skill-desc">React, Next.js, TypeScript, Tailwind CSS で美しく機能的なUIを構築</p>
+      </div>
+
+      <div class="skill-card">
+        <div class="skill-icon">⚡</div>
+        <h3 class="skill-name">Backend</h3>
+        <p class="skill-desc">Node.js, Python, Go でスケーラブルなAPIとサービスを設計</p>
+      </div>
+
+      <div class="skill-card">
+        <div class="skill-icon">🤖</div>
+        <h3 class="skill-name">AI Integration</h3>
+        <p class="skill-desc">LLM, RAG, Agent Skills を活用したAIネイティブな開発フロー</p>
+      </div>
+
+      <div class="skill-card">
+        <div class="skill-icon">☁️</div>
+        <h3 class="skill-name">Cloud & DevOps</h3>
+        <p class="skill-desc">AWS, GCP, Docker, Kubernetes でインフラを自動化</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects Section -->
+  <section class="projects" id="projects">
+    <div class="section-header">
+      <span class="section-label">03 // Projects</span>
+      <h2 class="section-title">Selected Work</h2>
+    </div>
+
+    <div class="projects-grid">
+      <div class="project-card">
+        <div class="project-image">&lt;/&gt;</div>
+        <div class="project-info">
+          <h3>AI-Powered Dev Tool</h3>
+          <p>Claude Code の Skills と MCP を活用した開発支援ツール。コンテキストエンジニアリングの実践例。</p>
+          <div class="project-tags">
+            <span class="tag">TypeScript</span>
+            <span class="tag">Claude API</span>
+            <span class="tag">MCP</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-image">[ ]</div>
+        <div class="project-info">
+          <h3>Real-time Dashboard</h3>
+          <p>WebSocket とリアルタイムデータ可視化。パフォーマンス最適化済みの大規模データ処理。</p>
+          <div class="project-tags">
+            <span class="tag">React</span>
+            <span class="tag">D3.js</span>
+            <span class="tag">WebSocket</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-image">◆</div>
+        <div class="project-info">
+          <h3>Serverless Platform</h3>
+          <p>マイクロサービスアーキテクチャによるスケーラブルなバックエンド基盤。</p>
+          <div class="project-tags">
+            <span class="tag">AWS Lambda</span>
+            <span class="tag">Go</span>
+            <span class="tag">DynamoDB</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section class="contact" id="contact">
+    <div class="contact-content">
+      <div class="section-header">
+        <span class="section-label" style="color: #fff;">04 // Contact</span>
+        <h2 class="section-title">Let's Talk</h2>
+      </div>
+
+      <p class="contact-text">
+        新しいプロジェクトやコラボレーションのご相談、
+        お気軽にどうぞ。
+      </p>
+
+      <div class="contact-links">
+        <a href="mailto:hello@camone.dev" class="contact-link">
+          ✉️ Email
+        </a>
+        <a href="https://github.com/camone" class="contact-link" target="_blank">
+          💻 GitHub
+        </a>
+        <a href="https://twitter.com/camone" class="contact-link" target="_blank">
+          🐦 Twitter
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <span>© 2026 camone. All rights reserved.</span>
+    <span>Built with <a href="#">Claude Code</a> + Skills</span>
+  </footer>
+
+  <!-- Custom Cursor Script -->
+  <script>
+    const cursor = document.querySelector('.cursor');
+    const cursorTrail = document.querySelector('.cursor-trail');
+
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = e.clientX - 10 + 'px';
+      cursor.style.top = e.clientY - 10 + 'px';
+
+      setTimeout(() => {
+        cursorTrail.style.left = e.clientX - 20 + 'px';
+        cursorTrail.style.top = e.clientY - 20 + 'px';
+      }, 50);
+    });
+
+    // Cursor hover effect
+    document.querySelectorAll('a, button, .btn, .skill-card, .project-card').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.transform = 'scale(2)';
+        cursorTrail.style.transform = 'scale(1.5)';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.transform = 'scale(1)';
+        cursorTrail.style.transform = 'scale(1)';
+      });
+    });
+
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.skill-card, .project-card, .stat-card').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(40px)';
+      el.style.transition = 'all 0.6s ease';
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>
