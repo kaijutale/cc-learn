@@ -1,0 +1,22 @@
+機能名: AIエージェントの長期タスク実行の仕組み学習
+
+- セッション名: AIエージェントが「数日間」自律して開発し続ける？！Claudeが公開した新しい仕組みを解説
+- 日付: 2026-02-04 19:00:23
+- 概要: Anthropicが公開した「Effective harnesses for long-running agents」記事の内容を学習し、長期タスクを実行するAIエージェントの設計パターン（イニシャライザーエージェントとコーディングエージェント）について理解を深めた
+- 実装内容:
+  - Firecrawl MCPを使用して記事の内容を取得
+  - イニシャライザーエージェントとコーディングエージェントの役割を整理
+  - Claude Agent SDKとClaude Codeの違いを明確化
+  - Web開発を行うユーザーとしての実用性を判断
+- 設計意図:
+  - 長期タスクを複数のコンテキストウィンドウにまたがって実行する際のベストプラクティスを理解する
+  - イニシャライザーエージェント: 初期環境のセットアップ（init.sh、progress file、feature list、gitリポジトリ）
+  - コーディングエージェント: 段階的な機能実装（一度に1つの機能、gitコミット、進捗記録）
+  - これらの設計パターンはClaude Agent SDK向けであり、Claude Codeの内部機能ではなく、開発者が自分で実装するためのガイドライン
+- 副作用:
+  - この記事の内容は主にClaude Agent SDKを使って独自のエージェントシステムを構築する開発者向け
+  - Claude Codeをエンドユーザーとして使う場合は、直接的に実装する必要はない
+  - ただし、考え方（進捗記録、gitコミット、タスク分割など）は既に実装ログルールやコミットメッセージルールとして実践中
+- 関連ファイル:
+  - 参照記事: https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents
+  - サンプルコード: https://github.com/anthropics/claude-quickstarts/tree/main/autonomous-coding
