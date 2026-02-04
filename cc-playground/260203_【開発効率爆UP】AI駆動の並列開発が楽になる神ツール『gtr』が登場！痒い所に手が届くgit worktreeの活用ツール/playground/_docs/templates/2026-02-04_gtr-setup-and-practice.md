@@ -40,3 +40,49 @@
 - worktreeは `<リポジトリ名>-worktrees/` に自動作成される
 - デフォルトブランチは `main` が必要（`master` だとエラー）
 - PATHにあるコマンドならカスタムエディタとして使える
+
+---
+
+## gtr config コマンドの学習
+
+- 日付: 2026-02-04 15:30:09
+- 概要: `git gtr config` コマンドの使い方を学び、グローバル設定を行った
+- 実装内容:
+  1. `git gtr config` の各サブコマンド（get/set/add/unset/list）を学習
+  2. 設定キーの種類と用途を理解
+  3. `--global` オプションの意味（ローカル vs グローバル設定）を理解
+  4. グローバル設定を実施（editor: antigravity, ai: claude）
+- 設計意図:
+  - グローバル設定を使うことで、新しいプロジェクトでも毎回設定する手間を省く
+  - エディタとAIツールは個人の好みなのでグローバル、フックやコピー設定はプロジェクト固有なのでローカルという使い分け
+- 副作用:
+  - `~/.gitconfig` にgtrのグローバル設定が追加された
+- 関連ファイル:
+  - ~/.gitconfig（グローバル設定）
+
+### gtr config サブコマンド一覧
+
+| コマンド | 用途 |
+|----------|------|
+| `git gtr config get <key>` | 設定値を取得 |
+| `git gtr config set <key> <value>` | 設定値を設定 |
+| `git gtr config add <key> <value>` | 複数値設定に値を追加 |
+| `git gtr config unset <key>` | 設定値を削除 |
+| `git gtr config list` | 全設定を一覧表示 |
+
+### 主な設定キー
+
+| キー | 説明 |
+|------|------|
+| `gtr.editor.default` | デフォルトエディタ |
+| `gtr.ai.default` | デフォルトAIツール |
+| `gtr.worktrees.dir` | worktree保存先 |
+| `gtr.hook.postCreate` | 作成後フック（複数値可） |
+| `gtr.copy.include` | コピー対象ファイル（複数値可） |
+
+### --global オプション
+
+| オプション | 適用範囲 | 保存場所 |
+|-----------|---------|---------|
+| なし | そのリポジトリだけ | `.git/config` |
+| `--global` | 全リポジトリ | `~/.gitconfig` |
