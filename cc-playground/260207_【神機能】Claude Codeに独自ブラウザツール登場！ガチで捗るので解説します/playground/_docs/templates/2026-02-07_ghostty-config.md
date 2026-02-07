@@ -1,0 +1,24 @@
+機能名: Ghostty ターミナル設定
+
+- セッション名: 未設定
+- 日付: 2026-02-07 18:38:19
+- 概要: GhosttyターミナルのカスタマイズとZellijの自動起動設定の確認
+- 実装内容:
+  - Ghosttyの設定ファイル（`~/.config/ghostty/config`）にZellijが自動起動する設定（`command = /opt/homebrew/bin/zellij`）が存在することを確認・説明
+  - 背景画像の設定を追加
+    - `background-image`: ボッジの画像（`/Users/aoyamaisaoosamu/WebDev/terminal-bg/bojji-bg.png`）
+    - `background-image-fit = cover`: 画面全体にフィット
+    - `background-image-position = center`: 中央配置
+  - `rgb(0 0 0 / 0.75)` 相当の暗いオーバーレイ設定を追加
+    - `background = 000000`: 黒ベース背景
+    - `background-image-opacity = 0.25`: 画像を25%で表示（= 75%黒オーバーレイ相当）
+  - 当初 `background-opacity` を使用したが、ターミナルウィンドウ自体が透過してしまうため `background-image-opacity` に修正
+- 設計意図:
+  - Hyper ターミナルで使用していた CSS（`::after` 疑似要素による黒オーバーレイ）の効果をGhosttyのネイティブ設定で再現
+  - `background-opacity` はウィンドウ全体の透過であり、CSSの `::after` オーバーレイとは異なる。`background-image-opacity` でベース黒背景の上に画像を薄く重ねることで同等の効果を実現
+- 副作用:
+  - `background-opacity` の変更はmacOSではGhosttyの再起動が必要
+  - 背景画像はVRAMに端末ごとに複製されるため、大きな画像ではメモリ使用量が増加する可能性あり
+- 関連ファイル:
+  - `~/.config/ghostty/config`
+  - `/Users/aoyamaisaoosamu/WebDev/terminal-bg/bojji-bg.png`
