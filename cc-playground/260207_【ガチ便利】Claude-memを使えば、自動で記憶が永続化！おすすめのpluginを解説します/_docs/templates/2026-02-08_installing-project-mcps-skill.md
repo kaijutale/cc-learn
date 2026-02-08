@@ -1,0 +1,22 @@
+機能名: installing-project-mcps スキル作成
+
+- セッション名: claude-mem-plugin解説
+- 日付: 2026-02-08 15:31:25
+- 概要: コンテキストウィンドウの効率化のため、プロジェクトスコープにMCPサーバーをインストールするスキルを新規作成した。グローバルMCPを最小限に抑え、必要なプロジェクトでだけ `/installing-project-mcps` を実行してMCPをセットアップする運用を実現する。
+- 実装内容:
+  - `~/.claude/skills/installing-project-mcps/SKILL.md` を作成（159行、500行以下を厳守）
+  - `~/.claude/skills/installing-project-mcps/references/mcp-registry.md` を作成
+  - 8つのMCPサーバー（brave-search, firecrawl, context7, chrome-devtools, next-devtools, serena, maestro, cipher）をレジストリに定義
+  - stdio方式とHTTP方式の両方のインストールコマンドを明記
+  - 環境変数の確認・案内フローを組み込み
+- 設計意図:
+  - Workflow Automationカテゴリのスキルとして設計。自由度は低（具体的なコマンドを正確に実行する必要があるため）
+  - Progressive Disclosure構造（SKILL.md → references/mcp-registry.md の1レベル参照）を採用し、コンテキストウィンドウの消費を最小化
+  - claude-mem（Plugin管理）とide（IDE提供）は `claude mcp add` で管理不可のため除外対象として明記
+  - AskUserQuestionでユーザーに選択させるフローにより、不要なMCPの追加を防止
+- 副作用:
+  - なし。既存のスキルや設定には影響しない
+  - 実際にMCPをインストールする際はプロジェクトの `.mcp.json` に書き込むため、プロジェクトごとに影響がある
+- 関連ファイル:
+  - `~/.claude/skills/installing-project-mcps/SKILL.md`
+  - `~/.claude/skills/installing-project-mcps/references/mcp-registry.md`
