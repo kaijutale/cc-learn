@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>王様ランキング — ボッジの冒険記</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Yuji+Boku&family=Zen+Maru+Gothic:wght@400;500;700;900&family=Crimson+Pro:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* ===== CSS VARIABLES ===== */
+    :root {
+      --parchment: #f5e6c8;
+      --parchment-light: #faf3e3;
+      --ink-brown: #4a3728;
+      --ink-light: #7a6455;
+      --royal-gold: #d4a843;
+      --royal-gold-light: #e8c96a;
+      --crown-amber: #c9922e;
+      --sky-blue: #8bbbd4;
+      --sky-blue-pale: #c3dde9;
+      --forest-green: #6b9e6b;
+      --sunset-orange: #d4845a;
+      --sunset-pink: #e8a08a;
+      --shadow-warm: rgba(74, 55, 40, 0.15);
+      --flag-red: #c45c4a;
+      --flag-red-light: #e0816f;
+      --castle-stone: #a09080;
+    }
+
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    body {
+      font-family: 'Zen Maru Gothic', sans-serif;
+      color: var(--ink-brown);
+      background: var(--parchment);
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* ===== PAPER TEXTURE OVERLAY ===== */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.5;
+    }
+
+    /* ===== CUSTOM SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--parchment);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--crown-amber);
+      border-radius: 10px;
+      border: 2px solid var(--parchment);
+    }
+
+    /* ===== NAVIGATION ===== */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      transition: background 0.4s, box-shadow 0.4s;
+    }
+
+    .nav.scrolled {
+      background: rgba(245, 230, 200, 0.92);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 20px var(--shadow-warm);
+    }
+
+    .nav a {
+      font-family: 'Yuji Boku', serif;
+      text-decoration: none;
+      color: var(--ink-brown);
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .nav a::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%) scaleX(0);
+      width: 60%;
+      height: 2px;
+      background: var(--royal-gold);
+      border-radius: 2px;
+      transition: transform 0.3s;
+    }
+
+    .nav a:hover::after {
+      transform: translateX(-50%) scaleX(1);
+    }
+
+    .nav a:hover {
+      color: var(--crown-amber);
+    }
+
+    /* ===== HERO SECTION ===== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      padding: 2rem;
+    }
+
+    /* Watercolor sky background */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(ellipse 120% 60% at 20% 10%, var(--sky-blue-pale) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 50% at 80% 20%, var(--sunset-pink) 0%, transparent 50%),
+        radial-gradient(ellipse 100% 40% at 50% 80%, var(--parchment-light) 0%, transparent 60%),
+        linear-gradient(to bottom, var(--sky-blue-pale) 0%, var(--parchment) 70%);
+      z-index: -1;
+    }
+
+    /* Floating castle silhouette */
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 200px;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 200'%3E%3Cpath d='M0,200 L0,160 Q50,140 100,150 L100,120 L110,120 L110,100 L120,80 L130,100 L130,120 L140,120 L140,150 Q200,130 250,145 L250,110 L255,110 L255,70 L260,50 L265,70 L265,110 L270,110 L270,145 Q350,125 450,140 L450,130 L460,130 L460,90 L465,60 L470,40 L475,60 L480,90 L480,130 L490,130 L490,140 Q550,130 650,142 Q750,130 800,138 L800,120 L810,120 L810,85 L815,65 L820,85 L820,120 L830,120 L830,138 Q900,128 950,135 L950,150 L955,150 L955,100 L960,80 L965,60 L970,80 L970,100 L975,150 L975,135 Q1050,125 1100,140 Q1150,145 1200,150 L1200,200 Z' fill='%234a372833'/%3E%3C/svg%3E") no-repeat bottom center;
+      background-size: cover;
+      z-index: -1;
+      opacity: 0.4;
+    }
+
+    /* Crown decoration */
+    .crown-deco {
+      width: 80px;
+      height: 60px;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeDropIn 0.8s 0.3s forwards;
+    }
+
+    .crown-deco svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 2px 4px var(--shadow-warm));
+    }
+
+    .hero-title {
+      font-family: 'Yuji Boku', serif;
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      color: var(--ink-brown);
+      line-height: 1.3;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      opacity: 0;
+      animation: fadeDropIn 1s 0.5s forwards;
+      text-shadow: 2px 2px 0 rgba(245, 230, 200, 0.8);
+    }
+
+    .hero-subtitle {
+      font-family: 'Crimson Pro', serif;
+      font-style: italic;
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      color: var(--ink-light);
+      letter-spacing: 0.15em;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeDropIn 1s 0.8s forwards;
+    }
+
+    .hero-desc {
+      max-width: 540px;
+      font-size: 1rem;
+      line-height: 2;
+      color: var(--ink-light);
+      opacity: 0;
+      animation: fadeDropIn 1s 1.1s forwards;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      animation: fadeDropIn 1s 1.5s forwards;
+    }
+
+    .scroll-hint span {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: var(--ink-light);
+    }
+
+    .scroll-arrow {
+      width: 20px;
+      height: 20px;
+      border-right: 2px solid var(--crown-amber);
+      border-bottom: 2px solid var(--crown-amber);
+      transform: rotate(45deg);
+      animation: bounceArrow 2s infinite;
+    }
+
+    /* ===== SECTION COMMON ===== */
+    section {
+      padding: 6rem 2rem;
+      position: relative;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .section-label {
+      font-family: 'Crimson Pro', serif;
+      font-style: italic;
+      font-size: 0.85rem;
+      letter-spacing: 0.3em;
+      color: var(--crown-amber);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-family: 'Yuji Boku', serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      color: var(--ink-brown);
+      position: relative;
+      display: inline-block;
+    }
+
+    .section-title::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(to right, var(--royal-gold), var(--royal-gold-light));
+      margin: 0.8rem auto 0;
+      border-radius: 3px;
+    }
+
+    /* ===== HAND-DRAWN BORDER DIVIDER ===== */
+    .divider {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      height: 30px;
+      opacity: 0.3;
+    }
+
+    .divider svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ===== CHARACTERS SECTION ===== */
+    .characters {
+      background:
+        radial-gradient(ellipse 60% 50% at 10% 90%, rgba(107, 158, 107, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 10%, rgba(139, 187, 212, 0.08) 0%, transparent 50%),
+        var(--parchment);
+    }
+
+    .characters-grid {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2.5rem;
+    }
+
+    .char-card {
+      background: var(--parchment-light);
+      border: 2px solid rgba(74, 55, 40, 0.1);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      position: relative;
+      transition: transform 0.4s, box-shadow 0.4s;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .char-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.6s, transform 0.6s;
+    }
+
+    .char-card::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--royal-gold-light), transparent, var(--sky-blue-pale));
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .char-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px var(--shadow-warm);
+    }
+
+    .char-card:hover::before {
+      opacity: 1;
+    }
+
+    .char-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 1.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      position: relative;
+    }
+
+    .char-icon::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px dashed var(--royal-gold-light);
+      opacity: 0.5;
+      animation: spinSlow 20s linear infinite;
+    }
+
+    .char-icon.bojji {
+      background: linear-gradient(135deg, var(--royal-gold-light), var(--parchment));
+    }
+
+    .char-icon.kage {
+      background: linear-gradient(135deg, #555, #888);
+    }
+
+    .char-icon.daida {
+      background: linear-gradient(135deg, var(--flag-red-light), var(--sunset-pink));
+    }
+
+    .char-name {
+      font-family: 'Yuji Boku', serif;
+      font-size: 1.4rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .char-title-sub {
+      font-family: 'Crimson Pro', serif;
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--crown-amber);
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    .char-desc {
+      font-size: 0.9rem;
+      line-height: 1.9;
+      color: var(--ink-light);
+    }
+
+    /* ===== STORY SECTION ===== */
+    .story {
+      background:
+        radial-gradient(ellipse 70% 50% at 80% 80%, rgba(212, 168, 67, 0.06) 0%, transparent 50%),
+        var(--parchment-light);
+    }
+
+    .story-timeline {
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      padding-left: 3rem;
+    }
+
+    .story-timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 3px;
+      height: 100%;
+      background: linear-gradient(
+        to bottom,
+        var(--royal-gold-light),
+        var(--crown-amber),
+        var(--sunset-orange),
+        var(--flag-red-light)
+      );
+      border-radius: 3px;
+    }
+
+    .story-event {
+      position: relative;
+      margin-bottom: 3rem;
+      padding: 1.5rem 2rem;
+      background: var(--parchment);
+      border-radius: 16px;
+      border: 1px solid rgba(74, 55, 40, 0.08);
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: opacity 0.6s, transform 0.6s;
+    }
+
+    .story-event.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .story-event::before {
+      content: '';
+      position: absolute;
+      left: -3rem;
+      top: 1.8rem;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 3px solid var(--royal-gold);
+      background: var(--parchment-light);
+      transform: translateX(-5.5px);
+    }
+
+    .story-chapter {
+      font-family: 'Crimson Pro', serif;
+      font-style: italic;
+      font-size: 0.8rem;
+      color: var(--crown-amber);
+      letter-spacing: 0.15em;
+      margin-bottom: 0.3rem;
+    }
+
+    .story-event h3 {
+      font-family: 'Yuji Boku', serif;
+      font-size: 1.2rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .story-event p {
+      font-size: 0.9rem;
+      line-height: 1.9;
+      color: var(--ink-light);
+    }
+
+    /* ===== WORLD SECTION ===== */
+    .world {
+      background: var(--parchment);
+      overflow: hidden;
+    }
+
+    .world-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2rem;
+    }
+
+    .world-card {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+      cursor: pointer;
+      opacity: 0;
+      transform: scale(0.95);
+      transition: opacity 0.5s, transform 0.5s;
+    }
+
+    .world-card.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .world-card-bg {
+      position: absolute;
+      inset: 0;
+      transition: transform 0.6s;
+    }
+
+    .world-card:hover .world-card-bg {
+      transform: scale(1.08);
+    }
+
+    .world-card-bg.castle {
+      background: linear-gradient(135deg, var(--castle-stone), #c4b5a4, var(--royal-gold-light));
+    }
+
+    .world-card-bg.forest {
+      background: linear-gradient(135deg, #5a8a5a, var(--forest-green), #8ab88a);
+    }
+
+    .world-card-bg.kingdom {
+      background: linear-gradient(135deg, var(--sky-blue), var(--sky-blue-pale), #f0e8d8);
+    }
+
+    .world-card-bg.underworld {
+      background: linear-gradient(135deg, #3a3a4a, #555568, #4a4a5a);
+    }
+
+    .world-card-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 1.5rem;
+      background: linear-gradient(to top, rgba(74, 55, 40, 0.85), transparent);
+      color: var(--parchment-light);
+    }
+
+    .world-card-content h3 {
+      font-family: 'Yuji Boku', serif;
+      font-size: 1.2rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .world-card-content p {
+      font-size: 0.8rem;
+      opacity: 0.85;
+      line-height: 1.6;
+    }
+
+    /* Watercolor splatter deco on cards */
+    .world-card::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ===== QUOTE SECTION ===== */
+    .quote-section {
+      padding: 5rem 2rem;
+      text-align: center;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 50%, rgba(212, 168, 67, 0.08) 0%, transparent 60%),
+        var(--parchment-light);
+    }
+
+    .quote-frame {
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      padding: 3rem;
+    }
+
+    .quote-frame::before,
+    .quote-frame::after {
+      content: '';
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-color: var(--royal-gold-light);
+      opacity: 0.5;
+    }
+
+    .quote-frame::before {
+      top: 0;
+      left: 0;
+      border-top: 3px solid;
+      border-left: 3px solid;
+      border-top-left-radius: 8px;
+    }
+
+    .quote-frame::after {
+      bottom: 0;
+      right: 0;
+      border-bottom: 3px solid;
+      border-right: 3px solid;
+      border-bottom-right-radius: 8px;
+    }
+
+    .quote-mark {
+      font-family: 'Crimson Pro', serif;
+      font-size: 5rem;
+      color: var(--royal-gold-light);
+      line-height: 1;
+      opacity: 0.4;
+      margin-bottom: -1.5rem;
+    }
+
+    .quote-text {
+      font-family: 'Yuji Boku', serif;
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      line-height: 2;
+      color: var(--ink-brown);
+      margin-bottom: 1.5rem;
+    }
+
+    .quote-attr {
+      font-family: 'Crimson Pro', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      color: var(--crown-amber);
+      letter-spacing: 0.1em;
+    }
+
+    /* ===== RANKING SECTION ===== */
+    .ranking {
+      background: var(--parchment);
+      padding-bottom: 4rem;
+    }
+
+    .ranking-list {
+      max-width: 600px;
+      margin: 0 auto;
+      list-style: none;
+    }
+
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 1rem;
+      background: var(--parchment-light);
+      border-radius: 14px;
+      border: 1px solid rgba(74, 55, 40, 0.06);
+      transition: transform 0.3s, box-shadow 0.3s;
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    .ranking-item.visible {
+      opacity: 1;
+      transform: translateX(0);
+      transition: opacity 0.5s, transform 0.5s;
+    }
+
+    .ranking-item:hover {
+      transform: translateX(6px);
+      box-shadow: -4px 4px 20px var(--shadow-warm);
+    }
+
+    .rank-num {
+      font-family: 'Yuji Boku', serif;
+      font-size: 2rem;
+      color: var(--royal-gold);
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .rank-num.first {
+      color: var(--royal-gold);
+      text-shadow: 0 0 10px rgba(212, 168, 67, 0.3);
+    }
+
+    .rank-info h3 {
+      font-family: 'Yuji Boku', serif;
+      font-size: 1.1rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .rank-info p {
+      font-size: 0.8rem;
+      color: var(--ink-light);
+    }
+
+    .rank-badge {
+      margin-left: auto;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      background: rgba(212, 168, 67, 0.1);
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: var(--ink-brown);
+      color: var(--parchment);
+      position: relative;
+    }
+
+    .footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(to right,
+        var(--royal-gold),
+        var(--flag-red),
+        var(--sunset-orange),
+        var(--royal-gold)
+      );
+    }
+
+    .footer-crown {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      opacity: 0.6;
+    }
+
+    .footer-text {
+      font-family: 'Crimson Pro', serif;
+      font-style: italic;
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      opacity: 0.6;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .footer-links a {
+      color: var(--royal-gold-light);
+      text-decoration: none;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      transition: color 0.3s;
+    }
+
+    .footer-links a:hover {
+      color: var(--parchment-light);
+    }
+
+    /* ===== FLOATING DECORATIONS ===== */
+    .float-deco {
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.06;
+    }
+
+    .float-deco.top-left {
+      top: -50px;
+      left: -50px;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: var(--sky-blue);
+    }
+
+    .float-deco.bottom-right {
+      bottom: -80px;
+      right: -80px;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: var(--royal-gold);
+    }
+
+    /* ===== BANNER FLAGS ===== */
+    .banner-flags {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeDropIn 1s 1.3s forwards;
+    }
+
+    .flag {
+      width: 20px;
+      height: 32px;
+      position: relative;
+      animation: flagWave 3s ease-in-out infinite;
+    }
+
+    .flag:nth-child(2) { animation-delay: 0.3s; }
+    .flag:nth-child(3) { animation-delay: 0.6s; }
+    .flag:nth-child(4) { animation-delay: 0.9s; }
+    .flag:nth-child(5) { animation-delay: 1.2s; }
+
+    .flag svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeDropIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes bounceArrow {
+      0%, 100% { transform: rotate(45deg) translateY(0); }
+      50% { transform: rotate(45deg) translateY(8px); }
+    }
+
+    @keyframes spinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes flagWave {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ===== SPARKLE PARTICLES ===== */
+    .sparkle-container {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--royal-gold-light);
+      border-radius: 50%;
+      animation: sparkle 3s ease-in-out infinite;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .nav {
+        gap: 0.8rem;
+        padding: 0.8rem 1rem;
+      }
+
+      .nav a {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+      }
+
+      section {
+        padding: 4rem 1.5rem;
+      }
+
+      .characters-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .world-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .story-timeline {
+        padding-left: 2rem;
+      }
+
+      .quote-frame {
+        padding: 2rem 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .world-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ranking-item {
+        gap: 1rem;
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating decorations -->
+  <div class="float-deco top-left"></div>
+  <div class="float-deco bottom-right"></div>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav">
+    <a href="#hero">はじまり</a>
+    <a href="#characters">仲間たち</a>
+    <a href="#story">物語</a>
+    <a href="#world">世界</a>
+    <a href="#ranking">ランキング</a>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="sparkle-container" id="sparkles"></div>
+
+    <div class="crown-deco">
+      <svg viewBox="0 0 100 75" fill="none">
+        <path d="M10,60 L20,20 L35,40 L50,10 L65,40 L80,20 L90,60 Z"
+              fill="url(#crownGrad)" stroke="#4a3728" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="50" cy="10" r="4" fill="#d4a843"/>
+        <circle cx="20" cy="20" r="3" fill="#d4a843"/>
+        <circle cx="80" cy="20" r="3" fill="#d4a843"/>
+        <line x1="10" y1="60" x2="90" y2="60" stroke="#4a3728" stroke-width="2.5"/>
+        <rect x="10" y="60" width="80" height="10" rx="3" fill="url(#crownBand)" stroke="#4a3728" stroke-width="1.5"/>
+        <circle cx="30" cy="65" r="2.5" fill="#c45c4a"/>
+        <circle cx="50" cy="65" r="2.5" fill="#8bbbd4"/>
+        <circle cx="70" cy="65" r="2.5" fill="#6b9e6b"/>
+        <defs>
+          <linearGradient id="crownGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#e8c96a"/>
+            <stop offset="100%" stop-color="#c9922e"/>
+          </linearGradient>
+          <linearGradient id="crownBand" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#d4a843"/>
+            <stop offset="50%" stop-color="#e8c96a"/>
+            <stop offset="100%" stop-color="#d4a843"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <h1 class="hero-title">王様ランキング</h1>
+    <p class="hero-subtitle">Ranking of Kings</p>
+
+    <div class="banner-flags">
+      <div class="flag">
+        <svg viewBox="0 0 20 32"><polygon points="2,0 18,0 18,28 10,22 2,28" fill="#c45c4a" stroke="#4a3728" stroke-width="1"/></svg>
+      </div>
+      <div class="flag">
+        <svg viewBox="0 0 20 32"><polygon points="2,0 18,0 18,28 10,22 2,28" fill="#d4a843" stroke="#4a3728" stroke-width="1"/></svg>
+      </div>
+      <div class="flag">
+        <svg viewBox="0 0 20 32"><polygon points="2,0 18,0 18,28 10,22 2,28" fill="#8bbbd4" stroke="#4a3728" stroke-width="1"/></svg>
+      </div>
+      <div class="flag">
+        <svg viewBox="0 0 20 32"><polygon points="2,0 18,0 18,28 10,22 2,28" fill="#6b9e6b" stroke="#4a3728" stroke-width="1"/></svg>
+      </div>
+      <div class="flag">
+        <svg viewBox="0 0 20 32"><polygon points="2,0 18,0 18,28 10,22 2,28" fill="#d4845a" stroke="#4a3728" stroke-width="1"/></svg>
+      </div>
+    </div>
+
+    <p class="hero-desc">
+      耳が聞こえず、剣も持てない非力な王子ボッジ。<br>
+      けれどその心には、誰よりも強い勇気が宿っている。<br>
+      これは、小さな王子の大きな冒険の物語——
+    </p>
+
+    <div class="scroll-hint">
+      <span>SCROLL</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- Divider -->
+  <div class="divider">
+    <svg viewBox="0 0 800 30" preserveAspectRatio="none">
+      <path d="M0,15 Q100,5 200,15 T400,15 T600,15 T800,15" fill="none" stroke="#d4a843" stroke-width="1.5" opacity="0.4"/>
+      <circle cx="400" cy="15" r="4" fill="#d4a843" opacity="0.3"/>
+    </svg>
+  </div>
+
+  <!-- Characters Section -->
+  <section class="characters" id="characters">
+    <div class="section-header">
+      <p class="section-label">Characters</p>
+      <h2 class="section-title">仲間たち</h2>
+    </div>
+
+    <div class="characters-grid">
+      <div class="char-card" data-animate>
+        <div class="char-icon bojji">👑</div>
+        <h3 class="char-name">ボッジ</h3>
+        <p class="char-title-sub">The First Prince</p>
+        <p class="char-desc">
+          ボッス王国の第一王子。耳が聞こえず、剣すら満足に振れないが、
+          誰よりも優しい心と、諦めない勇気を持つ。
+          その小さな身体に秘めた可能性は無限大。
+        </p>
+      </div>
+
+      <div class="char-card" data-animate>
+        <div class="char-icon kage">🖤</div>
+        <h3 class="char-name">カゲ</h3>
+        <p class="char-title-sub">The Shadow Clan</p>
+        <p class="char-desc">
+          影の一族の生き残り。最初はボッジの持ち物を狙っていたが、
+          ボッジの純粋さに触れ、唯一無二の親友となる。
+          涙もろくて、実は一番の情熱家。
+        </p>
+      </div>
+
+      <div class="char-card" data-animate>
+        <div class="char-icon daida">⚔️</div>
+        <h3 class="char-name">ダイダ</h3>
+        <p class="char-title-sub">The Second Prince</p>
+        <p class="char-desc">
+          ボッス王国の第二王子。優秀で自信に満ちているが、
+          兄ボッジへの複雑な感情を抱える。
+          その心の奥にある本当の想いとは——
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Divider -->
+  <div class="divider">
+    <svg viewBox="0 0 800 30" preserveAspectRatio="none">
+      <path d="M0,15 C100,0 200,30 300,15 S500,0 600,15 S700,30 800,15" fill="none" stroke="#c45c4a" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="200" cy="15" r="3" fill="#c45c4a" opacity="0.25"/>
+      <circle cx="600" cy="15" r="3" fill="#c45c4a" opacity="0.25"/>
+    </svg>
+  </div>
+
+  <!-- Story Section -->
+  <section class="story" id="story">
+    <div class="section-header">
+      <p class="section-label">Story</p>
+      <h2 class="section-title">物語</h2>
+    </div>
+
+    <div class="story-timeline">
+      <div class="story-event" data-animate>
+        <p class="story-chapter">Chapter I</p>
+        <h3>裸の王子</h3>
+        <p>
+          国民から「無能」と嘲られるボッジ。しかし彼の笑顔は決して曇らない。
+          ある日、不思議な影の生き物・カゲと出会い、運命が動き始める。
+        </p>
+      </div>
+
+      <div class="story-event" data-animate>
+        <p class="story-chapter">Chapter II</p>
+        <h3>旅立ちの決意</h3>
+        <p>
+          王位を弟ダイダに奪われ、国を追われたボッジ。
+          しかし彼はそれを嘆くことなく、真の強さを求めて旅に出る。
+          カゲと共に、未知の世界へ——
+        </p>
+      </div>
+
+      <div class="story-event" data-animate>
+        <p class="story-chapter">Chapter III</p>
+        <h3>デスパーとの修行</h3>
+        <p>
+          かつて「冥府の王」と恐れられた剣術の達人デスパー。
+          ボッジの隠された才能を見抜き、非力を逆手に取った
+          唯一無二の戦い方を教え込む。
+        </p>
+      </div>
+
+      <div class="story-event" data-animate>
+        <p class="story-chapter">Chapter IV</p>
+        <h3>王の器</h3>
+        <p>
+          暗躍する魔神、揺れ動く王国、そして明かされる父の秘密。
+          すべてが交錯する中、ボッジは仲間と共に立ち上がる。
+          本当の「王様」とは何か、その答えを探して——
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- World Section -->
+  <section class="world" id="world">
+    <div class="section-header">
+      <p class="section-label">World</p>
+      <h2 class="section-title">世界</h2>
+    </div>
+
+    <div class="world-grid">
+      <div class="world-card" data-animate>
+        <div class="world-card-bg castle"></div>
+        <div class="world-card-content">
+          <h3>ボッス王城</h3>
+          <p>巨大な城壁に守られた、ボッス王国の中枢。王と騎士団が住まう壮大な城。</p>
+        </div>
+      </div>
+
+      <div class="world-card" data-animate>
+        <div class="world-card-bg forest"></div>
+        <div class="world-card-content">
+          <h3>深き森</h3>
+          <p>魔物たちが棲む危険な森。しかしボッジとカゲにとっては冒険の始まりの場所。</p>
+        </div>
+      </div>
+
+      <div class="world-card" data-animate>
+        <div class="world-card-bg kingdom"></div>
+        <div class="world-card-content">
+          <h3>王様の国々</h3>
+          <p>世界には多くの王国が存在し、それぞれの王がランキングで競い合っている。</p>
+        </div>
+      </div>
+
+      <div class="world-card" data-animate>
+        <div class="world-card-bg underworld"></div>
+        <div class="world-card-content">
+          <h3>冥府</h3>
+          <p>デスパーが治めるもう一つの世界。ここでボッジは真の強さを手に入れる。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quote Section -->
+  <section class="quote-section">
+    <div class="quote-frame">
+      <div class="quote-mark">"</div>
+      <p class="quote-text">
+        弱くたっていい。<br>
+        逃げたっていい。<br>
+        でも、諦めちゃダメだ。
+      </p>
+      <p class="quote-attr">— カゲ</p>
+    </div>
+  </section>
+
+  <!-- Ranking Section -->
+  <section class="ranking" id="ranking">
+    <div class="section-header">
+      <p class="section-label">Ranking</p>
+      <h2 class="section-title">王様ランキング</h2>
+    </div>
+
+    <ul class="ranking-list">
+      <li class="ranking-item" data-animate>
+        <span class="rank-num first">1</span>
+        <div class="rank-info">
+          <h3>ボッス王</h3>
+          <p>ボッジとダイダの父。かつて世界最強と謳われた巨人の王。</p>
+        </div>
+        <span class="rank-badge">👑</span>
+      </li>
+
+      <li class="ranking-item" data-animate>
+        <span class="rank-num">2</span>
+        <div class="rank-info">
+          <h3>デスハー</h3>
+          <p>冥府の王。知略と剣技を兼ね備えた恐るべき実力者。</p>
+        </div>
+        <span class="rank-badge">⚔️</span>
+      </li>
+
+      <li class="ranking-item" data-animate>
+        <span class="rank-num">3</span>
+        <div class="rank-info">
+          <h3>ドルーシ</h3>
+          <p>ボッス王国の剣術師範。不器用だが誰よりも忠義に厚い騎士。</p>
+        </div>
+        <span class="rank-badge">🛡️</span>
+      </li>
+
+      <li class="ranking-item" data-animate>
+        <span class="rank-num">7</span>
+        <div class="rank-info">
+          <h3>ボッジ</h3>
+          <p>最下位から這い上がる小さな王子。その真の実力は——？</p>
+        </div>
+        <span class="rank-badge">✨</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-crown">♛</div>
+    <p class="footer-text">The adventure continues...</p>
+    <div class="footer-links">
+      <a href="#hero">はじまり</a>
+      <a href="#characters">仲間たち</a>
+      <a href="#story">物語</a>
+      <a href="#world">世界</a>
+    </div>
+  </footer>
+
+  <script>
+    // ===== Navigation scroll effect =====
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 80);
+    });
+
+    // ===== Scroll-triggered animations =====
+    const animateElements = document.querySelectorAll('[data-animate]');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          // Stagger the animation
+          const siblings = entry.target.parentElement.querySelectorAll('[data-animate]');
+          const idx = Array.from(siblings).indexOf(entry.target);
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, idx * 150);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.15,
+      rootMargin: '0px 0px -50px 0px'
+    });
+
+    animateElements.forEach(el => observer.observe(el));
+
+    // ===== Sparkle particles in hero =====
+    const sparkleContainer = document.getElementById('sparkles');
+
+    function createSparkle() {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      sparkle.style.left = Math.random() * 100 + '%';
+      sparkle.style.top = Math.random() * 100 + '%';
+      sparkle.style.animationDelay = Math.random() * 3 + 's';
+      sparkle.style.animationDuration = (2 + Math.random() * 3) + 's';
+      sparkle.style.width = (2 + Math.random() * 4) + 'px';
+      sparkle.style.height = sparkle.style.width;
+      sparkleContainer.appendChild(sparkle);
+    }
+
+    for (let i = 0; i < 20; i++) {
+      createSparkle();
+    }
+
+    // ===== Smooth scroll for nav links =====
+    document.querySelectorAll('.nav a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // ===== Parallax-like subtle movement on hero =====
+    const hero = document.querySelector('.hero');
+
+    hero.addEventListener('mousemove', (e) => {
+      const rect = hero.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+
+      const title = hero.querySelector('.hero-title');
+      const flags = hero.querySelector('.banner-flags');
+
+      title.style.transform = `translate(${x * 8}px, ${y * 5}px)`;
+      if (flags) flags.style.transform = `translate(${x * -5}px, ${y * -3}px)`;
+    });
+
+    hero.addEventListener('mouseleave', () => {
+      const title = hero.querySelector('.hero-title');
+      const flags = hero.querySelector('.banner-flags');
+      title.style.transform = '';
+      if (flags) flags.style.transform = '';
+    });
+  </script>
+
+</body>
+</html>
