@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boris Cherny's 23 Moves - Claude Code活用術</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #0d0d0d;
+        --bg-terminal: #111111;
+        --bg-card: #1e1e1e;
+        --bg-code: #0a0a0a;
+        --text-primary: #e5e5e5;
+        --text-secondary: #888888;
+        --text-muted: #555555;
+        --accent: #e07a41;
+        --accent-light: rgba(224, 122, 65, 0.12);
+        --accent-dim: rgba(224, 122, 65, 0.6);
+        --green: #4ade80;
+        --blue: #60a5fa;
+        --border: #2a2a2a;
+        --border-light: #333333;
+      }
+
+      body {
+        font-family: "JetBrains Mono", monospace;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        line-height: 1.7;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        justify-content: center;
+        padding: 2rem 1rem;
+        min-height: 100vh;
+      }
+
+      /* Terminal window */
+      .terminal {
+        max-width: 1100px;
+        width: 100%;
+        background: var(--bg-primary);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 4rem);
+      }
+
+      /* Title bar */
+      .titlebar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+
+      .dots {
+        display: flex;
+        gap: 8px;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .dot-red { background: #ff5f57; }
+      .dot-yellow { background: #febc2e; }
+      .dot-green { background: #28c840; }
+
+      .titlebar-text {
+        font-size: 13px;
+        color: var(--text-secondary);
+        flex: 1;
+        text-align: center;
+      }
+
+      /* Volume selector */
+      .volume-selector {
+        display: flex;
+        gap: 0;
+        padding: 0 16px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+
+      .volume-btn {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        background: none;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+      }
+
+      .volume-btn:hover {
+        color: var(--text-primary);
+      }
+
+      .volume-btn.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      /* Tab bar */
+      .tab-bar {
+        display: flex;
+        gap: 2px;
+        padding: 8px 16px;
+        background: var(--bg-terminal);
+        border-bottom: 1px solid var(--border);
+        overflow-x: auto;
+        flex-shrink: 0;
+      }
+
+      .tab-bar::-webkit-scrollbar {
+        height: 4px;
+      }
+
+      .tab-bar::-webkit-scrollbar-track {
+        background: var(--bg-terminal);
+      }
+
+      .tab-bar::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+
+      .tab-btn {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-muted);
+        background: none;
+        border: none;
+        padding: 6px 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        white-space: nowrap;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+
+      .tab-btn:hover {
+        color: var(--text-secondary);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .tab-btn.active {
+        color: var(--accent);
+        background: rgba(224, 122, 65, 0.1);
+      }
+
+      /* Content area */
+      .content-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+      }
+
+      .content-area::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .content-area::-webkit-scrollbar-track {
+        background: var(--bg-primary);
+      }
+
+      .content-area::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+      }
+
+      /* Tip content */
+      .tip-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .tip-content.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .tip-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+
+      .tip-num {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--accent);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        border-radius: 6px;
+        flex-shrink: 0;
+      }
+
+      .tip-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .tip-badge {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        border-radius: 4px;
+        padding: 3px 8px;
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+
+      .tip-body {
+        font-family: "Inter", sans-serif;
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.8;
+      }
+
+      .tip-body p {
+        margin-bottom: 12px;
+      }
+
+      .tip-body strong {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      .tip-body ul {
+        margin: 8px 0 16px 20px;
+      }
+
+      .tip-body li {
+        margin-bottom: 6px;
+      }
+
+      .tip-body li::marker {
+        color: var(--accent);
+      }
+
+      /* Code blocks */
+      .code-block {
+        background: var(--bg-code);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        margin: 12px 0;
+        overflow-x: auto;
+      }
+
+      .code-block code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text-primary);
+      }
+
+      .code-block .prompt {
+        color: var(--green);
+      }
+
+      .code-block .cmd {
+        color: var(--accent);
+      }
+
+      .code-block .comment {
+        color: var(--text-muted);
+      }
+
+      /* Inline code */
+      code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.9em;
+        background: var(--bg-code);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--accent);
+        border: 1px solid var(--border);
+      }
+
+      /* Highlight box (quote) */
+      .highlight-box {
+        border-left: 3px solid var(--accent);
+        background: var(--accent-light);
+        padding: 14px 18px;
+        margin: 16px 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box .label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 6px;
+      }
+
+      .highlight-box p {
+        font-size: 14px;
+        font-style: italic;
+        color: var(--text-secondary);
+        margin: 0;
+      }
+
+      .highlight-box cite {
+        display: block;
+        margin-top: 6px;
+        font-style: normal;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      /* Tables */
+      .tip-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 13px;
+      }
+
+      .tip-table th {
+        text-align: left;
+        padding: 8px 12px;
+        background: var(--bg-code);
+        border: 1px solid var(--border);
+        font-weight: 600;
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .tip-table td {
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        vertical-align: top;
+        font-family: "Inter", sans-serif;
+      }
+
+      .tip-table td code {
+        font-size: 12px;
+      }
+
+      /* Special tip */
+      .tip-content.special .tip-num {
+        background: #ef4444;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      }
+
+      /* Status bar */
+      .statusbar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 8px 16px;
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--text-muted);
+        flex-shrink: 0;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        animation: blink 2s ease-in-out infinite;
+      }
+
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+      }
+
+      .statusbar a {
+        color: var(--blue);
+        text-decoration: none;
+      }
+
+      .statusbar a:hover {
+        text-decoration: underline;
+      }
+
+      /* Install tab */
+      .install-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .install-content.active {
+        display: block;
+      }
+
+      .install-content h3 {
+        font-size: 18px;
+        margin-bottom: 12px;
+        color: var(--text-primary);
+      }
+
+      .install-content p {
+        font-family: "Inter", sans-serif;
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        line-height: 1.7;
+      }
+
+      .install-cmd {
+        position: relative;
+        background: var(--bg-code);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        margin: 16px 0;
+      }
+
+      .install-cmd code {
+        font-size: 13px;
+        color: var(--green);
+        background: none;
+        border: none;
+        padding: 0;
+        word-break: break-all;
+      }
+
+      .copy-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--text-muted);
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 4px 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .copy-btn:hover {
+        color: var(--text-primary);
+        border-color: var(--text-muted);
+      }
+
+      .copy-btn.copied {
+        color: var(--green);
+        border-color: var(--green);
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        body {
+          padding: 0;
+        }
+
+        .terminal {
+          border-radius: 0;
+          max-height: 100vh;
+          border: none;
+        }
+
+        .volume-btn {
+          font-size: 11px;
+          padding: 8px 12px;
+        }
+
+        .tab-btn {
+          font-size: 11px;
+          padding: 5px 8px;
+        }
+
+        .content-area {
+          padding: 16px;
+        }
+
+        .tip-title {
+          font-size: 16px;
+        }
+
+        .tip-body {
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="terminal">
+      <!-- Title bar -->
+      <div class="titlebar">
+        <div class="dots">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+        </div>
+        <span class="titlebar-text">boris ~ claude-code-tips</span>
+        <div style="width: 52px"></div>
+      </div>
+
+      <!-- Volume selector -->
+      <div class="volume-selector">
+        <button class="volume-btn active" onclick="switchVolume('v1')">
+          Part 1 &mdash; 13 tips
+        </button>
+        <button class="volume-btn" onclick="switchVolume('v2')">
+          Part 2 &mdash; 10 tips
+        </button>
+        <button class="volume-btn" onclick="switchVolume('install')">
+          Install
+        </button>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="tab-bar" id="tabBar"></div>
+
+      <!-- Content area -->
+      <div class="content-area" id="contentArea"></div>
+
+      <!-- Status bar -->
+      <div class="statusbar">
+        <span class="status-dot"></span>
+        <span>23 tips loaded</span>
+        <span style="margin-left: auto">
+          <a
+            href="https://howborisusesclaudecode.com"
+            target="_blank"
+            rel="noopener"
+            >howborisusesclaudecode.com</a
+          >
+          &middot;
+          <a
+            href="https://x.com/bcherny/status/2007179832300581177"
+            target="_blank"
+            rel="noopener"
+            >@bcherny</a
+          >
+        </span>
+      </div>
+    </div>
+
+    <script>
+      const tips = {
+        v1: [
+          {
+            num: "01",
+            title: "5つのClaudeを並列実行",
+            chapter: "環境 & セットアップ",
+            body: `
+              <p>ターミナルで<strong>5つのClaude Codeインスタンス</strong>を同時実行する。同じリポジトリの別々の<strong>gitワークツリー</strong>を使い、タブに1〜5の番号を付けて管理する。</p>
+              <ul>
+                <li>同じリポジトリの<strong>別々のgitワークツリー</strong>を使い、タブに1〜5の番号を付けて管理</li>
+                <li>iTerm2のシステム通知で、どのClaudeが入力待ちかを把握できる</li>
+                <li>テスト・レビュー・新機能開発を同時進行</li>
+              </ul>
+              <div class="code-block"><code><span class="prompt">$</span> <span class="cmd">git worktree add</span> ../my-repo-2 feature-branch-1
+<span class="prompt">$</span> <span class="cmd">git worktree add</span> ../my-repo-3 feature-branch-2</code></div>
+            `,
+          },
+          {
+            num: "02",
+            title: "Web & モバイルでも並列セッション",
+            chapter: "環境 & セットアップ",
+            body: `
+              <p>ターミナルに加え、<strong>claude.ai/code で5〜10セッション</strong>を追加実行。<code>&amp;</code>コマンドや<code>--teleport</code>フラグでローカル↔Web間のワーク移動が可能。</p>
+              <ul>
+                <li>朝はiOSアプリからセッション開始 → 出社後デスクトップで再開</li>
+                <li>通勤時間もClaude Codeの作業時間に変えられる</li>
+                <li>ターミナルの5つ + Webの5〜10で、合計<strong>10〜15のセッション</strong>を同時並行</li>
+              </ul>
+            `,
+          },
+          {
+            num: "03",
+            title: "全てにOpus + Thinkingを使う",
+            chapter: "環境 & セットアップ",
+            body: `
+              <p><strong>Opus（thinking有効）を常時使用</strong>する。Sonnetより遅いが、操舵が少なく済み、ツール使用が優秀。結果的に小さいモデルより速い。</p>
+              <div class="highlight-box">
+                <div class="label">Quote</div>
+                <p>"It's the best coding model I've ever used. Less steering + better tool use = faster overall results."</p>
+                <cite>— Boris Cherny</cite>
+              </div>
+              <ul>
+                <li>Sonnet等の小さいモデルでは頻繁な軌道修正が必要になり、トータルで遅くなる</li>
+                <li>Opusは一発で正しい方向に進むことが多く、人間の介入コストが下がる</li>
+              </ul>
+            `,
+          },
+          {
+            num: "04",
+            title: "共有CLAUDE.md",
+            chapter: "知識の蓄積",
+            body: `
+              <p>チームで<strong>1つのCLAUDE.mdファイルをGitリポジトリにチェックイン</strong>する。週に複数回チーム全員が更新し、Claudeが間違いを犯した時にドキュメント化して同じミスの再発を防止する。</p>
+              <ul>
+                <li>CLAUDE.mdは毎回コンテキストに読み込まれる</li>
+                <li>「このプロジェクトではXXXしない」と書くだけでClaudeの行動が変わる</li>
+                <li>チーム全員で共有するため、一人の学びが全員に伝播する</li>
+              </ul>
+              <div class="code-block"><code><span class="comment"># CLAUDE.md の例</span>
+<span class="comment">## コーディング規約</span>
+- テストは必ず vitest を使う
+- console.logではなくloggerを使う
+- 型はanyを使わない</code></div>
+            `,
+          },
+          {
+            num: "05",
+            title: "コードレビューで@.claude",
+            chapter: "知識の蓄積",
+            body: `
+              <p>PRレビュー時に<strong>@.claude をタグ付け</strong>し、学びをCLAUDE.mdに直接追加する。Claude Code GitHub Actionを使用。</p>
+              <ul>
+                <li>レビューのたびにClaude自体が賢くなる<strong>「Compounding Engineering」</strong></li>
+                <li>使うほどチーム全体の生産性が上がるフライホイール効果</li>
+                <li>PRコメントで「これをCLAUDE.mdに追加して」と指示するだけで、Claudeが自分でルールを学習</li>
+              </ul>
+            `,
+          },
+          {
+            num: "06",
+            title: "Plan Modeから始める",
+            chapter: "ワークフロー",
+            body: `
+              <p>ほとんどのセッションを<strong>Plan Mode（Shift+Tab ×2）</strong>で開始する。Claudeと計画を何度もやり取りして納得するまで練り、その後auto-accept editsモードに切替えて一発実装する。</p>
+              <table class="tip-table">
+                <thead><tr><th>ステップ</th><th>操作</th><th>説明</th></tr></thead>
+                <tbody>
+                  <tr><td>Plan Mode ON</td><td><code>Shift+Tab</code> ×2</td><td>読み取り専用モード。Claudeは計画を提案するがコードは変更しない</td></tr>
+                  <tr><td>Auto-accept ON</td><td><code>Shift+Tab</code> ×1</td><td>Claudeの変更を自動承認。良い計画があれば驚くほど正確にコードを書く</td></tr>
+                </tbody>
+              </table>
+              <p><strong>ポイント</strong>：良い計画があればClaudeは驚くほど正確にコードを書く。計画なしでいきなりコーディングさせると、間違った問題を解決してしまうリスクがある。</p>
+            `,
+          },
+          {
+            num: "07",
+            title: "スラッシュコマンドで高速化",
+            chapter: "ワークフロー",
+            body: `
+              <p><code>.claude/commands/</code>にスラッシュコマンドを作成し、Gitにチェックインする。インラインBashにより<code>git status</code>などを事前計算し、余分なモデル呼び出しを削減できる。</p>
+              <div class="code-block"><code><span class="comment"># .claude/commands/commit-push-pr.md</span>
+以下のgit情報を元にコミット→PR作成して:
+<span class="cmd">$(git status)</span>
+<span class="cmd">$(git diff --cached)</span></code></div>
+              <ul>
+                <li><code>/commit-push-pr</code> 一発でgit状態確認→コミット→プッシュ→PR作成まで自動実行</li>
+                <li>チーム全体で共有できるので、定型作業の標準化にも使える</li>
+                <li>インラインBash（<code>$(command)</code>）で事前にデータを取得し、Claudeに渡す</li>
+              </ul>
+            `,
+          },
+          {
+            num: "08",
+            title: "サブエージェントで定型作業自動化",
+            chapter: "ワークフロー",
+            body: `
+              <p><code>.claude/agents/</code>にサブエージェントを配置し、PRレビューの定型ワークフローを自動化する。</p>
+              <table class="tip-table">
+                <thead><tr><th>エージェント</th><th>役割</th></tr></thead>
+                <tbody>
+                  <tr><td><code>code-simplifier</code></td><td>完成したコードをシンプルに整理する</td></tr>
+                  <tr><td><code>verify-app</code></td><td>詳細なE2Eテスト手順を実行する</td></tr>
+                </tbody>
+              </table>
+              <p><strong>重要</strong>：サブエージェントはメインのコンテキストウィンドウを消費しない。別コンテキストで走るからメインの作業効率を保てる。</p>
+            `,
+          },
+          {
+            num: "09",
+            title: "PostToolUseフックでフォーマット",
+            chapter: "システム設定",
+            body: `
+              <p><strong>PostToolUseフック</strong>でコードを自動フォーマットする。Claudeは90%は綺麗なコードを生成するが、残りの10%をフックがカバーしてCIのフォーマットエラーを防止する。</p>
+              <ul>
+                <li>フックはClaude Codeのイベント（ツール使用前後、セッション開始時等）に紐づく自動実行コマンド</li>
+                <li>人間が見張らなくても決定的チェックが走る</li>
+                <li><strong>例</strong>：ファイル書き込み後に自動で<code>prettier</code>や<code>eslint --fix</code>を実行</li>
+              </ul>
+            `,
+          },
+          {
+            num: "10",
+            title: "安全なコマンドを事前許可",
+            chapter: "システム設定",
+            body: `
+              <p><code>--dangerously-skip-permissions</code>は<strong>使わない</strong>。<code>/permissions</code>で安全なBashコマンドだけを事前許可する。</p>
+              <ul>
+                <li>設定は<code>.claude/settings.json</code>に保存しチーム共有できる</li>
+                <li>ワイルドカードで安全なコマンドパターンを定義可能</li>
+              </ul>
+              <div class="code-block"><code><span class="cmd">Bash(npm test:*)</span>  <span class="comment"># テスト系コマンドをまとめて許可</span></code></div>
+              <p><strong>注意</strong>：<code>--dangerously-skip-permissions</code>は全てのパーミッションチェックをスキップするため、セキュリティリスクが高い。安全なコマンドのみを個別に許可するのがベストプラクティス。</p>
+            `,
+          },
+          {
+            num: "11",
+            title: "外部ツール連携（MCP）",
+            chapter: "システム設定",
+            body: `
+              <p>Claude Codeが<strong>Slack、BigQuery、Sentry</strong>など既存ツールとMCPサーバー経由で自律的に連携する。</p>
+              <ul>
+                <li>MCPサーバー経由でメッセージ送信、分析クエリ実行、エラーログ取得が可能</li>
+                <li><code>.mcp.json</code>でバージョン管理しチーム全体でアクセス可能</li>
+                <li>「Sentryでエラー確認して」「Slackで報告して」とClaude Codeに指示するだけで完結</li>
+              </ul>
+            `,
+          },
+          {
+            num: "12",
+            title: "長時間タスクの管理",
+            chapter: "システム設定",
+            body: `
+              <p>3つのアプローチを使い分ける：</p>
+              <table class="tip-table">
+                <thead><tr><th>#</th><th>アプローチ</th><th>説明</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>バックグラウンドエージェント</td><td>タスク完了後に別エージェントでレビュー。メインの作業を止めずに品質チェックを走らせる</td></tr>
+                  <tr><td>2</td><td>Stopフック</td><td>フックを使って特定条件でClaudeを停止。例えば「テストが全部通ったら止まれ」等の条件設定</td></tr>
+                  <tr><td>3</td><td>ralph-wiggumプラグイン</td><td>サンドボックスで<code>--permission-mode=dontAsk</code>を使い中断なく実行。安全な環境内で自律的にタスクを完了</td></tr>
+                </tbody>
+              </table>
+            `,
+          },
+          {
+            num: "13",
+            title: "検証手段を与える",
+            chapter: "最も重要な活用術",
+            special: true,
+            body: `
+              <div class="highlight-box">
+                <div class="label">Most Important</div>
+                <p>"Give Claude a way to verify its work... it will 2-3x the quality of the final result."</p>
+                <cite>— Boris Cherny</cite>
+              </div>
+              <p>Borisが<strong>「最も重要」</strong>と断言する活用術。Claudeに自分の作業を確認する手段を与えることで、最終結果の品質が<strong>2〜3倍</strong>に向上する。</p>
+              <table class="tip-table">
+                <thead><tr><th>検証手段</th><th>内容</th></tr></thead>
+                <tbody>
+                  <tr><td>テストコード</td><td>実装後にテストを実行して正しさを確認</td></tr>
+                  <tr><td>Chrome拡張</td><td>UIをブラウザで開いてスクリーンショット撮影 → 比較 → 反復改善</td></tr>
+                  <tr><td>リンター / ビルド</td><td>CIパイプラインをローカルで再現して事前チェック</td></tr>
+                  <tr><td>E2Eテスト</td><td>サブエージェントで網羅的にエンドツーエンドテストを実行</td></tr>
+                </tbody>
+              </table>
+              <p><strong>核心</strong>：フィードバックループを閉じること。「書いて終わり」ではなく「書いて、確認して、直して」のサイクルを回す。<strong>検証できないものは出荷しない</strong>。</p>
+            `,
+          },
+        ],
+        v2: [
+          {
+            num: "14",
+            title: "もっと並列で",
+            chapter: "並列処理と計画の深化",
+            body: `
+              <p><strong>git worktree</strong>を使って3〜5のワークツリーを同時起動し、それぞれで独立したClaudeセッションを実行する。</p>
+              <ul>
+                <li>Claude Codeチームは<strong>checkoutよりworktreeを推奨</strong></li>
+                <li>シェルエイリアス（<code>za</code>, <code>zb</code>, <code>zc</code>）でワークツリー間をワンキーで移動するユーザーも</li>
+              </ul>
+              <div class="code-block"><code><span class="prompt">$</span> <span class="cmd">git worktree add</span> ../repo-a feature-a
+<span class="prompt">$</span> <span class="cmd">git worktree add</span> ../repo-b feature-b
+
+<span class="comment"># シェルエイリアスで高速切り替え</span>
+<span class="cmd">alias</span> za='cd ../repo-a'
+<span class="cmd">alias</span> zb='cd ../repo-b'</code></div>
+            `,
+          },
+          {
+            num: "15",
+            title: "複雑なタスクは必ずPlan Modeから",
+            chapter: "並列処理と計画の深化",
+            body: `
+              <p>Plan Modeに十分な時間を投資して、Claudeが<strong>一発で実装できる</strong>ようにする。</p>
+              <ul>
+                <li>上級者は<strong>1つのClaudeに計画を書かせ、別のClaudeにスタッフエンジニアとしてレビューさせる</strong></li>
+                <li>良い計画は実装の手戻りを劇的に減らす</li>
+              </ul>
+              <div class="highlight-box">
+                <div class="label">Quote</div>
+                <p>"A good plan is really important to avoid issues down the line."</p>
+                <cite>— Boris Cherny</cite>
+              </div>
+            `,
+          },
+          {
+            num: "16",
+            title: "CLAUDE.mdに投資する",
+            chapter: "知識基盤の強化",
+            body: `
+              <p>Claudeを修正するたびに「<strong>CLAUDE.mdを更新して、同じミスをしないようにして</strong>」と指示する。</p>
+              <ul>
+                <li>Claudeは自分でルールを書くのが上手い</li>
+                <li>タスク別のノートディレクトリを用意し、CLAUDE.mdからポイントする方法も有効</li>
+                <li>修正のたびにCLAUDE.mdが賢くなり、チーム全体の知識が蓄積される</li>
+              </ul>
+            `,
+          },
+          {
+            num: "17",
+            title: "自分のSkillsを作る",
+            chapter: "知識基盤の強化",
+            body: `
+              <p>カスタムSkillsをGitにコミットして<strong>プロジェクト横断で再利用</strong>する。</p>
+              <ul>
+                <li>毎日使うタスクをskills/commandsに変換</li>
+                <li><code>/techdebt</code>コマンドで重複コードを削除</li>
+                <li>Slack/GDrive/Asana/GitHubの7日分を集約する同期コマンド</li>
+                <li>dbtモデルを書くanalytics-engineerエージェント</li>
+              </ul>
+            `,
+          },
+          {
+            num: "18",
+            title: "Claudeはバグの大半を自力で直す",
+            chapter: "実践力の向上",
+            body: `
+              <p><strong>Slack MCP</strong>を有効にして、バグスレッドをそのまま貼り付ける。「直して」と言うだけでコンテキスト切り替えが不要になる。</p>
+              <ul>
+                <li>Dockerログが分散システムのトラブルシューティングに驚くほど効果的</li>
+                <li>バグ報告→修正→テストのサイクルをClaudeが一気通貫で処理</li>
+              </ul>
+            `,
+          },
+          {
+            num: "19",
+            title: "プロンプティングをレベルアップ",
+            chapter: "実践力の向上",
+            body: `
+              <p>3つのテクニック：</p>
+              <table class="tip-table">
+                <thead><tr><th>#</th><th>テクニック</th><th>内容</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>Claudeに試験させる</td><td>「変更点を厳しく質問して、テストに合格するまでPRを出すな」</td></tr>
+                  <tr><td>2</td><td>やり直しを要求</td><td>「知っていることを全て踏まえて、一から洗練された解決策を実装して」</td></tr>
+                  <tr><td>3</td><td>詳細な仕様を書く</td><td>曖昧さを減らすために詳細な仕様を書く</td></tr>
+                </tbody>
+              </table>
+              <div class="highlight-box">
+                <div class="label">Quote</div>
+                <p>"Don't accept the first solution. Push Claude to do better—it usually can."</p>
+                <cite>— Boris Cherny</cite>
+              </div>
+            `,
+          },
+          {
+            num: "20",
+            title: "ターミナル & 環境設定",
+            chapter: "環境とエージェント",
+            body: `
+              <ul>
+                <li><strong>Ghostty</strong>ターミナルを推奨（同期レンダリング、24bitカラー、Unicode対応）</li>
+                <li><code>/statusline</code>でステータスバーをカスタマイズ（コンテキスト使用量、gitブランチ表示）</li>
+                <li><strong>音声入力</strong>（macOSの<code>fn</code>×2）でプロンプティングを3倍速に</li>
+              </ul>
+              <div class="highlight-box">
+                <div class="label">Tip</div>
+                <p>人は話す速度がタイピングの約3倍。音声入力を活用すると、より詳細なプロンプトを素早く書ける。</p>
+              </div>
+            `,
+          },
+          {
+            num: "21",
+            title: "サブエージェントを活用する",
+            chapter: "環境とエージェント",
+            body: `
+              <p>3つの活用法：</p>
+              <table class="tip-table">
+                <thead><tr><th>#</th><th>活用法</th><th>内容</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>計算力の追加</td><td>「サブエージェントを使って」と追記するだけで追加の計算リソースを投入</td></tr>
+                  <tr><td>2</td><td>コンテキスト保護</td><td>個別タスクをオフロードしてメインエージェントのコンテキストをクリーンに保つ</td></tr>
+                  <tr><td>3</td><td>権限リクエスト管理</td><td>フックでOpus 4.5に権限リクエストをルーティングし、攻撃スキャンと安全な操作の自動承認を実行</td></tr>
+                </tbody>
+              </table>
+            `,
+          },
+          {
+            num: "22",
+            title: "データ分析にClaudeを使う",
+            chapter: "データと学習",
+            body: `
+              <p>Claude Code + <code>bq</code> CLIでリアルタイムにメトリクスを抽出・分析する。</p>
+              <ul>
+                <li>チームで共有BigQueryスキルを運用</li>
+                <li>CLI、MCP、APIアクセスがある任意のデータベースに応用可能</li>
+              </ul>
+              <div class="highlight-box">
+                <div class="label">Quote</div>
+                <p>"Personally, I haven't written a line of SQL in 6+ months."</p>
+                <cite>— Boris Cherny</cite>
+              </div>
+            `,
+          },
+          {
+            num: "23",
+            title: "Claudeで学ぶ",
+            chapter: "データと学習",
+            body: `
+              <p>4つの学習戦略：</p>
+              <table class="tip-table">
+                <thead><tr><th>#</th><th>戦略</th><th>内容</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>説明的出力</td><td><code>/config</code>で"Explanatory"や"Learning"出力スタイルを有効化</td></tr>
+                  <tr><td>2</td><td>HTMLプレゼンテーション</td><td>不慣れなコードをビジュアルなHTMLスライドで解説させる</td></tr>
+                  <tr><td>3</td><td>ASCIIダイアグラム</td><td>プロトコルやコードベースの構造をASCII図で理解</td></tr>
+                  <tr><td>4</td><td>間隔反復学習</td><td>Claudeにフォローアップ質問をさせ、知識のギャップを特定するスキルを構築</td></tr>
+                </tbody>
+              </table>
+            `,
+          },
+        ],
+      };
+
+      let currentVolume = "v1";
+      let currentTip = 0;
+
+      function switchVolume(vol) {
+        currentVolume = vol;
+        currentTip = 0;
+
+        document.querySelectorAll(".volume-btn").forEach((btn, i) => {
+          btn.classList.toggle(
+            "active",
+            (vol === "v1" && i === 0) ||
+              (vol === "v2" && i === 1) ||
+              (vol === "install" && i === 2),
+          );
+        });
+
+        if (vol === "install") {
+          renderInstall();
+        } else {
+          renderTabs();
+          renderTip();
+        }
+      }
+
+      function renderTabs() {
+        const tabBar = document.getElementById("tabBar");
+        const data = tips[currentVolume];
+        tabBar.innerHTML = data
+          .map(
+            (tip, i) =>
+              `<button class="tab-btn ${i === currentTip ? "active" : ""}" onclick="selectTip(${i})">${tip.num} ${tip.title}</button>`,
+          )
+          .join("");
+      }
+
+      function selectTip(index) {
+        currentTip = index;
+        document.querySelectorAll(".tab-btn").forEach((btn, i) => {
+          btn.classList.toggle("active", i === index);
+        });
+        renderTip();
+
+        // Scroll active tab into view
+        const activeTab = document.querySelector(".tab-btn.active");
+        if (activeTab) {
+          activeTab.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+            inline: "center",
+          });
+        }
+      }
+
+      function renderTip() {
+        const area = document.getElementById("contentArea");
+        const tip = tips[currentVolume][currentTip];
+        const isSpecial = tip.special ? "special" : "";
+
+        area.innerHTML = `
+          <div class="tip-content active ${isSpecial}">
+            <div class="tip-header">
+              <span class="tip-num">${tip.num}</span>
+              <span class="tip-title">${tip.title}</span>
+              ${tip.special ? '<span class="tip-badge">MOST IMPORTANT</span>' : ""}
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; font-family: 'JetBrains Mono', monospace;">
+              ${tip.chapter}
+            </div>
+            <div class="tip-body">
+              ${tip.body}
+            </div>
+          </div>
+        `;
+      }
+
+      function renderInstall() {
+        const tabBar = document.getElementById("tabBar");
+        tabBar.innerHTML = "";
+
+        const area = document.getElementById("contentArea");
+        area.innerHTML = `
+          <div class="install-content active">
+            <h3>Install as a Skill</h3>
+            <p>以下のコマンドでBorisの23 Tipsを Claude Code のスキルとしてインストールできる。インストール後は <code>/boris</code> コマンドで全tipsにアクセス可能。</p>
+            <div class="install-cmd">
+              <code id="installCode">mkdir -p ~/.claude/skills/boris && curl -L -o ~/.claude/skills/boris/SKILL.md https://howborisusesclaudecode.com/api/install</code>
+              <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
+            </div>
+            <p>インストール後、Claudeが会話中に関連するtipsを自動的にサーフェスしてくれるようになる。</p>
+            <div class="highlight-box">
+              <div class="label">Source</div>
+              <p>Built by @CarolinaCherry using Claude Code. Based on <a href="https://x.com/bcherny/status/2007179832300581177" target="_blank" rel="noopener" style="color: var(--blue);">Boris Cherny's X threads</a>.</p>
+            </div>
+          </div>
+        `;
+      }
+
+      function copyInstall(btn) {
+        const code = document.getElementById("installCode").textContent;
+        navigator.clipboard.writeText(code).then(() => {
+          btn.textContent = "Copied!";
+          btn.classList.add("copied");
+          setTimeout(() => {
+            btn.textContent = "Copy";
+            btn.classList.remove("copied");
+          }, 2000);
+        });
+      }
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (currentVolume === "install") return;
+        const data = tips[currentVolume];
+        if (e.key === "ArrowRight" && currentTip < data.length - 1) {
+          selectTip(currentTip + 1);
+        } else if (e.key === "ArrowLeft" && currentTip > 0) {
+          selectTip(currentTip - 1);
+        }
+      });
+
+      // Initialize
+      renderTabs();
+      renderTip();
+    </script>
+  </body>
+</html>
