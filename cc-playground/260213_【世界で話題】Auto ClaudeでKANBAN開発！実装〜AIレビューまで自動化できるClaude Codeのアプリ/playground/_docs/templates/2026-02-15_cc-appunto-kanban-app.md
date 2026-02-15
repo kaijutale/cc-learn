@@ -1,0 +1,71 @@
+機能名: CC Appunto KANBAN型メモ管理アプリ 全フェーズ実装
+
+- セッション名: cc-appunto-kanban-implementation
+- 日付: 2026-02-15 02:59:50
+- 概要: Auto Claude KANBAN開発の学習プロジェクトの一環として、CC Appunto（KANBAN型メモ管理アプリ）のプロトタイプを新規プロジェクトとして構築。Phase 0〜8の全9フェーズを1セッションで完遂し、Gitコミットまで完了。
+
+- 実装内容:
+  - Phase 0: プロジェクト移行
+    - `/Users/aoyamaisaoosamu/WebDev/Project./260214_cc-appunto/project/` に Next.js 16.1.6 アプリを作成
+    - 既存ファイル（_idea/, try/）をコピー、_docs/templates/ 作成
+    - コア依存パッケージ: zustand 5.0.11, nanoid 5.1.6, @dnd-kit/react 0.2.4
+    - package.json のバージョンを全て固定（^ なし）
+  - Phase 1: 型定義とプロジェクト基盤
+    - types/kanban.ts: CardTag, ColumnStatus, Card, Column, Board + TAG_CONFIG, COLUMN_CONFIG, COLUMN_ORDER
+    - types/claude.ts: ClaudeMode, AIFeature, ClaudeSettings, ClaudeRequest, ClaudeResponse, ClaudeState
+  - Phase 2: データ層とストア
+    - lib/storage/interface.ts: StorageAdapter インターフェース（Strategy Pattern）
+    - lib/storage/localStorage.ts: localStorage実装
+    - stores/boardStore.ts: zustand v5 + persist（skipHydration: true でSSR対応）
+    - stores/searchStore.ts: 検索・フィルター状態管理
+    - components/providers/StoreProvider.tsx: クライアントマウント時にrehydrate
+  - Phase 3: 静的UIコンポーネント
+    - globals.css: Tailwind v4 @custom-variant dark + カスタムCSS変数（背景/surface/border）
+    - ui/Button, Modal, Input: 共通UIコンポーネント
+    - board/KanbanBoard, KanbanColumn, KanbanCard: KANBAN階層
+    - card/TagBadge: タグ色分けバッジ
+  - Phase 4: カードCRUD
+    - card/CardModal: 作成/編集モード切替、タグ選択、カラム変更
+  - Phase 5: ドラッグ&ドロップ
+    - DragDropProvider + useSortable（@dnd-kit/react）+ move helper（@dnd-kit/helpers）
+    - カラム: type='column', accept=['item','column']
+    - カード: type='item', group=column, isDragging でビジュアルフィードバック
+    - @dnd-kit/helpers を追加インストール（@dnd-kit/react に含まれていなかった）
+  - Phase 6: 検索・フィルター
+    - search/SearchBar: テキスト検索（title + description）
+    - search/TagFilter: タグトグル選択
+    - KanbanBoard内のfilterCards関数で適用
+  - Phase 7: Claude AI統合
+    - app/api/claude/route.ts: execFile で `claude -p` 呼び出し（コマンドインジェクション防止）
+    - lib/claude/client.ts: クライアント側fetch関数
+    - claude/ClaudePanel: FABボタン → パネル展開、Summarize Board / Suggest Tasks
+    - CardModal: AI Generate ボタンで説明文自動生成
+  - Phase 8: 仕上げ
+    - ui/Toast.tsx: zustand管理のToast通知、3秒自動消去
+    - ToastContainerをpage.tsxに組み込み
+  - Gitコミット:
+    - `1b71670` chore: CC Appuntoプロジェクト初期設定（19ファイル, +4,646行）
+    - `c6277c2` feat: KANBAN型メモ管理アプリの初期実装（26ファイル, +1,623行）
+
+- 設計意図:
+  - ストレージ抽象化層（Strategy Pattern）: localStorageを将来のバックエンド（Supabase等）に差し替え可能にするため
+  - zustand skipHydration + StoreProvider: Next.js App RouterのSSR環境でlocalStorageが存在しない問題を解決。クライアントマウント後にrehydrateすることでhydration mismatchを防止
+  - @dnd-kit/react（新API）採用: 旧@dnd-kit/core + sortable + utilitiesの3パッケージ構成より、useSortable + DragDropProviderの統合APIがシンプル
+  - Claude CLI連携にexecFile使用: exec（シェル経由）ではなくexecFile（直接実行）でコマンドインジェクションを防止
+  - package.jsonバージョン固定: camoneの指示により、再現性確保のため全パッケージから ^ を除去
+  - 2コミット分割: 設定/ドキュメント（chore）とアプリ実装コード（feat）を目的別に分離
+
+- 副作用:
+  - @dnd-kit/react 0.2.4 は experimental（27 dependents）。将来APIが変わる可能性あり
+  - @dnd-kit/helpers が @dnd-kit/react の依存に含まれておらず、別途インストールが必要だった（計画では未記載）
+  - Claude CLI連携はローカル環境のみ（claude コマンドがPATHに必要、デプロイ環境では動作しない）
+  - Tailwind CSS v4 の @custom-variant はまだ新しい仕様
+  - Phase 7b（API直接利用フォールバック）は未実装（@anthropic-ai/sdk 未インストール）
+  - 実装計画を _idea/plan-to-implement.md にも保存済み（camoneのリクエスト）
+
+- 関連ファイル:
+  - 新プロジェクト: /Users/aoyamaisaoosamu/WebDev/Project./260214_cc-appunto/project/
+  - 実装計画: /Users/aoyamaisaoosamu/WebDev/Project./260214_cc-appunto/project/_idea/plan-to-implement.md
+  - 新プロジェクト実装ログ: /Users/aoyamaisaoosamu/WebDev/Project./260214_cc-appunto/project/_docs/templates/2026-02-14_cc-appunto-initial-implementation.md
+  - CLAUDE.md: /Users/aoyamaisaoosamu/WebDev/Project./260214_cc-appunto/project/.claude/CLAUDE.md
+  - src/（全26ファイル）: types/, stores/, lib/, components/, app/
