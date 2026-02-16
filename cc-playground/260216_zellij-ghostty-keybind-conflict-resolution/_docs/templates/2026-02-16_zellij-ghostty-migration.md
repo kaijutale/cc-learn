@@ -1,0 +1,24 @@
+機能名: Zellij + Ghostty 設定の移行手順書作成 & 干渉防止設定の経緯記録
+
+- セッション名: zellij-ghostty-migration
+- 日付: 2026-02-16 22:50:50
+- 概要: ZellijとGhosttyの設定を移行先Mac（camone@mainmbp）へコピペ移行するための手順書作成。また、Zellijの `default_mode "locked"` + `Alt+g` 設定の導入経緯を記録した。
+- 実装内容:
+  - 移行元Mac（aoyamaisaoosamu）の Zellij/Ghostty 設定を確認・分析
+  - 移行先Mac（camone@mainmbp）向けにパス修正済みの手順書を `~/Desktop/migration-guide-zellij-ghostty.md` に作成
+  - 移行対象ファイル: `~/.config/zellij/config.kdl`、`~/.config/ghostty/config`、背景画像2枚
+  - Ghostty設定内の絶対パスを `/Users/aoyamaisaoosamu/` → `/Users/camone/` に修正済みで記載
+- 設計意図:
+  - `default_mode "locked"` を導入した理由: Claude Codeの **Thinking Mode トグル（Ctrl+T）** がZellijの **Tabモード切り替え（Ctrl+T）** と衝突し、Thinking Modeが切り替えられない問題が発生したため
+  - ロックモードにすることで、Zellijのショートカットをデフォルトで無効化し、Claude Codeにキー入力がそのまま届くようにした
+  - `Alt+g` をZellijのロック/アンロックのトグルキーに設定。Alt系はCLIツールとの衝突が少ないため選択
+  - Ghosttyの `macos-option-as-alt = true` と連携し、macOSのOptionキーをAltとして機能させることで `Alt+g` が正しく動作する3層構成（Ghostty → Zellij → Claude Code）
+- 副作用:
+  - Zellijのペイン操作やタブ操作をする際は、毎回 `Alt+g` でロック解除が必要（ワンステップ増える）
+  - 移行先Macでユーザー名が異なる場合、Ghostty設定内の絶対パスを手動修正する必要がある
+- 関連ファイル:
+  - `~/.config/zellij/config.kdl` - Zellijキーバインド設定（default_mode "locked" + Alt+g）
+  - `~/.config/ghostty/config` - Ghostty設定（zellij自動起動 + macos-option-as-alt）
+  - `~/Desktop/migration-guide-zellij-ghostty.md` - 移行手順書（本セッションで作成）
+  - `~/WebDev/terminal-bg/naruto-hokage.png` - 背景画像（NARUTO）
+  - `~/WebDev/terminal-bg/bojji-bg.png` - 背景画像（Bojji）
