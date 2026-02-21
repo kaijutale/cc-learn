@@ -1,3 +1,7 @@
 {
-  "outputStyle": "Explanatory"
+  "outputStyle": "Explanatory",
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  }
 }

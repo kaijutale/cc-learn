@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Boris Cherny's 23 Moves - Claude Code活用術</title>
+    <title>Boris Cherny's 35 Moves - Claude Code活用術</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -559,6 +559,9 @@
         <button class="volume-btn" onclick="switchVolume('v2')">
           Part 2 &mdash; 10 tips
         </button>
+        <button class="volume-btn" onclick="switchVolume('v3')">
+          Part 3 &mdash; 12 tips
+        </button>
         <button class="volume-btn" onclick="switchVolume('install')">
           Install
         </button>
@@ -573,7 +576,7 @@
       <!-- Status bar -->
       <div class="statusbar">
         <span class="status-dot"></span>
-        <span>23 tips loaded</span>
+        <span>35 tips loaded</span>
         <span style="margin-left: auto">
           <a
             href="https://howborisusesclaudecode.com"
@@ -964,6 +967,187 @@
             `,
           },
         ],
+        v3: [
+          {
+            num: "24",
+            title: "ターミナル設定を構成する",
+            chapter: "カスタマイズ基盤",
+            body: `
+              <p>ターミナルを最適化して<strong>Claude Codeの体験を最大化</strong>する。テーマ、通知、改行設定、Vimモードなど。</p>
+              <ul>
+                <li><code>/config</code>でライト/ダークモードを切り替え</li>
+                <li>iTerm2の通知設定、またはカスタム通知フックを有効化</li>
+                <li>IDE端末やApple Terminal、Warp、Alacrittyでは<code>/terminal-setup</code>で<kbd>Shift+Enter</kbd>改行を有効に</li>
+                <li><code>/vim</code>でVimモードを起動</li>
+              </ul>
+            `,
+          },
+          {
+            num: "25",
+            title: "エフォートレベルを調整",
+            chapter: "カスタマイズ基盤",
+            body: `
+              <p><code>/model</code>でエフォートレベルを選択する。</p>
+              <table class="tip-table">
+                <thead><tr><th>レベル</th><th>特徴</th></tr></thead>
+                <tbody>
+                  <tr><td>Low</td><td>少ないトークン、高速レスポンス</td></tr>
+                  <tr><td>Medium</td><td>バランスの取れた動作</td></tr>
+                  <tr><td>High</td><td>多いトークン、最大の知能</td></tr>
+                </tbody>
+              </table>
+              <div class="highlight-box">
+                <div class="label">Boris's Preference</div>
+                <p>"High for everything."</p>
+                <cite>— Boris Cherny</cite>
+              </div>
+            `,
+          },
+          {
+            num: "26",
+            title: "プラグイン・MCP・スキルをインストール",
+            chapter: "拡張機能",
+            body: `
+              <p>プラグインで<strong>LSP、MCP、スキル、エージェント、フック</strong>をまとめてインストールできる。</p>
+              <ul>
+                <li>Anthropic公式プラグインマーケットプレイスからインストール</li>
+                <li>社内用のカスタムマーケットプレイスも作成可能</li>
+                <li><code>settings.json</code>をチェックインしてチームでマーケットプレイスを自動共有</li>
+                <li><code>/plugin</code>で開始</li>
+              </ul>
+            `,
+          },
+          {
+            num: "27",
+            title: "カスタムエージェントを作成",
+            chapter: "拡張機能",
+            body: `
+              <p><code>.claude/agents/</code>に<code>.md</code>ファイルを配置して<strong>カスタムエージェント</strong>を作成する。</p>
+              <ul>
+                <li>カスタムの<strong>名前、色、ツールセット、権限、モデル</strong>を設定可能</li>
+                <li><code>settings.json</code>の<code>"agent"</code>フィールドでデフォルトエージェントとして設定</li>
+                <li><code>--agent</code>フラグでCLI起動時にエージェントを指定</li>
+                <li><code>/agents</code>で開始</li>
+              </ul>
+            `,
+          },
+          {
+            num: "28",
+            title: "共通パーミッションを事前承認",
+            chapter: "セキュリティ & 権限",
+            body: `
+              <p><code>/permissions</code>で安全なコマンドを<strong>ホワイトリスト登録</strong>する。ワイルドカード構文に対応。</p>
+              <div class="code-block"><code><span class="cmd">Bash(bun run *)</span>     <span class="comment"># bun runコマンド全般を許可</span>
+<span class="cmd">Edit(/docs/**)</span>      <span class="comment"># docsフォルダ以下の編集を許可</span></code></div>
+              <ul>
+                <li>プロンプトインジェクション検出 + 静的解析 + サンドボックス + 人間の監視の組み合わせ</li>
+                <li><code>settings.json</code>にチェックインしてチーム共有</li>
+              </ul>
+            `,
+          },
+          {
+            num: "29",
+            title: "サンドボックスを有効化",
+            chapter: "セキュリティ & 権限",
+            body: `
+              <p><code>/sandbox</code>でオープンソースのサンドボックスランタイムを有効にする。<strong>安全性向上</strong>と<strong>権限プロンプト削減</strong>を両立。</p>
+              <ul>
+                <li>ローカルマシンで動作</li>
+                <li><strong>ファイル分離</strong>と<strong>ネットワーク分離</strong>をサポート</li>
+                <li>権限プロンプトが大幅に減少し、作業フローがスムーズに</li>
+              </ul>
+            `,
+          },
+          {
+            num: "30",
+            title: "ステータスラインを追加",
+            chapter: "UI & 体験",
+            body: `
+              <p><code>/statusline</code>でコンポーザーの真下に<strong>カスタムステータスライン</strong>を表示する。</p>
+              <ul>
+                <li>モデル、ディレクトリ、残りコンテキスト、コストなどを表示</li>
+                <li>チームメンバーごとに異なるステータスラインを設定可能</li>
+                <li><code>.bashrc</code>/<code>.zshrc</code>を元にClaudeがステータスラインを自動生成</li>
+              </ul>
+            `,
+          },
+          {
+            num: "31",
+            title: "キーバインドをカスタマイズ",
+            chapter: "UI & 体験",
+            body: `
+              <p><code>/keybindings</code>で<strong>あらゆるキーバインドを再マップ</strong>できる。</p>
+              <ul>
+                <li>設定は<code>~/.claude/keybindings.json</code>に保存</li>
+                <li>設定はライブリロードされ、即座に反映される</li>
+                <li>すぐにフィードバックを確認できる</li>
+              </ul>
+            `,
+          },
+          {
+            num: "32",
+            title: "フックをセットアップ",
+            chapter: "自動化",
+            body: `
+              <p>Claudeのライフサイクルに<strong>決定的フック</strong>を接続する。</p>
+              <ul>
+                <li>権限リクエストをSlackやOpusに自動ルーティング</li>
+                <li>ターン終了時にClaudeに作業を継続させる（エージェント呼び出しやプロンプトで判断）</li>
+                <li>ツール呼び出しの前後処理（例：独自のロギング追加）</li>
+              </ul>
+              <p>「Claudeにフックを追加して」と指示するだけで開始できる。</p>
+            `,
+          },
+          {
+            num: "33",
+            title: "スピナー動詞をカスタマイズ",
+            chapter: "自動化",
+            body: `
+              <p>スピナーの<strong>動詞リスト</strong>をカスタマイズして、デフォルトのリストを置き換えたり追加したりできる。</p>
+              <ul>
+                <li><code>settings.json</code>でチーム全体と共有</li>
+                <li>チーム独自のユーモアやカルチャーを反映</li>
+                <li>ソースコントロールにチェックインして統一</li>
+              </ul>
+            `,
+          },
+          {
+            num: "34",
+            title: "アウトプットスタイルを使う",
+            chapter: "アウトプット",
+            body: `
+              <p><code>/config</code>でClaudeの<strong>応答トーンとフォーマット</strong>を設定する。</p>
+              <table class="tip-table">
+                <thead><tr><th>スタイル</th><th>用途</th></tr></thead>
+                <tbody>
+                  <tr><td>Explanatory</td><td>新しいコードベースに慣れる時。フレームワークやコードパターンを解説しながら作業</td></tr>
+                  <tr><td>Learning</td><td>コード変更を通じてClaudeがコーチング</td></tr>
+                  <tr><td>Custom</td><td>カスタム出力スタイルでClaudeの声をカスタマイズ</td></tr>
+                </tbody>
+              </table>
+            `,
+          },
+          {
+            num: "35",
+            title: "あらゆることをカスタマイズ",
+            chapter: "アウトプット",
+            special: true,
+            body: `
+              <div class="highlight-box">
+                <div class="label">Key Message</div>
+                <p>"Claude Code works great out of the box, but when you do customize, check your settings.json into git so your team can benefit too."</p>
+                <cite>— Boris Cherny</cite>
+              </div>
+              <p>Claude Codeはそのままでも強力だが、カスタマイズすればチーム全体のパフォーマンスが飛躍的に向上する。</p>
+              <ul>
+                <li><strong>37種類の設定</strong>と<strong>84個の環境変数</strong>に対応</li>
+                <li><code>settings.json</code>の<code>"env"</code>フィールドでラッパースクリプト不要</li>
+                <li>設定はコードベース、サブフォルダ、個人、企業ポリシーのレベルで管理</li>
+                <li><code>settings.json</code>をGitにコミットしてチーム全体で活用</li>
+              </ul>
+            `,
+          },
+        ],
       };
 
       let currentVolume = "v1";
@@ -978,7 +1162,8 @@
             "active",
             (vol === "v1" && i === 0) ||
               (vol === "v2" && i === 1) ||
-              (vol === "install" && i === 2),
+              (vol === "v3" && i === 2) ||
+              (vol === "install" && i === 3),
           );
         });
 
@@ -1049,7 +1234,7 @@
         area.innerHTML = `
           <div class="install-content active">
             <h3>Install as a Skill</h3>
-            <p>以下のコマンドでBorisの23 Tipsを Claude Code のスキルとしてインストールできる。インストール後は <code>/boris</code> コマンドで全tipsにアクセス可能。</p>
+            <p>以下のコマンドでBorisの35 Tipsを Claude Code のスキルとしてインストールできる。インストール後は <code>/boris</code> コマンドで全tipsにアクセス可能。</p>
             <div class="install-cmd">
               <code id="installCode">mkdir -p ~/.claude/skills/boris && curl -L -o ~/.claude/skills/boris/SKILL.md https://howborisusesclaudecode.com/api/install</code>
               <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
