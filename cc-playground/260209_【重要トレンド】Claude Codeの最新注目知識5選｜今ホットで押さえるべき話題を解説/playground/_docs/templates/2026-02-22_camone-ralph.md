@@ -1,0 +1,74 @@
+機能名: camone-ralph（オリジナル外部Ralph Loop Skill）
+
+- 日付: 2026-02-22 20:26:15（bugfix: 20:36:35, skill化: 20:55:41）
+- 概要: Geoffrey Huntleyが考案したRalph Wiggum Loopの「毎回クリーンなコンテキストウィンドウ」という本質思想を、Claude Code Skillとして実装。公式プラグイン版がStop hookでセッション内ループするためコンテキスト汚染が起きる問題を解決しつつ、公式の良い設計（completion promise、max-iterations、状態管理）を取り入れたcamoneオリジナル版。
+- 実装内容:
+  - Claude Code Skill: `~/.claude/skills/camone-ralph/SKILL.md`
+  - 実行エンジン: `~/.claude/skills/camone-ralph/scripts/camone-ralph.sh`（約500行、18関数）
+  - CLIアクセス: `~/.local/bin/camone-ralph` → skillのscriptsへsymlink
+  - 外部whileループで `claude -p --dangerously-skip-permissions --no-session-persistence` を毎回新規セッションとして実行
+  - CLI: `--max-iterations`, `--completion-promise`, `--auto-commit`, `--budget-per-iteration`, `--dry-run`, `--log-dir`
+  - `.ralph/state.json` にjqでアトミック状態管理（tmp.$$ + mvパターン）
+  - `.ralph/logs/iteration-NNN.log` にイテレーション毎の出力保存
+  - `<promise>TEXT</promise>` タグのperl正規表現検出で完了判定
+  - `--auto-commit` でイテレーション毎のgit自動コミット
+  - SIGINT/SIGTERMの両方をtrapし、子プロセス（claude CLI）も確実にkillするグレースフルシャットダウン
+  - macOS通知音（afplay）+ 音声読み上げ（say）
+  - `.gitignore` への `.ralph/` 自動追加
+  - カラー付きイテレーションヘッダー・経過時間表示
+- 設計意図:
+  - 公式プラグインはStop hookでセッション内ループするため、失敗した試行がコンテキストに残り続けLLM性能が劣化する。外部ループで毎回 `claude -p` を新規起動することで、常にクリーンなコンテキストウィンドウを確保
+  - Skill形式で提供することで `/camone-ralph` でClaude Code内から呼び出し可能、かつsymlinkでターミナルからも直接実行可能
+  - `env -u CLAUDECODE` でClaude Codeセッション内からの実行も可能に（ネストセッション防止の環境変数をunset）
+  - bash 3.2互換（macOSデフォルト）: 連想配列不使用、POSIX互換な構文
+  - `set -euo pipefail` でエラー検出しつつ、Claude CLI失敗時はログ記録して続行（resilient設計）
+- 副作用:
+  - `--dangerously-skip-permissions` を使用するため、Claude CLIが全権限で実行される（非対話モードでは必須）
+  - macOS通知音が鳴る（テスト中に予期せず鳴る可能性あり）
+  - `.gitignore` が自動変更される
+- bugfix（20:36）:
+  - 親プロセスがkill/SIGTERMされた時に子プロセス（claude -p）がorphanとして残り、通知が無限に飛び続ける問題を修正
+  - `claude` をバックグラウンド実行 + PID追跡 + `wait` で完了待ちする方式に変更
+  - `cleanup_child()` で `kill -0` による存在確認 → `kill` → `wait` の安全な停止を実装
+  - SIGINTだけでなくSIGTERMもtrapに追加
+- skill化（20:55）:
+  - `~/.local/bin/camone-ralph` から `~/.claude/skills/camone-ralph/` へ移行
+  - skill-creatorの `init_skill.py` でスケルトン生成 → SKILL.md作成 → `quick_validate.py` でバリデーション通過
+  - `~/.local/bin/camone-ralph` はsymlinkとして維持（CLIアクセス用）
+- 関連ファイル:
+  - `~/.claude/skills/camone-ralph/SKILL.md` — Skill定義
+  - `~/.claude/skills/camone-ralph/scripts/camone-ralph.sh` — 実行エンジン
+  - `~/.local/bin/camone-ralph` — symlink（CLIアクセス用）
+  - `.ralph/state.json` — 実行時に生成される状態ファイル
+  - `.ralph/logs/` — イテレーション毎のログディレクトリ
+
+---
+
+機能名: camone-ralph-loop v1.1.0 バグ修正（4件）
+
+- セッション名: ralph-loop-bugfix
+- 日付: 2026-02-23 09:21:08
+- 概要: FizzBuzz TDD デモ実行時に無限ループに入るバグを調査・修正。4つのバグを発見し全て修正。
+- 実装内容:
+  - Bug 1 (致命的): completion promise 検知の3段階フォールバック化
+    - Method 1: ログ内 `<promise>` タグ検索（従来）
+    - Method 2: ログ内プレーンテキスト一致（タグなしでも検出）
+    - Method 3: プロジェクトファイル内のpromise検索（Claudeがファイルに書いた場合に対応）
+    - `--output-format text` を明示指定で出力形式を確定
+  - Bug 2 (中程度): `.ralph/` → `.ralph-loop/` のgitignoreパス不一致を修正
+  - Bug 3 (中程度): `--timeout-per-iteration` オプション追加（デフォルト300秒）
+    - bashのwatchdog timerパターン: `(sleep N && kill $PID) &` で実装
+    - タイマー自身のPIDもTIMER_PIDで追跡し、cleanup_childで確実にkill
+  - Bug 4 (軽微): `RALPH_LOOP_ACTIVE=1` 環境変数をclaude起動時にセット
+    - ユーザーがStop hookで `[ -n "$RALPH_LOOP_ACTIVE" ] && exit 0` を追加すれば通知を抑制可能
+  - `--max-cost` → `--max-budget-usd` にCLI正式フラグ名へ修正
+- 設計意図:
+  - LLMの出力は非決定的なので、1つの検知方法に依存しない3段階フォールバックで堅牢性を確保
+  - タイムアウトで「1イテレーションが永遠にハング」する問題を防止
+  - 環境変数ベースのフック抑制で、既存のhook設定を壊さずに通知スパムを回避可能に
+- 副作用:
+  - `--timeout-per-iteration` のデフォルト300秒はタスクによっては短い可能性がある。複雑なタスクでは600秒以上を推奨
+  - Method 3のファイル検索はPROMPT.md自体に `<promise>` タグが含まれるため除外処理あり
+- 関連ファイル:
+  - `~/.claude/skills/camone-ralph-loop/scripts/camone-ralph-loop.sh` — v1.1.0
+  - `~/.claude/skills/camone-ralph-loop/SKILL.md` — Skill定義（未更新、別途対応必要）

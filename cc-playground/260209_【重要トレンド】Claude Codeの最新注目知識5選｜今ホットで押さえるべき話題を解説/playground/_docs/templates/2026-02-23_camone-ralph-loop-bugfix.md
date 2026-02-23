@@ -1,0 +1,23 @@
+機能名: camone-ralph-loop 3バグ修正
+
+- セッション名: camone-ralph-loop-bugfix
+- 日付: 2026-02-23 11:05:25
+- 概要: camone-ralph-loop skill の3つのバグを修正し、FizzBuzz TDD テストで動作検証を実施。ログ出力が0バイトになる致命的バグ、completion promise検出の不具合、gitignoreのミスマッチを全て解消。
+- 実装内容:
+  - Bug 1: `--output-format text` を `--output-format stream-json` + `--verbose` に変更。text形式は処理完了後に一括出力するため、timeoutでkillされると全データが失われていた。stream-jsonはリアルタイムでJSONイベントを出力するため、途中killでも部分出力が残る。
+  - Bug 2: `check_completion_promise()` を stream-json 対応に書き換え。jqで `type == "assistant"` と `type == "result"` メッセージだけ抽出してから promise テキストを検索。tool_result（PROMPT.mdのRead結果など）に含まれるpromiseタグによる偽陽性を防止。
+  - Bug 3: `ensure_gitignore()` が `.ralph-loop/` をチェックするが `.ralph/` を書き込んでいたミスマッチを修正。`.ralph-loop/` に統一。
+- 設計意図:
+  - stream-json を選択した理由: claude -p の text 形式は内部でレスポンスを蓄積し最後に一括出力する設計。Node.jsのprocess.stdout.write()はPOSIX上でファイルへの同期書き込みなので、stream-jsonならイベント単位で即座にファイルに反映される。
+  - jq によるフィルタリング: stream-json のログにはtool_use/tool_resultも含まれるため、PROMPT.mdをReadした際のtool_resultに `<promise>` タグが含まれると偽陽性が発生する。assistant/result メッセージだけに絞ることで回避。
+  - `--verbose` フラグ追加: `claude -p --output-format stream-json` は `--verbose` が必須（なしだとエラー）。テスト中に発見・即修正。
+- 副作用:
+  - ログ形式が plain text から stream-json (JSON Lines) に変更。人間が直接読むには jq でパースが必要。
+  - `--verbose` により claude -p の出力情報量が増加し、ログファイルサイズが大きくなる（FizzBuzz TDDで約175KB）。
+  - 既存の gitignore に前回バグ版が書いた `.ralph/` エントリが残っている（手動削除が必要）。
+- 関連ファイル:
+  - `/Users/camone/.claude/skills/camone-ralph-loop/scripts/camone-ralph-loop.sh` (修正対象スクリプト)
+  - 行340: `--output-format stream-json` (Bug 1)
+  - 行340前: `--verbose` 追加 (Bug 1補足)
+  - 行394-435: `check_completion_promise()` 関数全体書き換え (Bug 2)
+  - 行219-229: `ensure_gitignore()` の `.ralph/` → `.ralph-loop/` 統一 (Bug 3)
