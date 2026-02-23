@@ -1,0 +1,45 @@
+機能名: designing-beautiful-frontends Skill アップグレード
+
+- 日付: 2026-02-19 02:09:05
+- 概要: designing-beautiful-frontends Skillを「Style Pusher」（特定美学を押し付けるSkill）から「テーマ非依存のヘルパーSkill」へ全面リファクタした。公式ブログ（Improving Frontend Design through Skills）とskill-creatorのベストプラクティスに基づき、具体値のハードコードを排除し、デザイン思考プロセスと反収束原則に置き換えた。
+- 実装内容:
+  - SKILL.md を全面書き換え（170行→206行）
+    - 6固定美学スタイルのテーブル → 無限の美学方向性の示唆（5つの軸でのスペクトル提示）へ変更
+    - 推奨フォント12個のリスト → フォント選択の原則のみに変更（避けるべきリストは維持）
+    - 具体的HEXカラーパレット → パレット構築の思考法に変更
+    - AskUserQuestionワークフローを明確に記載（コンテキスト把握→美学方向決定→実装）
+    - 反収束ルールセクションを新設（5つの自己チェック質問付き）
+    - 推奨技術スタックにAskUserQuestion確認を追加
+    - allowed-toolsフィールドを削除（不要なトークン消費防止）
+  - references/ ディレクトリを新設し、3ファイル作成
+    - design-system-guide.md（164行）: タイポグラフィ/カラー/モーション/空間構成の原則レベルガイダンス
+    - anti-convergence-patterns.md（104行）: 5つの収束軸（フォント/カラー/レイアウト/アニメーション/コンポーネント）の思考転換フレームワーク
+    - implementation-checklist.md（35行）: 反収束/美学品質/技術品質の3カテゴリチェックリスト
+  - 旧ファイル5個を削除
+    - design-principles.md（6スタイル詳細がスタイル押し付け）
+    - typography-guide.md（具体フォントリストが収束を誘発、Space Grotesk推奨が公式と矛盾）
+    - color-palette.md（6プリセットの具体HEXコードが収束を誘発）
+    - anti-patterns.md（コンセプトはanti-convergence-patterns.mdに再構成）
+    - examples.md（全9例が同色+React固定、公式SKILL.mdにもコード例なし）
+- 設計意図:
+  - 公式ブログの核心メッセージ「分布収束（distributional convergence）を防ぐ」を最優先に設計
+  - 具体的な値（フォント名、HEXコード、固定スタイル名）の代わりに「思考プロセス」を教える構造へ転換
+  - "Pick an extreme" アプローチ（5軸のスペクトル）で、毎回異なる方向性を促す
+  - Progressive Disclosure（段階的開示）を維持: SKILL.md（常時ロード）→ references/（必要時ロード）
+  - sr-structure.md / sr-content.md のルールに完全準拠: フロントマター形式、500行制限、1レベル参照、100行超目次
+- 副作用:
+  - 旧ファイルの完全削除により、旧Skillの具体的コード例（9つのReactコンポーネント例）は失われる。ただし公式SKILL.mdにもコード例は含まれておらず、コード例はSkillの責務外と判断
+  - Skill発動時のトークン消費量は旧版とほぼ同等（SKILL.md: 206行）だが、参照ファイルは必要時のみ読み込まれるため、全体的なトークン効率は改善
+- 関連ファイル:
+  - ~/.claude/skills/designing-beautiful-frontends/SKILL.md
+  - ~/.claude/skills/designing-beautiful-frontends/references/design-system-guide.md
+  - ~/.claude/skills/designing-beautiful-frontends/references/anti-convergence-patterns.md
+  - ~/.claude/skills/designing-beautiful-frontends/references/implementation-checklist.md
+- 検証結果:
+  - quick_validate.py: PASS
+  - 全11項目の検証チェックリスト: ALL PASS
+  - HEXコード検索: ゼロ件（完全除去確認済み）
+- 参照情報:
+  - https://claude.com/blog/improving-frontend-design-through-skills
+  - ~/.claude/rules/skill-rules/sr-structure.md
+  - ~/.claude/rules/skill-rules/sr-content.md
