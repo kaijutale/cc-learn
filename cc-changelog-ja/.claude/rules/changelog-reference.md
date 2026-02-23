@@ -9,7 +9,7 @@ paths:
 
 cc-changelog-ja.md を更新する際は、必ず以下の公式 Changelog を参照すること:
 
-- [Claude Code CHANGELOG.md](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)
+- [Claude Code Changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)
 
 ## 更新手順
 
