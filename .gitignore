@@ -59,3 +59,11 @@ cc-prayground/sandbox/temp/
 
 # cc log
 _docs/templates
+# Ralph Loop state (auto-added by camone-ralph)
+.ralph/
+
+# Ralph Loop state (auto-added by camone-ralph-loop)
+.ralph/
+
+# Ralph Loop state (auto-added by camone-ralph-loop)
+.ralph-loop/
