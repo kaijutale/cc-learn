@@ -1,3 +1,4 @@
+# PRが作成・更新されたとき、変更ファイル一覧と行数統計を自動コメントする
 name: PR Stats Comment
 
 on:
