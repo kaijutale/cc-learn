@@ -1,0 +1,63 @@
+# === OS (macOS) ===
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+
+# === Editor / IDE (Google Antigravity) ===
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+*.vsix
+
+# === Security ===
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+.dev.vars
+
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.p8
+*.mobileprovision
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+credentials.json
+serviceAccountKey.json
+.gcp-credentials.json
+.aws/
+.azure/
+token.json
+secrets.yaml
+secrets.yml
+*.secret
+
+.ssh/
+secring.*
+
+# === Paid Content Protection ===
+_docs/references/
+.claude/CLAUDE.local.md
+
+# === Logs ===
+logs/
+*.log
+
+# === Claude Code / AI Tools ===
+.claude/settings.local.json
+.cursorindexingignore
+.cursorignore
