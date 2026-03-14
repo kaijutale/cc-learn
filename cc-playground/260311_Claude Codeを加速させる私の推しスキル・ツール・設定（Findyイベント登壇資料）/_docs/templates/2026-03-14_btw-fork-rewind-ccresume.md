@@ -1,0 +1,22 @@
+機能名: /btw, /fork, /rewind, ccresume 学習・テストissue作成
+
+- セッション名: （未設定）
+- 日付: 2026-03-14 15:09:39
+- 概要: Zenn記事「Claude Codeを加速させる私の推しスキル・ツール・設定」のセクション「あるコンテキストを持ったまま、複数の会話をしたい」について学習し、4つの機能（/btw, /fork, /rewind, ccresume）の動作確認用GitHub issueを作成した
+- 実装内容:
+  - 記事の該当セクションをWebFetchで取得し、各機能の役割・使い方を解説
+    - `/btw`: コンテキストを消費せずに脇道質問ができる機能
+    - `/fork`: 会話を分岐させ、セッションIDで `claude --resume ID` により別ターミナルで再開できる機能
+    - `/rewind`: 会話を任意の時点まで巻き戻せる機能
+    - `ccresume`: `claude --resume` で過去セッションを復元する機能
+  - テスト用GitHub issue #41を作成（https://github.com/camoneart/cc-learn/issues/41）
+    - 各機能ごとにチェックリスト形式でテスト項目を設定
+- 設計意図:
+  - コンテキストウィンドウの有限性を踏まえ、「コンテキスト分離」「並行作業」「巻き戻し」の3つの観点で機能を整理・理解するため
+  - Gitブランチとの類似性（/fork ≒ git branch、/rewind ≒ git reset）で概念を把握
+- 副作用:
+  - 記事取得時にFirecrawl MCPのクレジット不足が発生し、WebFetchにフォールバック。今後もFirecrawlのクレジット枯渇に注意が必要
+  - 記事によると `/fork` 実行時に `-r` で開始できると出力されるがバグの可能性があり、`--resume ID` を使う必要がある
+- 関連ファイル:
+  - issue: https://github.com/camoneart/cc-learn/issues/41
+  - 参考記事: https://zenn.dev/ubie_dev/articles/claude-code-tips-findy-2026

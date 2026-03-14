@@ -1,0 +1,26 @@
+機能名: upload-image-to-prスキル動作テスト
+
+- セッション名: upload-image-to-pr-trial
+- 日付: 2026-03-13 00:43:28
+- 概要: tonkotsuboy/github-upload-image-to-pr スキルを導入し、Claude CodeからGitHub PRにスクリーンショットを自動で貼り付ける機能を検証した（issue #36）
+- 実装内容:
+  - `npx skills add tonkotsuboy/github-upload-image-to-pr -y` でプロジェクトスコープにスキルをインストール
+  - テスト用ブランチ `test/upload-image-to-pr` を作成しPR #37を作成
+  - Chrome DevTools MCPでKing Gnu公式サイト（https://kinggnu.jp/）のスクショを撮影
+  - Chrome DevTools MCPでPRページを開き、コメント欄のファイル入力にスクショをアップロード
+  - GitHubが発行した永続URL（user-attachments/assets/...）を取得
+  - `gh pr edit` でPR descriptionに画像を埋め込み → 成功
+  - `gh pr comment` でPRコメントにも画像を投稿 → 成功
+- 設計意図:
+  - GitHub APIには画像アップロードのエンドポイントが存在しないため、ブラウザ自動化でコメント欄のファイル入力を経由して永続URLを取得する仕組み
+  - Chrome DevTools MCPを使用（Playwright MCPは未インストールのため）
+  - 独自プロファイル（~/.cache/chrome-devtools-mcp/chrome-profile/）にGitHubログインセッションが保存されるため、次回以降は再ログイン不要
+- 副作用:
+  - Chrome DevTools MCPのブラウザプロファイルロック問題: 別セッションが古いChromeプロセスを掴んだまま残っていると、新しいセッションから接続できない（SingletonLock）。古いプロセスをkillして解決した
+  - Chrome DevTools MCPのブラウザはGitHubに未ログイン状態で起動するため、初回は手動ログインが必要
+- 関連ファイル:
+  - .claude/skills/github-upload-image-to-pr -> ../../.agents/skills/github-upload-image-to-pr（シンボリックリンク）
+  - .agents/skills/github-upload-image-to-pr/SKILL.md（スキル本体）
+  - test-upload-image.md（テスト用ファイル）
+  - PR: https://github.com/camoneart/cc-learn/pull/37
+  - issue: https://github.com/camoneart/cc-learn/issues/36
