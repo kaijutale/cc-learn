@@ -1,0 +1,24 @@
+機能名: Multi-Folder Git Clone 試用
+
+- セッション名: multi-folder-git-clone-trial
+- 日付: 2026-03-13 09:37:44
+- 概要: Zenn記事「Claude Codeを加速させる私の推しスキル・ツール・設定」で紹介されていたRaycast拡張機能「Multi-Folder Git Clone」をインストール・試用し、git worktreeとの比較検証を行った（issue #38）
+- 実装内容:
+  - 記事の該当セクション「一つのリポジトリをたくさんクローンして並行作業したい」を読解・学習
+  - tonkotsuboy/multi-folder-git-clone リポジトリを /tmp にクローンし、`npm install && npm run dev` で開発者モードインストール（Raycast Storeには未公開のため）
+  - camoneart/cc-learn リポジトリで実行し、`~/git/github.com/camoneart/` 配下に cc-learn, cc-learn-2, cc-learn-3 の3つのクローンが自動採番で生成されることを確認
+  - 各クローンが独立した `.git/` を持ち、同一リモート origin に紐づいていることを `git remote -v` で確認
+  - 試用メモ（try-multi-folder-git-clone.md）を作成し、新ブランチ `try/multi-folder-git-clone` でPR #39を作成
+- 設計意図:
+  - git worktreeではなく複数クローン方式を選ぶ理由（エディタでの見やすさ、完全な独立性）を実体験で理解するため
+  - 「並列開発 = git worktree」という固定観念を見直し、体験的最適解としての複数クローン方式を評価
+- 副作用:
+  - /tmp にクローンしたため、PC再起動で拡張機能が消える可能性あり。永続化するなら ~/dev/tools/ 等への移動が必要
+  - ~/git/github.com/ にデフォルトでクローンされるため、既存の ~/dev/ ディレクトリとは別管理になる
+  - 元の test/upload-image-to-pr ブランチが既にPR #37でマージ済みだったため、rebase後に差分ゼロとなりPR作成不可に。新ブランチ try/multi-folder-git-clone を作成して解決
+- 関連ファイル:
+  - try-multi-folder-git-clone.md（試用メモ）
+  - PR: https://github.com/camoneart/cc-learn/pull/39
+  - issue: https://github.com/camoneart/cc-learn/issues/38
+  - 参考ツール: https://github.com/tonkotsuboy/multi-folder-git-clone
+  - 参考記事: https://zenn.dev/ubie_dev/articles/claude-code-tips-findy-2026
