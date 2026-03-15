@@ -1,0 +1,24 @@
+機能名: 実務で効く指示の型の理解 + Ctrl+G外部エディタ環境構築
+
+- 日付: 2026-03-11 09:30:41
+- 概要: まさお氏の記事から「実務で効く指示の型」（目的・制約・検証・出力の4要素）を深掘り学習し、その活用場面を整理。さらにClaude CodeのCtrl+G（外部エディタ）機能を使えるように環境設定を修正した
+- 実装内容:
+  - 「実務で効く指示の型」4要素（目的・制約・検証・出力）の解説と具体例の整理
+  - 型の活用場面の明確化: 専用Skill/Hooksがない中規模タスクで、日常プロンプトのフレームワークとして使う
+  - 型とSKILL.mdの関係整理: 型はSkillの設計指針であり、SKILL.mdの構造そのものではない
+  - Zellijの設定修正: locked セクションに `unbind "Ctrl g"` を追加し、デフォルトのCtrl+Gバインドを解放
+  - Claude Codeの設定修正: ~/.claude/settings.json の EDITOR/VISUAL に `--wait` フラグを追加
+  - .zshrcの設定修正: EDITOR/VISUALに `antigravity --wait` を追加
+- 設計意図:
+  - 型の理解は「Skill化する前の手動運用」を安定させるため。型→繰り返し→Skill化という成長ステップの基礎固め
+  - Ctrl+G環境構築は、型を使った長めのプロンプトをエディタで快適に書くための実践環境整備
+  - Zellijの `unbind` はピンポイント解除で、既存のAlt+G運用に影響を与えない最小変更とした
+  - settings.jsonの修正を優先したのは、Claude Codeが.zshrcより settings.json の env を優先参照するため
+- 副作用:
+  - Zellijの `Ctrl+G` によるLock/Unlock切替が使えなくなった（ただしAlt+Gで代替可能なので影響なし）
+  - antigravity --wait でエディタのタブを閉じ忘れるとClaude Codeがブロックされ続ける点に注意
+- 関連ファイル:
+  - ~/.config/zellij/config.kdl（unbind "Ctrl g" 追加）
+  - ~/.claude/settings.json（EDITOR/VISUALに --wait 追加）
+  - ~/.zshrc（EDITOR/VISUALに antigravity --wait 追加）
+  - _docs/references/screencapture-note-masa-wunder-n-nc0ff9d8a2dec-2026-03-09-17_22_27.pdf（参照元記事PDF）
