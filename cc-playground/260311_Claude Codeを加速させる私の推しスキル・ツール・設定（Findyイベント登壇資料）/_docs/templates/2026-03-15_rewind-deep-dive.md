@@ -1,0 +1,28 @@
+機能名: /rewind 深掘り学習
+
+- セッション名: （未設定）
+- 日付: 2026-03-15 07:44:13
+- 概要: /rewindコマンドの詳細な動作・選択肢・関連機能との違いを体系的に学習した
+- 実装内容:
+  - /rewindコマンドの基本的な仕組みを学習
+    - Claudeがファイル変更するたびにチェックポイントが自動作成される
+    - 起動方法は2つ: `/rewind` コマンド or `Esc×2`（どちらも同じ機能）
+    - 巻き戻しは「フォーク方式」で非破壊的（元の会話も --resume で復元可能）
+  - `/rewind` vs `--resume (-r)` の違いを整理
+    - `/rewind` と `Esc×2` はセッション内のタイムトラベル（同じ機能の別呼び出し）
+    - `--resume` はセッション間のタイムトラベル（終了後の再開）
+  - Rewindメニューの3つの選択肢を詳細に学習
+    - Restore conversation: 選んだ時点に巻き戻す（フォークして新しい会話に分岐）
+    - Summarize from here: 選んだ時点以降を要約に圧縮（/compactの部分適用版）
+    - Never mind: キャンセル
+  - 「Summarize from here: add context (optional)」の意味を確認
+    - 要約時の焦点を指定できるテキスト入力欄
+    - `/compact <指示>` と同じ仕組みで、空欄でも自動判断で要約してくれる
+- 設計意図:
+  - 前回セッション（issue #41）で作成した /rewind テスト項目の事前学習として、実際の画面UIも含めて動作を理解するため
+  - 類似機能（Esc, Esc×2, /rewind, --resume, /compact）の違いを明確に整理し、適切な場面で使い分けられるようにするため
+- 副作用:
+  - 特になし
+- 関連ファイル:
+  - 前回ログ: _docs/templates/2026-03-14_btw-fork-rewind-ccresume.md
+  - 関連issue: https://github.com/camoneart/cc-learn/issues/41

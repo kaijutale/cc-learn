@@ -1,0 +1,25 @@
+機能名: scaffolding-project-context Skill作成
+
+- セッション名: masao-article-skill-creation
+- 日付: 2026-03-11 16:47:52
+- 概要: まさお記事「Claude Codeを使いこなす本質知識」のハーネス設計思想をSkill化。CLAUDE.md単体ではなく、プロジェクト全体のコンテキスト設計（CLAUDE.md + .docs/ + 情報配置マップ + Hooks/Skills推奨）を一括スキャフォールドするSkillを作成した
+- 実装内容:
+  - まさお記事（46ページPDF）を全ページ精読し、設計原則を抽出
+  - 既存 `optimizing-agent-context` Skillとの差別化ポイントを分析
+  - init_skill.py でスケルトン生成、不要ディレクトリ（scripts/, assets/）削除
+  - references/design-principles.md: CLAUDE.md設計原則、書くべき/書かないべき、チェックリスト、ミニマルテンプレート
+  - references/placement-guide.md: 情報配置フローチャート、配置先比較表、Hooks推奨設定、Skill vs サブエージェント判断基準
+  - SKILL.md: 6ステップワークフロー（深層分析→情報分類→CLAUDE.md生成→.docs生成→レポート→セルフレビュー）
+  - quick_validate.py でバリデーション通過
+- 設計意図:
+  - 既存スキルとの補完関係: `optimizing-agent-context`は「既存CLAUDE.mdの品質レビュー」、本スキルは「プロジェクト全体のコンテキスト設計を新規構築」。プロジェクトライフサイクルの異なるフェーズをカバー
+  - まさお記事の核心「何をどこに置くか」をフローチャート化: references/placement-guide.md の判断ツリーにより、情報配置の再現性を確保
+  - 段階的開示の自己適用: SKILL.md本体は約130行にコンパクト化、設計原則と配置ガイドはreferencesに分離
+  - プロジェクト規模に応じた.docs/構造: 小/中/大規模の3パターンを用意し、過剰な構造化を防止
+  - ユーザー確認ポイント: Step 2の情報分類結果でユーザー確認を挟み、一方的な設計を防止
+- 副作用: 特になし。既存ファイルへの変更なし。グローバルSkillとして全プロジェクトで利用可能
+- 関連ファイル:
+  - ~/.claude/skills/scaffolding-project-context/SKILL.md
+  - ~/.claude/skills/scaffolding-project-context/references/design-principles.md
+  - ~/.claude/skills/scaffolding-project-context/references/placement-guide.md
+  - _docs/references/screencapture-note-masa-wunder-n-nc0ff9d8a2dec-2026-03-09-17_22_27.pdf（元記事）

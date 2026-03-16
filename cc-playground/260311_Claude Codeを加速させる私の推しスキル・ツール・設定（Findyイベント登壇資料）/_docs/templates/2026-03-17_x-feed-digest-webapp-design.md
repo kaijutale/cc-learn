@@ -1,0 +1,32 @@
+機能名: X Feed Digest Web App 設計
+
+- セッション名: （未設定）
+- 日付: 2026-03-17 07:15:40
+- 概要: Zenn記事「Claude Codeを加速させる私の推しスキル・ツール・設定」で紹介されているX(Twitter) → RSSHub → Gemini翻訳 → Obsidianパイプラインの本質を分析し、Webアプリとして再構築するための技術設計書を作成した
+- 実装内容:
+  - パイプラインの本質を3つの変換として抽出
+    - ストリーム → レジストリ変換（流れて消える情報を蓄積・検索可能にする）
+    - プッシュ → プル変換（タイムラインを追う消費から朝のダイジェストへ）
+    - 多言語 → 母語変換（英語技術ツイートの認知コストを下げる）
+  - 技術スタックの選定と判断根拠を文書化
+    - Next.js 16 (App Router + Server Actions + API Routes)
+    - SQLite + Prisma 6（個人ツール向けゼロセットアップDB）
+    - Gemini API直接呼び出し（nano-banana CLIの重い依存を回避）
+    - crontab / Vercel Cron（node-cronはNext.jsサーバーレスと相性悪のため不採用）
+  - Prismaスキーマのデータモデル設計（Feed, Tweet, Digest, DigestTweet, Setting）
+  - ディレクトリ構成・バックエンド処理フロー・画面構成を設計
+  - 5段階のPhase分け実装順序を策定
+  - 設計書3ファイルを /Users/camone/dev/ideas/_docs/templates/app/x-feed-digest-webapp/ に保存
+- 設計意図:
+  - CLIツール群の組み合わせ運用（Docker + シェルスクリプト + cron + 複数CLI）は運用コストが高いため、Webアプリ1つに統合
+  - 実装着手時に設計書1つ読めばすぐ開発開始できるよう、判断根拠も含めて詳細に記録
+  - 個人利用の実用ツールとして最小限の技術選定（過剰な認証やDB運用を排除）
+- 副作用:
+  - RSSHub Docker環境の構築が実装の前提条件
+  - Gemini APIキーの取得と利用料金（月$2程度見込み）が必要
+  - 設計段階のため、実装時に技術的制約で設計変更が必要になる可能性あり
+- 関連ファイル:
+  - 設計書ディレクトリ: /Users/camone/dev/ideas/_docs/templates/app/x-feed-digest-webapp/
+    - 2026-03-17_x-feed-digest-design.md（実装ログ形式の概要）
+    - 2026-03-17_technical-spec.md（技術設計書の全文）
+    - 2026-03-17_design-conversation-log.md（設計プロセスログ）
