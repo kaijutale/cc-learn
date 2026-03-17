@@ -59,6 +59,9 @@ cc-prayground/sandbox/temp/
 
 # cc log
 _docs/templates
+
+# Claude Code local files (personal, not shared)
+CLAUDE.local.md
 # Ralph Loop state (auto-added by camone-ralph)
 .ralph/
 
