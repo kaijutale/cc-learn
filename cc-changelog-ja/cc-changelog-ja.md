@@ -1,5 +1,34 @@
 # Claude Code 変更履歴
 
+## 2.1.78
+
+- ターンが API エラー（レート制限、認証失敗など）により終了した際に発火する `StopFailure` フックイベントを追加
+- プラグインの永続状態用の `${CLAUDE_PLUGIN_DATA}` 変数を追加 — プラグイン更新後も保持され、`/plugin uninstall` 時に削除前にプロンプトを表示
+- プラグイン同梱エージェントの `effort`、`maxTurns`、`disallowedTools` フロントマターサポートを追加
+- ターミナル通知（iTerm2/Kitty/Ghostty ポップアップ、プログレスバー）が `set -g allow-passthrough on` 設定時に tmux 内から外側のターミナルに到達するように
+- レスポンステキストが生成に応じて行ごとにストリーミングされるように
+- Linux のサンドボックス化された Bash 内で `git log HEAD` が "ambiguous argument" で失敗する問題と、スタブファイルが作業ディレクトリの `git status` を汚染する問題を修正
+- サブエージェントを使用した大規模セッション（5MB超）で `cc log` および `--resume` が会話履歴をサイレントに切り詰める問題を修正
+- API エラーが停止フックをトリガーし、ブロッキングエラーをモデルに再送信する無限ループを修正
+- `deny: ["mcp__servername"]` 権限ルールがモデルへの送信前に MCP サーバーツールを削除せず、モデルがブロックされたツールを認識し使用を試みる問題を修正
+- `sandbox.filesystem.allowWrite` が絶対パスで動作しない問題を修正（以前は `//` プレフィックスが必要だった）
+- `/sandbox` の Dependencies タブが macOS で macOS 固有の情報ではなく Linux の前提条件を表示する問題を修正
+- **セキュリティ:** `sandbox.enabled: true` が設定されているが依存関係が不足している場合にサンドボックスがサイレントに無効化される問題を修正 — 起動時に可視的な警告を表示するように
+- `.git`、`.claude`、その他の保護ディレクトリが `bypassPermissions` モードでプロンプトなしに書き込み可能になっていた問題を修正
+- ノーマルモードで ctrl+u がリードラインの kill-line ではなくスクロールしてしまう問題を修正（ctrl+u/ctrl+d による半ページスクロールはトランスクリプトモードのみに変更）
+- 音声モードの修飾キーコンボのプッシュトゥトークキーバインド（例：ctrl+k）が即座にアクティブ化せずホールドが必要になる問題を修正
+- WSLg 搭載の WSL2 で音声モードが動作しない問題を修正、WSL1/Win10 ユーザーには明確なエラーを表示
+- `--worktree` フラグがワークツリーディレクトリからスキルとフックを読み込まない問題を修正
+- `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS` および `includeGitInstructions` 設定がシステムプロンプトの git status セクションを抑制しない問題を修正
+- VS Code が Dock/Spotlight から起動された場合に Bash ツールが Homebrew やその他の PATH 依存バイナリを見つけられない問題を修正
+- truecolor サポートをアドバタイズしない VS Code/Cursor/code-server ターミナルで Claude のオレンジ色が薄く表示される問題を修正
+- `/model` ピッカーにカスタムエントリを追加する `ANTHROPIC_CUSTOM_MODEL_OPTION` 環境変数を追加 — オプションで `_NAME` および `_DESCRIPTION` サフィックス付き変数で表示名をカスタマイズ可能
+- Haiku モデル使用時に `ANTHROPIC_BETAS` 環境変数がサイレントに無視される問題を修正
+- キューイングされたプロンプトが改行セパレーターなしで連結される問題を修正
+- 大規模セッション再開時のメモリ使用量と起動時間を改善
+- [VSCode] 認証済み状態でサイドバーを開いた際にログイン画面が一瞬表示される問題を修正
+- [VSCode] Opus 選択時の "API Error: Rate limit reached" を修正 — プランティアが不明なサブスクライバーにはモデルドロップダウンで 1M コンテキストバリアントを提供しないように
+
 ## 2.1.77
 
 - Claude Opus 4.6 のデフォルト最大出力トークン制限を 64k トークンに引き上げ、Opus 4.6 および Sonnet 4.6 モデルの上限を 128k トークンに引き上げ
