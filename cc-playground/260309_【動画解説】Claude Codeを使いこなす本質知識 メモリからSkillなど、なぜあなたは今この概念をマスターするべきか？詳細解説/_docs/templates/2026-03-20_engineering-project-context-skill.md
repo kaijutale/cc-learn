@@ -1,0 +1,27 @@
+機能名: engineering-project-context Skill統合
+
+- セッション名: skill-unification-engineering-project-context
+- 日付: 2026-03-20 06:34:43
+- 概要: `scaffolding-project-context`（新規構築用）と`optimizing-agent-context`（レビュー・改善用）の2つのSkillを、`engineering-project-context`として1つに統合した。同じ目的（CLAUDE.md設計・改善）のSkillが複数あると呼び出しの揺れが生じるため、CLAUDE.mdの有無でモードを自動切替する統合Skillに集約。PDF記事の新知見（チーム共有戦略、.docs/Rules運用注意）も反映した
+- 実装内容:
+  - SKILL.md: Scaffold Mode（5ステップ）+ Review & Optimize Mode（5ステップ）の2モード統合。CLAUDE.mdの存在有無で自動切替
+  - references/context-design-principles.md: 旧 design-principles.md + agent-doc.md を統合。「設計の大原則」（最初は"減らす"ことに投資する）を冒頭に追加。5原則にスコアリング定義を追加
+  - references/placement-guide.md: 既存ベース + 「チーム開発でのCLAUDE.md共有戦略」セクション追加 + 「.docs/の運用注意」「Rulesの運用注意」追加
+  - references/sample-claude-md.md: optimizing-agent-contextからそのままコピー
+  - README.md: #9にEngineering Project Contextエントリ追加、以降の番号を+1で修正（19エントリに）
+- 設計意図:
+  - 1 Skill = 1 目的: 「CLAUDE.md + .docs/ + 情報配置」というコンテキスト設計の目的に対してSkillを1つに統一。呼び出しトリガーの揺れを排除
+  - モード自動切替: CLAUDE.mdの有無という「観測可能な事実」で分岐するので、ユーザーがモードを意識する必要がない
+  - referenceの統合判断: design-principles.md と agent-doc.md は「CLAUDE.mdをどう書くか」という同じテーマなので統合。placement-guide.md は「どこに配置するか」という別テーマなので独立を維持
+  - 命名: `engineering`は「Context Engineering」の概念を反映し、新規構築（scaffolding）も改善（optimizing）も包含する動名詞
+  - PDF新知見の配置: 「減らすことに投資する」は全体の設計哲学なのでdesign-principlesの冒頭に、チーム戦略と運用注意はplacement-guideに配置
+- 副作用:
+  - 旧Skill 2ディレクトリの手動削除が必要（`~/.claude/skills/scaffolding-project-context/` と `~/.claude/skills/optimizing-agent-context/`）。削除コマンドの実行許可が得られなかったため未完了
+  - 旧Skillが残っている間は、同じトリガーワードで旧Skill + 新Skillの3つが候補になる。削除後に解消
+- 関連ファイル:
+  - ~/.claude/skills/engineering-project-context/SKILL.md
+  - ~/.claude/skills/engineering-project-context/references/context-design-principles.md
+  - ~/.claude/skills/engineering-project-context/references/placement-guide.md
+  - ~/.claude/skills/engineering-project-context/references/sample-claude-md.md
+  - ~/.claude/skills/README.md
+  - _docs/references/screencapture-note-masa-wunder-n-nc0ff9d8a2dec-2026-03-09-17_22_27.pdf（元記事PDF）

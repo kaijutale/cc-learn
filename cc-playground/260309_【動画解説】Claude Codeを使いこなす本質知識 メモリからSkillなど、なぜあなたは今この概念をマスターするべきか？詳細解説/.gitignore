@@ -51,7 +51,6 @@ secring.*
 
 # === Paid Content Protection ===
 _docs/references/
-.claude/CLAUDE.local.md
 
 # === Logs ===
 logs/
