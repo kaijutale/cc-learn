@@ -1,0 +1,30 @@
+機能名: 情報収集Collector群 設計書
+
+- セッション名: collector-info-gathering-spec
+- 日付: 2026-03-21 22:55:47
+- 概要: かもね版AIエージェントハーネス「ケルベロス」の情報収集機能として、X・note・YouTubeの指定アカウント投稿を毎日自動収集してmdファイル化するCollector群の設計書を作成した。既存6つのAgent Core設計書（architecture, api-design, data-model, observability, session-design, autonomous）に続く7つ目の設計書。
+- 実装内容:
+  - `.docs/spec/collector-info-gathering.md` を新規作成（898行）
+  - 全11セクション構成: 設計思想 / Collector一覧と個別設計 / 出力設計 / 収集対象設定ファイル / 実行設計 / Hooks設計 / ディレクトリ構成 / agentsテーブル登録 / 権限設計 / 段階的実装計画 / 関連設計書
+  - 3つの独立したCollector（X / note / YouTube）の責務・検索クエリ・システムプロンプト・許可ツールを個別定義
+  - Claude Agent SDK TypeScript APIに基づくコード例（query(), hooks, allowedTools, permissionMode: "dontAsk"）
+  - Promise.allSettled + 結果マージパターンによる並列実行設計
+  - Phase 1（md出力）→ Phase 2（観測）→ Phase 3（DB連携）→ Phase 4（堅牢化）の段階的実装計画
+- 設計意図:
+  - Collector/Executorパターン（agent-core-autonomous.mdで定義）の具体的な実装第1号として設計
+  - Brave Search MCPを情報ソースに採用（API認証不要、MCPツールとして即利用可）
+  - 各Collectorは検索結果を文字列として返し、オーケストレーターが最後に1回マージ書き込みする設計（ファイルロック不要で並列実行可能）
+  - permissionMode: "dontAsk" + allowedTools でCollectorの権限境界をSDKレベルで強制
+  - セッションID（{agentName}-{YYYYMMDD}）とファイル名（{YYYYMMDD}_daily-digest.md）の日付ベース設計で冪等性を確保
+- 副作用:
+  - 設計書のみの追加であり、コードやインフラへの副作用なし
+  - Brave Search MCPの検索精度に依存するため、Phase 1実装時に検索クエリの最適化が必要になる可能性あり
+  - 3ソース統合の1ファイル出力は、ソースが増えた場合にファイルサイズが大きくなる懸念あり（Phase 4で検討）
+- 関連ファイル:
+  - `.docs/spec/collector-info-gathering.md` （新規作成）
+  - `.docs/spec/agent-core-autonomous.md` （親設計書 - Collector/Executorパターン定義）
+  - `.docs/spec/agent-core-api-design.md` （API設計 - query()/Hooks統合）
+  - `.docs/spec/agent-core-data-model.md` （データモデル - knowledges/agentsテーブル）
+  - `.docs/spec/agent-core-observability.md` （観測設計 - Hooks設計の基盤）
+  - `.docs/spec/agent-core-architecture.md` （アーキテクチャ - ディレクトリ構成規約）
+  - `.docs/spec/agent-core-session-design.md` （セッション管理 - セッションID生成規則）
