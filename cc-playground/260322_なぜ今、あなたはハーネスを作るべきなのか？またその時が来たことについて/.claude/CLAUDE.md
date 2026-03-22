@@ -2,8 +2,7 @@
 
 回答には以下のpdfを参照すること
 
-- `screencapture-note-masa-wunder-n-n35d2ee4ac1a8-2026-03-22-02_03_43.pdf`
-- ``
+- `.docs/references/masao-why-build-harness-now.pdf`
 
 # Gitルール
 
