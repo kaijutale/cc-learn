@@ -1,0 +1,28 @@
+機能名: authoring-skills スキル統合
+
+- セッション名: 勉強会レポート解説 + スキル統合
+- 日付: 2026-03-23 01:53:34
+- 概要: スキル作成に関する3つの分散リソース（thariq-skills, skill-creator, skill-rules）を1つの統合スキル `authoring-skills` に統合した。
+- 実装内容:
+  - thariq-skills（Anthropic内部プレイブック: 9カテゴリ、9Tips）+ skill-creator（6ステップ作成プロセス、スクリプト群）+ skill-rules（かもねオリジナルのルールファイル4本）を `authoring-skills` に統合
+  - SKILL.md（279行）をハブとして作成。9原則、9カテゴリ、構造、段階的開示、自由度、作成プロセス概要、スクリプト使用法、配布戦略、Gotchasを含む
+  - references/ に8ファイル配置（ルールファイル4本をpaths:フロントマター削除してリネーム移行 + skill-creatorのreferences 3本をそのまま移行 + creation-process.md新規作成）
+  - scripts/ に3ファイル移行（init_skill.py, package_skill.py, quick_validate.py）
+  - CLAUDE.mdから「Skill作成ルール」セクション（rules/skill-authoring-rules.mdへのポインタ）を削除
+  - 旧ファイル（thariq-skills/, skill-creator/, rules/skill-authoring-rules.md, rules/skill-rules/）を削除
+  - content-design.md移行時に9カテゴリ表と自由度テーブルをSKILL.md本文に移動し、references側から削除して重複排除
+  - LICENSE.txt（Apache 2.0）はREMIX著作物のため不要と判断し削除
+- 設計意図:
+  - 問題1: skill-authoring-rules.mdが「skill-creatorを使え」と指示 → thariq-skillsが使われない問題の解消
+  - 問題2: ルールファイル5本がpaths: [".claude/skills/**"]で自動ロード → スキルディレクトリ編集時に毎回コンテキスト消費する問題の解消
+  - 問題3: skill-creatorとthariq-skillsの重複 → Claudeがどちらを使うか迷う問題の解消
+  - 問題4: CLAUDE.mdにルールファイルへのポインタ → 常時コンテキスト消費する問題の解消
+  - 段階的開示の正しい適用: ルールファイル（常時ロード）ではなく、スキルのreferences（必要時のみロード）に配置することでコンテキスト効率を改善
+- 副作用:
+  - ルールファイルの自動ロード（paths: .claude/skills/**）がなくなったため、スキルディレクトリ編集時にスキル作成ルールが自動適用されなくなった。ただし、スキル作成時には authoring-skills スキルがトリガーされるため、実質的な影響はない
+  - generating-gitignoreスキルのdescription（発動条件なし）は未修正のまま
+- 関連ファイル:
+  - ~/.claude/skills/authoring-skills/SKILL.md
+  - ~/.claude/skills/authoring-skills/references/（8ファイル）
+  - ~/.claude/skills/authoring-skills/scripts/（3ファイル）
+  - ~/.claude/CLAUDE.md（Skill作成ルールセクション削除）
