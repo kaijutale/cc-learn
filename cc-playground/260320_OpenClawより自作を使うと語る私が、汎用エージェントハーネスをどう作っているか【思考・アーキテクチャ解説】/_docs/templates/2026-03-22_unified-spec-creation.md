@@ -1,0 +1,31 @@
+機能名: ケルベロスハーネス統合設計書の作成
+
+- セッション名: unified-spec-creation
+- 日付: 2026-03-22 13:33:48
+- 概要: 既存7つの分割設計書とPDF資料3本を統合し、5つのユースケースに焦点を当てた統合設計書を新規作成した。
+- 実装内容:
+  - `.docs/spec/cerberus-harness-unified-spec.md` を新規作成（約1,100行）
+  - 全11セクション構成: はじめに / ハーネスとは何か / 全体アーキテクチャ / 安全性と確実性 / データモデルとセッション管理 / Agent Core API / 観測 / 自律実行とナレッジ管理 / ユースケース別実装ガイド / 収集対象の設定と実行設計 / 段階的実装計画
+  - 5つのユースケース: X日次収集 / note日次収集 / YouTube日次収集 / 個人ナレッジベース構築 / 情報モニタリング
+  - 新規セクション「安全性と確実性」: スクリプト設計 / Zodバリデーション / 権限設計 / コスト制御（maxTurns）
+  - 新規ユースケース2つ: ナレッジベース構築（UC4）と情報モニタリング（UC5）のCollector/Executor設計
+- 設計意図:
+  - 7つの分割設計書の重複を排除し、1ファイルで全体像を把握できる構成にする
+  - PDF資料「なぜ今ハーネスを作るべきか」のスクリプト+バリデーション要件を設計書に反映
+  - ユースケース別セクション（セクション8）で目的駆動のリファレンスを提供
+- 副作用:
+  - 設計書のみの作成であり、コードやインフラへの副作用なし
+  - 既存7設計書は統合設計書の確認後に削除予定（ユーザー判断で実行）
+- 統合元ファイル:
+  - `.docs/spec/agent-core-architecture.md` → セクション2に統合
+  - `.docs/spec/agent-core-api-design.md` → セクション5に統合
+  - `.docs/spec/agent-core-data-model.md` → セクション4に統合
+  - `.docs/spec/agent-core-observability.md` → セクション6に統合
+  - `.docs/spec/agent-core-session-design.md` → セクション4に統合
+  - `.docs/spec/agent-core-autonomous.md` → セクション7に統合
+  - `.docs/spec/collector-info-gathering.md` → セクション8, 9に統合
+  - `.docs/references/masao-why-build-harness-now.pdf` → セクション1, 3に反映
+  - `.docs/references/260204_masao_汎用エージェントハーネス設計_思考とアーキテクチャ解説.pdf` → 全体に反映
+  - `.docs/references/260131_masao_ケルベロス汎用エージェントハーネス_Excalidraw図解資料.pdf` → セクション3に反映
+- 関連ファイル:
+  - `.docs/spec/cerberus-harness-unified-spec.md` （新規作成）
