@@ -1,0 +1,24 @@
+機能名: PDF記事解説 & explaining-pdf-articleスキル作成
+
+- セッション名: （未設定）
+- 日付: 2026-03-24 08:15:33
+- 概要: まさお氏のnote記事「ClaudeCodeが静かに開けた『パンドラの箱』を、あなたは知っているか」のPDFを全ページ読み込み、概要・セクションごとの解説を実施。その後、繰り返し使えるようexplaining-pdf-articleスキルを作成。記事内容についての深掘り議論（ハーネス設計思想、決定論/非決定論、コスト最適化、スワーミング vs Agent Teams）も実施。
+- 実装内容:
+  - PDF記事（55ページ）を20ページずつ分割して全ページ読み込み・解説
+  - `~/.claude/skills/explaining-pdf-article/SKILL.md` を新規作成（PDF記事解説の汎用スキル）
+  - 記事内容に関する深掘り議論を複数ラウンド実施:
+    - ハーネスの層構造（ミルフィーユ的4層カスケーディング）
+    - 決定論的処理 vs 非決定論的処理の使い分け
+    - コスト最適化の3原則（決定論的処理優先、AI判断特化、サブエージェント計画的利用）
+    - 「ハーネス設計 = AIの判断基準の設計」という本質
+    - スワーミングとAgent Teamsの比較（公式ドキュメントに基づく訂正含む）
+- 設計意図:
+  - explaining-pdf-articleスキルは、authoring-skillsガイドに準拠し段階的開示を意識。SKILL.md単体59行でコンパクトに設計
+  - descriptionにトリガーワード（日本語・英語）を含め、自然な言い回しで発動する設計
+  - PDF特定のフォールバック（CLAUDE.md参照 → ユーザー指定 → .docs/references/探索）を組み込み
+- 副作用:
+  - `~/.claude/skills/explaining-pdf-article/` 配下にinit_skill.pyが生成したテンプレートファイル（scripts/example.py, references/api_reference.md, assets/example_asset.txt）が残存。スキル動作に影響なし。手動削除推奨
+- 関連ファイル:
+  - `~/.claude/skills/explaining-pdf-article/SKILL.md` - 新規作成したスキル
+  - `.docs/references/masao-note-claude-code-pandora-box-20260101.pdf` - 解説対象のPDF
+  - `.docs/articles/explaining-pdf-article-content.md` - スキルによる解説出力ファイル
