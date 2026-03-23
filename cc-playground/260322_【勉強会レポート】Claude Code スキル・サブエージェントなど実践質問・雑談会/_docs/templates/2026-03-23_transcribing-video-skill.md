@@ -1,0 +1,30 @@
+機能名: transcribing-video スキル作成
+
+- セッション名: 勉強会レポート解説 + 動画文字起こし体験 + スキル化
+- 日付: 2026-03-23 11:09:31
+- 概要: まさおの勉強会レポート記事（PDF）の解説セッションから、「ローカルエージェントの強み」を実体験するために動画文字起こしを実施。その体験をスキル化した。
+- 実装内容:
+  - 勉強会レポートPDF（5セクション）の概要・各セクション詳細解説を実施
+  - hanes-archive.mp4（43分30秒）の文字起こしを実体験
+    - ffmpegで音声抽出（WAV 16kHz mono）
+    - mlx-whisper（whisper-large-v3-turbo）で文字起こし（約3分20秒で処理）
+    - 言語指定ミス（en→ja）でハルシネーション発生を体験し、修正
+    - サブエージェントで1684セグメントを16セクション・211行のMarkdownに整形
+  - 体験をベースに transcribing-video スキルを作成
+    - SKILL.md（49行）: トリガー条件、ワークフロー、Gotchas
+    - scripts/transcribe.py: ffmpeg音声抽出 + mlx-whisper文字起こしの一括処理スクリプト
+    - authoring-skills の init_skill.py でテンプレート生成後、カスタマイズ
+  - mlx-whisper を pip3 install でかもねのMacにインストール
+- 設計意図:
+  - スキルの2層構造: 決定論的処理（音声抽出・文字起こし）はスクリプトに、非決定論的処理（段落化・セクション分け・誤認識修正）はClaudeの判断に委ねる設計
+  - まさおの記事「スキルの自由度の設計」をそのまま実践: スクリプト部分は低自由度（fragile操作）、Markdown整形部分は高自由度（文脈依存の判断）
+  - Gotchasに言語指定ミスのハルシネーション問題を初日から記載（実体験に基づく）
+- 副作用:
+  - mlx-whisper および依存パッケージ（torch, numpy, scipy等）がユーザーレベルにインストールされた
+  - whisperモデル（large-v3-turbo、約1.5GB）が初回実行時にHugging Faceからダウンロードされキャッシュに保存された
+  - hanes-audio.wav（80MB）、hanes-transcript.txt、hanes-transcript-timestamps.txt、hanes-transcript.md が .docs/references/ に生成された（不要なら削除可）
+- 関連ファイル:
+  - ~/.claude/skills/transcribing-video/SKILL.md
+  - ~/.claude/skills/transcribing-video/scripts/transcribe.py
+  - .docs/references/hanes-transcript.md（文字起こし結果）
+  - .docs/references/hanes-transcript-timestamps.txt（タイムスタンプ付き生データ）
