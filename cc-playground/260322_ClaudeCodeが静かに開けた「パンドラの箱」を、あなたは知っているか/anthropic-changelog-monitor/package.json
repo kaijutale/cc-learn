@@ -1,0 +1,23 @@
+{
+  "name": "anthropic-changelog-monitor",
+  "version": "1.0.0",
+  "description": "Anthropic Changelog Monitor - 決定論的ハーネスで非決定論的AIを制御するローカルエージェント",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "run-once": "node dist/index.js --once",
+    "dev": "tsx src/index.ts --once"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "latest",
+    "cheerio": "^1.0.0",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
+  }
+}
