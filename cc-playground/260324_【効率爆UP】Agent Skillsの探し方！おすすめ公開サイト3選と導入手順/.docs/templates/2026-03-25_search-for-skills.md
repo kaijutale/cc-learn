@@ -1,0 +1,22 @@
+機能名: search-for-skillsスキルの作成
+
+- セッション名: agent-skills-search-skill
+- 日付: 2026-03-25 06:59:53
+- 概要: まさお氏のnote記事で紹介された3つのスキル公開サイト（Skills.sh / SkillSMP / OpenClaw）を横断検索し、結果を比較表示した上で選択したスキルをインストールするClaude Codeスキルを作成した
+- 実装内容:
+  - 記事の解説: PDF記事の内容を読み込み、3サイトの特徴・使い分けを解説
+  - 各サイトの最新情報取得: 3つのサブエージェントを並列で起動し、Skills.sh / SkillSMP / OpenClawの最新情報をWebから取得
+  - スキル設計: authoring-skillsスキルのベストプラクティスに従い、AskUserQuestionで要件をヒアリング（検索手段: Web検索ベース、出力範囲: 結果表示＋即インストール、配置先: ユーザーに都度確認）
+  - スキル実装: Progressive Disclosure構成で3ファイルを作成
+    - `~/.claude/skills/search-for-skills/SKILL.md` (73行) — ハブファイル
+    - `~/.claude/skills/search-for-skills/references/search-strategies.md` (100行) — サイト別検索クエリ構成・フォールバック戦略
+    - `~/.claude/skills/search-for-skills/references/installation-guide.md` (62行) — サイト別インストール手順
+  - リネーム: ユーザーの提案で `finding-skills` → `search-for-skills` にリネーム
+  - バリデーション: `quick_validate.py` で構造検証 → パス
+- 設計意図: スキル作成ガイドの原則に準拠。特に「Description = Trigger Condition」（日本語・英語両方のトリガーフレーズを含める）、「Don't Railroad」（大枠だけ示して具体手順はリファレンスに委ねる）、「Progressive Disclosure」（SKILL.mdはハブとして軽量に保ち、詳細はreferences/に分離）を重視した。検索はBrave Search MCPの `site:` 指定で各サイトを明示的にターゲットする設計とし、URLをリンクとして貼るのではなく検索クエリとして組み込むことでAIエージェントにとって実用的な形にした
+- 副作用: なし
+- 関連ファイル:
+  - `~/.claude/skills/search-for-skills/SKILL.md` — スキル本体
+  - `~/.claude/skills/search-for-skills/references/search-strategies.md` — 検索戦略
+  - `~/.claude/skills/search-for-skills/references/installation-guide.md` — インストール手順
+  - `.docs/references/agent-skills-guide-note-article.pdf` — 参照元PDF記事
