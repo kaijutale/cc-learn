@@ -1,0 +1,10 @@
+# reference
+
+回答には以下を参照すること
+
+- `.docs/references/pdf/next-ai-agent-leap-and-harness.pdf`
+
+# Gitルール
+
+このプロジェクトの `.docs/templates` はGitの管理対象とする。
+.gitignore には追加しないこと。
