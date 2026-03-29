@@ -1,0 +1,54 @@
+機能名: committerスクリプト導入とcommit skill統合（L1壁の実装）
+
+- セッション名: N/A
+- 日付: 2026-03-29 13:42:53
+- 概要: PDF記事のL1（壁：不可侵制約）概念を実践に移し、steipeteのcommitterスクリプトをかもねの環境に導入。さらに既存の/commit skillの実行レイヤーをcommitter経由に変更し、ワークフロー知能（skill）と構造的強制（committer）の紐づけを完成させた。
+- 実装内容:
+  - **committerスクリプト導入**:
+    - steipete/agent-scripts の `scripts/committer`（111行bash）をそのまま `~/.local/bin/committer` に配置
+    - `chmod +x` 済み、PATHに `~/.local/bin` が既に含まれていることを確認
+    - 4項目の動作テスト実施（`.`ブロック、存在しないファイル、正常コミット、変更なし検出）→全て期待通り
+  - **CLAUDE.md更新**（2回の修正を経て最終形に到達）:
+    - 初回: `Commit helper: committer "<msg>" <file...>。手動git add/git commitより優先。` を追記
+    - かもねの指摘①「優先はバイパス可能。L1にすべき」→ 強制度を引き上げ
+    - かもねの指摘②「PATHの明示がない」「steipeteのAGENTS.MDと同じ紐づけにすべき」
+    - 最終形: `Commit helper on PATH: committer(bash)。committer "<msg>" <file...>で実行。手動git add/git commit不可（staging scope保護）。`
+    - steipeteの `Commit helper on PATH: committer (bash). Prefer it;` + openclawの `so staging stays scoped` を統合した電報スタイル
+  - **commit skill（SKILL.md）更新**:
+    - 禁止事項: `git add -A / git add . 禁止` → `手動git add/git commit禁止。全コミットはcommitter経由で実行` に変更
+    - Step 6: 手動 `git add` + `git commit` → `committer "<msg>" <files...>` 呼び出しに差し替え
+    - allowed-tools: `Bash(committer *)` を追加
+    - committerのガードレール説明を追加（何をするか・どう動くかを具体的に記述）
+  - **trash.tsの評価**:
+    - steipeteの `scripts/trash.ts` はTypeScriptのプログラマティックAPI（`export function movePathsToTrash`）であり、CLI用ではない
+    - かもねのmacOSには `/usr/bin/trash`（システムバイナリ）が既に存在
+    - steipete自身もAGENTS.MDで `trash … (system command)` と記載 → システムコマンドを参照している
+    - 結論: trash.tsの作成は不要
+  - **セッション固有用語の除去**:
+    - かもねの指摘により、SKILL.md内の「L1強制」「L1ガードレール」を除去
+    - 理由: 別セッションのClaude Codeはnote記事のPDFを読んでおらず「L1」が意味不明になる
+    - 修正後: 「L1」の代わりにcommitterの具体的挙動（`exit 1`で拒否、等）を記述
+- 設計意図:
+  - 前回セッション（2026-03-29 05:53:07）では「committerはsteipete個人のツール、かもねのCLAUDE.mdには追加不要」と判断した。今回かもねの質問（steipeteのAGENTS.MD×scriptsの紐づけを実践したい）により方針を転換
+  - committerスクリプト自体は汎用bashであり、steipete固有コードはゼロ。カスタマイズなしでそのまま使用可能と判断
+  - commit skillとcommitterの関係は「競合」ではなく「補完」:
+    - skill = ワークフロー知能（分類・prefix選択・確認・分割提案）
+    - committer = 構造的強制（.ブロック、ステージリセット、存在確認）
+    - skillのStep 6（実行レイヤー）をcommitterに差し替えることで両者を統合
+  - steipeteのパターン再現: AGENTS.MD（ワークフロー指示）→ committer（強制）= かもね版: /commit skill（ワークフロー知能）→ committer（強制）
+  - CLAUDE.md/SKILL.mdにはセッション固有の概念（L1/L2/L3）を書かず、具体的挙動のみ記述する原則を確立
+  - CLAUDE.mdの紐づけはsteipeteのAGENTS.MDの書き方に倣う: PATHの明示、ツール名、使用法、理由を1行に凝縮
+- 副作用:
+  - `~/.local/bin/committer` が新規追加（111行bash、PATHに自動で含まれる）
+  - `~/.claude/CLAUDE.md` のCommitセクションに1行追加
+  - `~/.claude/skills/commit/SKILL.md` の禁止事項・Step 6・allowed-toolsが変更
+  - 既存のcommit skillワークフロー（Step 1-5, 7）は変更なし
+- 関連ファイル:
+  - 新規: `~/.local/bin/committer`（steipete/agent-scripts/scripts/committer のコピー）
+  - 変更: `~/.claude/CLAUDE.md`（Commitセクション）
+  - 変更: `~/.claude/skills/commit/SKILL.md`（禁止事項、Step 6、allowed-tools）
+  - 参照: https://github.com/steipete/agent-scripts/blob/main/scripts/committer
+  - 参照: https://github.com/steipete/agent-scripts/blob/main/scripts/trash.ts
+  - 参照: https://github.com/steipete/agent-scripts/blob/main/AGENTS.MD
+  - 参照: `.docs/references/pdf/next-ai-agent-leap-and-harness.pdf`（L1セクション）
+  - 前回ログ: `.docs/templates/2026-03-29_l1-multi-agent-safety-deep-dive.md`
