@@ -1,0 +1,26 @@
+機能名: /handoff・/pickup 二重構造の調査・設計
+
+- セッション名: handoff-pickup-dual-structure
+- 日付: 2026-03-30 15:33:53
+- 概要: note記事で言及されていた steipete の「コンテキスト二重構造」を原典（GitHub）まで遡って調査し、かもね用 /handoff・/pickup スラッシュコマンドの設計方針を策定した
+- 実装内容:
+  - steipete/agent-scripts の AGENTS.MD、docs/slash-commands/ を全件スクレイピング
+  - handoff.md / pickup.md の raw コンテンツを取得・分析
+  - 記事PDF の該当箇所と照合し「二重構造」の正確な意味を特定
+  - Claude Code 向けの適応方針をテーブル形式で整理
+- 設計意図:
+  - 「二重構造」= 揮発するコンテキスト（判断バイアス）と永続化するコンテキスト（事実の記録）の分離
+  - steipete は Codex 用に `~/.codex/prompts/` にプロンプトテンプレートとして実装
+  - Claude Code では `~/.claude/commands/` に `.md` を配置して同等機能を実現する
+  - steipete版との主要差分: ファイル永続化が必須（Codexはタスクコンテキストに残るが、Claude Codeは /clear で消えるため）、tmux 依存を除去、AGENTS.MD → CLAUDE.md 参照
+- 副作用:
+  - 実装はまだ未着手。設計方針の合意まで
+  - handoff 状態ファイルの保存先（`.claude/handoff-state.md`）は仮決定。プロジェクトごとに配置
+- 関連ファイル:
+  - `.docs/references/pdf/next-ai-agent-leap-and-harness.pdf` — 記事PDF（二重構造の解説元）
+  - `~/.claude/commands/` — スラッシュコマンド配置先（空）
+  - `~/.claude/CLAUDE.md` — Slash Commands セクション追加予定
+  - steipete原典:
+    - https://github.com/steipete/agent-scripts/blob/main/AGENTS.MD
+    - https://github.com/steipete/agent-scripts/blob/main/docs/slash-commands/handoff.md
+    - https://github.com/steipete/agent-scripts/blob/main/docs/slash-commands/pickup.md
