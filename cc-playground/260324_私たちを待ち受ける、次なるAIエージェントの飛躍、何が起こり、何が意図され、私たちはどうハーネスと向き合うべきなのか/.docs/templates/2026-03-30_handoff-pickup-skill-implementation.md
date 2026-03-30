@@ -1,0 +1,23 @@
+機能名: /handoff・/pickup 二重構造スキル実装
+
+- セッション名: handoff-pickup-implementation
+- 日付: 2026-03-30 18:58:29
+- 概要: steipete の「コンテキスト二重構造」を Claude Code のスキルとして実装。揮発するコンテキスト（判断バイアス）と永続化するコンテキスト（事実の記録）を分離し、`/handoff` → `/clear` → `/pickup` でバイアスだけリセットできるようにした
+- 実装内容:
+  - `~/.claude/skills/handoff/SKILL.md` を新規作成（セッション終了時の状態書き出し）
+  - `~/.claude/skills/pickup/SKILL.md` を新規作成（セッション開始時の状態復元）
+  - `~/.claude/CLAUDE.md` に Handoff/Pickup 運用ルールセクションを追加
+  - 当初 `~/.claude/commands/` に作成予定だったが、commands が skills に統合・非推奨化されていることを確認し skills に変更
+- 設計意図:
+  - steipete版（Codex用 `~/.codex/prompts/`）を Claude Code 用に適応
+  - steipete版との差分3点: (1) `.claude/handoff-state.md` へのファイル永続化追加（Claude Codeは /clear で揮発するため必須）、(2) tmux項目を削除、(3) AGENTS.MD → CLAUDE.md 参照
+  - CLAUDE.md にはスキルの「存在宣言」ではなく「運用ルール（いつ使うか）」のみ記載。スキルの存在自体は自動検出される
+  - allowed-tools を明示し最小権限を付与（handoff: git/gh/date/Read/Write、pickup: git/gh/Read）
+- 副作用:
+  - `.claude/handoff-state.md` は各プロジェクトで gitignore 対象にする必要あり（未設定のプロジェクトでは手動追加が必要）
+  - 実運用テスト（`/handoff` → `/clear` → `/pickup` の一連フロー）は未実施
+- 関連ファイル:
+  - `~/.claude/skills/handoff/SKILL.md` — handoff スキル本体
+  - `~/.claude/skills/pickup/SKILL.md` — pickup スキル本体
+  - `~/.claude/CLAUDE.md` — Handoff/Pickup 運用ルールセクション（L95-100）
+  - `.docs/templates/2026-03-30_handoff-pickup-dual-structure-research.md` — 前回の調査ログ
