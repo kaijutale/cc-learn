@@ -1,0 +1,62 @@
+# === OS (macOS) ===
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+
+# === Security ===
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+.dev.vars
+
+# Private keys & certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.p8
+*.mobileprovision
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Credentials & tokens
+credentials.json
+serviceAccountKey.json
+.gcp-credentials.json
+.aws/
+.azure/
+token.json
+secrets.yaml
+secrets.yml
+*.secret
+
+# SSH
+.ssh/
+
+# GPG
+secring.*
+
+# === Logs ===
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# === Claude Code / AI Tools ===
+.claude/settings.local.json
+
+# === Verification Guide ===
+verification-guide.md
