@@ -1,6 +1,6 @@
 # reference
 
-回答には以下を参照すること
+応答する際は以下を参照すること：
 
 - `.docs/references/pdf/next-ai-agent-leap-and-harness.pdf`
 
