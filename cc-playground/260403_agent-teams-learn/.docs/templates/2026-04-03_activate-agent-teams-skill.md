@@ -1,0 +1,23 @@
+機能名: activate-agent-teams スキル作成
+
+- セッション名: agent-teams-learn
+- 日付: 2026-04-03 16:01:18
+- 概要: Agent Teamsの強制発動スキルを作成。Claudeが効率最適化の判断でSubagentsにfallbackする問題を防止するため、ユーザーが明示的にAgent Teamsを要求した際に確実に発動させるスキルを設計・実装した。
+- 実装内容:
+  - `~/.claude/skills/activate-agent-teams/SKILL.md` を新規作成
+  - トリガーワード: `use agent teams`, `activate agent teams`, `agent teamsで` 等（日英両対応）
+  - Pre-flight Check（env flag / バージョン / セッション種別）の検証フローを定義
+  - Subagentへのサイレントfallback禁止ルールを明文化
+  - 既存の `orchestrating-agent-teams` スキルとの役割分担を設計（activate = 強制命令 / orchestrating = 構成パターン集）
+- 設計意図:
+  - スキルカテゴリは「Business Automation」、自由度は「Low」（唯一の正しいパス = Agent Teamsを使う）
+  - Progressive Disclosureの観点で、50行の単一SKILL.md構成（リファレンスファイル不要の軽量設計）
+  - descriptionフィールドにトリガーフレーズを豊富に含め、発動率を最大化
+  - 「情報提供」ではなく「行動制約」を本質とするスキル設計
+- 副作用:
+  - IDE拡張（VS Code等）やSubagentコンテキスト内ではAgent Teamsをspawnできないため、その場合はブロッカーを報告する設計
+  - `orchestrating-agent-teams` スキルとトリガーワードが一部重複する可能性あり（ただし役割が明確に異なるため実害は低い）
+- 関連ファイル:
+  - `~/.claude/skills/activate-agent-teams/SKILL.md`
+  - `~/.claude/skills/orchestrating-agent-teams/SKILL.md`（既存・併用対象）
+  - `.claude/settings.json`（`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1"` 設定済み）
