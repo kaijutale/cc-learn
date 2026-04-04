@@ -1,0 +1,26 @@
+機能名: Agent Teams 通信プロトコルとタスク依存関係のL1/L2分析
+
+- セッション名: (未設定)
+- 日付: 2026-04-04 15:38:26
+- 概要: 記事のAgent Teams通信プロトコル・タスク依存関係に関する記述を、公式docsと比較検証。noteが主張する「L1（不可侵制約）として機能する」という位置づけの正確性を批判的に分析
+- 実装内容:
+  - Agent Teamsの6つのメッセージ型を公式docsから特定・整理:
+    - `message`（ダイレクトメッセージ）、`broadcast`（全メンバー同報）
+    - `plan_approval_request` / `plan_approval_response`（プラン承認/却下）
+    - `shutdown_request` / `shutdown_response`（グレースフルシャットダウン）
+  - 通信の物理的仕組み: `.claude/mailbox/`のJSONファイルをLLMがツールで読み書き、ポーリングで受信
+  - タスク依存関係: `addBlockedBy` / `addBlocks`パラメータで依存グラフ構築。blocked状態のタスクはclaim対象外
+  - 公式docs引用: "a pending task with unresolved dependencies cannot be claimed until those dependencies are completed"
+  - `claim`の概念: タスクを「自分が引き受ける」と宣言すること（JiraやLinearのアサインと同義）
+- 設計意図:
+  - noteの「通信プロトコルがL1として機能する」という主張を検証するために、L1の本来の定義（構造的にLLMが迂回不可能）と比較
+  - かもねが「自然言語で指示して機能するのにL1ではないのでは？」と的確に疑問提起。この論点を深掘り
+- 副作用:
+  - **noteの主張は不正確と結論**: 通信プロトコルもタスク依存関係も、LLMの「従う意思」に依存しており、物理的ブロック（L1）ではなく高信頼性の構造化制約（L2）
+  - L1にするにはHooksで外部スクリプトによる物理的ゲートが必要（例: blocked状態のタスクclaimをツール実行拒否で阻止）
+  - L3（自然言語のお願い）よりは型定義・データ構造による信頼性向上がある点は認める（L2の価値）
+  - noteの「『お願い』ではなく『構造的に不可能にする』」は二項対立として不正確。L2という中間層の存在を見落としている
+- 関連ファイル:
+  - `.docs/references/pdf/next-ai-agent-leap-and-harness.pdf`（記事本体）
+  - https://code.claude.com/docs/en/agent-teams（公式docs）
+  - https://code.claude.com/docs/en/agent-teams#assign-and-claim-tasks（タスク依存関係セクション）
