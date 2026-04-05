@@ -1,0 +1,28 @@
+機能名: ブランチ戦略セクション解説 + gitflowサンプルリポジトリ構築
+
+- セッション名: （未設定）
+- 日付: 2026-04-05 14:45:30
+- 概要: note記事「私たちを待ち受ける、次なるAIエージェントの飛躍」の「ブランチ戦略 — チーム内協調とチーム間分離」セクションおよび「既知の制約」「ハーネス成熟度モデル」セクションを解説。gitflowベースのAgent Teams運用を体感するためのサンプルgitリポジトリを構築。
+- 実装内容:
+  - PDF全体からブランチ戦略セクションを特定・抽出し、段落ごとに解説
+  - `examples/gitflow-agent-teams/` にgitリポジトリを構築（4ブランチ: main, develop, feature/team-frontend, feature/team-backend）
+  - 各ブランチにエージェント定義（PM/Designer/Engineer/Tester/Reviewer）、spec、REDテスト、実装、レビューログを配置
+  - コミットメッセージに `[PM Agent]` `[Tester Agent]` 等のサフィックスを付与して追跡可能に
+  - 記事のツリー図がディレクトリ構造ではなくブランチの分岐関係+マージ方向の運用ルールであることを解説
+  - ブランチ名の `/` がgitの命名規約でありディレクトリ区切りではないことを解説
+  - 「既知の制約」セクション（1チーム管理制限、ネスト不可、セッション非復元、トークンコスト）を解説
+  - 「ハーネス成熟度モデル」Level 0〜6を表形式で整理
+  - developブランチのマージ権限がL1でなくL2寄りである記事の矛盾を指摘
+- 設計意図:
+  - gitflowの構造を「実際に操作して確認できる」形で提供することで、ブランチ戦略の理解を体験的にする
+  - 各featureブランチのコミット履歴で「チーム内の全工程パイプライン（PM→Designer→Tester→Engineer→Reviewer）」を可視化
+  - `git ls-tree` + `diff` でチーム間のファイル分離を目視確認可能に
+- 副作用:
+  - サンプルリポジトリのエージェント定義には「このチームはどのファイル領域を担当するか」の明示的ルールが未記載。実運用ではCLAUDE.mdまたはエージェント定義のBoundariesに書く必要がある
+  - サンプルはnpm未初期化のため、TypeScript/テストの型エラーが出る（意図的に無視）
+  - 当初 `sample/` に作成したが、かもねが `examples/` にリネーム済み
+- 関連ファイル:
+  - `.docs/references/pdf/next-ai-agent-leap-and-harness.pdf` — 参照元のnote記事PDF
+  - `examples/gitflow-agent-teams/` — 構築したサンプルgitリポジトリ
+  - `examples/gitflow-agent-teams/CLAUDE.md` — サンプル用のプロジェクトルール
+  - `examples/gitflow-agent-teams/.claude/agents/*.md` — エージェント定義（PM/Designer/Engineer/Tester/Reviewer）
