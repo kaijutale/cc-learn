@@ -3,7 +3,8 @@
     "allow": [
       "Edit",
       "Write",
-      "Bash(mkdir*)"
+      "Bash(mkdir*)",
+      "Create"
     ]
   },
   "env": {
