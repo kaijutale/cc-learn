@@ -1,0 +1,27 @@
+機能名: orchestrating-agent-teamsスキルへのブランチ戦略リファレンス追加
+
+- セッション名: （未設定）
+- 日付: 2026-04-06 16:46:22
+- 概要: note記事「私たちを待ち受ける、次なるAIエージェントの飛躍」のブランチ戦略セクションの知見を、既存の`orchestrating-agent-teams`スキルに`references/branch-strategy.md`として統合した
+- 実装内容:
+  - `~/.claude/skills/orchestrating-agent-teams/references/branch-strategy.md` を新規作成
+    - gitflowベースの推奨ブランチ構造（main → develop → feature/team-*）
+    - フェーズゲートとしてのマージ権限設計
+    - 単一チーム/複数チーム並列の使い分け
+    - ファイル所有権との組み合わせパターン
+    - worktree分離との使い分け判断基準
+    - Gotchas 4項目
+  - `SKILL.md`のReference Navigationテーブルにブランチ戦略行を追加
+  - `SKILL.md`のGotchasにブランチ戦略なし運用のリスクを追加
+- 設計意図:
+  - 既存スキルは「How to use Agent Teams」（操作方法）に偏っており、「How to succeed with Agent Teams」（成功のための設計原則）が欠けていた。ブランチ戦略はその接合点として最適
+  - 記事の知見を「蒸留」し、元PDFへの依存なしで自己完結するリファレンスとして作成。どのプロジェクトでもPDF不要で機能する汎用性を確保
+  - 記事の「動的オーケストレーションL1層のブランチレベル実装」という位置づけを反映
+- 副作用:
+  - 「動的オーケストレーションのL1層」という記事由来の用語が1箇所残っている。文脈で意味は伝わるが、記事を読んでいないユーザーには馴染みがない表現
+  - ブランチ戦略は「推奨」であり、全プロジェクトに適用すべき絶対ルールではない（小規模プロジェクトではdevelopブランチ不要な場合もある）
+- 関連ファイル:
+  - `~/.claude/skills/orchestrating-agent-teams/SKILL.md` — 更新済み（Reference Navigation + Gotchas）
+  - `~/.claude/skills/orchestrating-agent-teams/references/branch-strategy.md` — 新規作成
+  - `.docs/references/pdf/next-ai-agent-leap-and-harness.pdf` — 知見の原典（スキル自体は非依存）
+  - `.docs/templates/2026-04-05_branch-strategy-section-deep-dive.md` — ブランチ戦略セクションの解説ログ（先行作業）
