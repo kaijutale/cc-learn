@@ -1,0 +1,26 @@
+機能名: directing-ai-development スキル作成
+
+- セッション名: directing-ai-development skill creation
+- 日付: 2026-04-09 01:47:58
+- 概要: note記事「私たちを待ち受ける、次なるAIエージェントの飛躍」の「人間の役割はどう変わるか」セクション（Before: コーディング60%→After: アーキテクチャ設計30%/品質ゲート判断30%/ハーネス改善20%/方針決定20%）をスキル化。人間のディレクター判断を構造化する壁打ちスキルとして実装。
+- 実装内容:
+  - SKILL.md: 1スキル4モード構成（Architecture/Quality Gate/Harness Evolution/Direction Pivot）
+  - references/architecture-decisions.md: アーキテクチャ設計モードの問いかけ集（12問4フェーズ）
+  - references/quality-gate-judgment.md: 品質ゲート判断モードの問いかけ集（Accept/Rework/Reject 3択フレームワーク）
+  - references/harness-evolution.md: ハーネス改善モードの問いかけ集（シグナル検出→成熟度モデル→ROI判断）
+  - references/direction-pivots.md: 方針転換モードの問いかけ集（サンクコスト排除→代替検討→判断）
+  - review-agent-essenceでセルフレビュー → 5つの改善を反映
+- 設計意図:
+  - **判断と実行の分離**: 既存スキルは「How（実行）」を担う。このスキルは「What/Whether（判断）」を担う。映画監督モデル
+  - **問いかけ型**: AIが判断を代行しない。構造化された問いを投げてユーザーの判断を引き出す壁打ち相手
+  - **1スキル4モード**: 入口を1つにし、状況から自動判定。映画監督は1人で4つの判断をする存在だから分けない
+  - **note記事非依存**: 記事の概念を消化し汎用フレームワークとして再構成。記事PDFがなくても機能する
+- 副作用:
+  - 既存スキル（executing-ai-development-workflow, review-harness, review-agent-essence, orchestrating-agent-teams, spec-based-development）との連携を前提とする。これらが未インストールの場合、連携案内が空振りする
+  - Gotchasは現時点で6項目。実際の使用経験を通じて失敗パターンを追加していく必要がある
+- 関連ファイル:
+  - /Users/camone/.claude/skills/directing-ai-development/SKILL.md
+  - /Users/camone/.claude/skills/directing-ai-development/references/architecture-decisions.md
+  - /Users/camone/.claude/skills/directing-ai-development/references/quality-gate-judgment.md
+  - /Users/camone/.claude/skills/directing-ai-development/references/harness-evolution.md
+  - /Users/camone/.claude/skills/directing-ai-development/references/direction-pivots.md
