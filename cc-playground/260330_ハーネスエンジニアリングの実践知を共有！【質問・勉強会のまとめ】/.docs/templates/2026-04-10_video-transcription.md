@@ -1,0 +1,25 @@
+機能名: 勉強会動画の文字起こしとMarkdown整形
+
+- セッション名: video-transcription-harness-engineering
+- 日付: 2026-04-10 16:26:32
+- 概要: 「ハーネスエンジニアリングの実践知を共有！【質問・勉強会のまとめ】」の動画ファイル（82分、292MB）を文字起こしし、構造化されたMarkdownトランスクリプトを生成した
+- 実装内容:
+  - ffmpeg + mlx-whisper（large-v3-turbo）で音声抽出・文字起こし実行（約4分で完了）
+  - 3,228セグメントのraw JSONから、話題の転換点を分析して25セクションに構造化
+  - 各段落にタイムスタンプ `**[MM:SS]**` を付与
+  - セクション見出しを内容から判断して付与
+  - フィラー（えー、まあ、あのー等）を適度に残し話し言葉の雰囲気を維持
+  - 固有名詞の誤認識を文脈から修正（黒どん→Claude Code、オイス→Opus等）
+  - 末尾にメタ情報テーブルと主要キーワード一覧を追記
+- 設計意図:
+  - 82分の長尺動画のため、全セグメントを一括処理ではなく、複数箇所をサンプリング読みして全体構造を把握した後にMarkdown整形する2段階アプローチを採用
+  - セクション分けは「話題の転換」を基準にし、時系列順よりも意味的なまとまりを優先
+  - 勉強会の対話形式（まさ＋オリオン＋コミュニティQ&A）を自然に読める段落に統合
+- 副作用:
+  - Whisperの日本語認識で一部固有名詞の誤認識が残る可能性あり（Claude→クロード、Agent Teams→エージェントチームス等のカタカナ表記揺れ）
+  - 82分の動画に対して25セクション・250行のトランスクリプトは要約度が高め。詳細が必要な場合はraw-segments.jsonを参照
+- 関連ファイル:
+  - 入力: `.docs/references/video/qwddwqwdqqwd_compressed.mp4`
+  - 出力（raw）: `.docs/video-transcripts/qwddwqwdqqwd_compressed-raw-segments.json`
+  - 出力（整形済）: `.docs/video-transcripts/qwddwqwdqqwd_compressed-transcript.md`
+  - スキル: `~/.claude/skills/transcribing-video/scripts/transcribe.py`
