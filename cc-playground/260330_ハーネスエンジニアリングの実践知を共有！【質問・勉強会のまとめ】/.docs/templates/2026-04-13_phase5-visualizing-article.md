@@ -1,7 +1,7 @@
 機能名: Q1-Q6ハーネス強化プラン Phase 5 — visualizing-article 新規スキル（Mermaid + nano-banana 統合）
 
 - セッション名: ハーネスエンジニアリング実践知まとめ
-- 日付: 2026-04-13 13:50:00
+- 日付: 2026-04-13 13:36:19
 - 概要:
   Q6 の実装。既存の記事 MD（主に `article-explainer` が生成した ASCII art 主体の記事）を
   Mermaid 図 + nano-banana AI 生成画像で視覚強化する独立スキルを新設した。

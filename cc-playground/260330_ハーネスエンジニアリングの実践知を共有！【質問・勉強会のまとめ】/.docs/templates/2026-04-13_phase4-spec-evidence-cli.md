@@ -1,7 +1,7 @@
 機能名: Q1-Q6ハーネス強化プラン Phase 4 — spec-validator + evidence-matcher CLI化 + branch-validator 薄ラッパ化
 
 - セッション名: ハーネスエンジニアリング実践知まとめ
-- 日付: 2026-04-13 13:20:00
+- 日付: 2026-04-13 13:35:05
 - 概要:
   Q4 の実装。branch-validator と linking-ticket-evidence スキルから「決定論的に判定可能な処理」を
   独立 CLI として切り出した。branch-validator は spec-validator CLI を呼び出す薄いラッパーになり、
