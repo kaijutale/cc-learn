@@ -48,3 +48,17 @@ failure_replanner:
   auto_retry_count: 1                    # 0-5 (無限リトライ防止)
   root_cause_template: .docs/knowledge/decisions/_ROOT_CAUSE_TEMPLATE.md
   escalate_after_count: 3                # retry_of チェーンが 3 を超えたら強制 escalate
+
+# ================================================================
+# v0.2.0 #4 追加: Opus 固定判断の検証 KPI (§8 #13)
+# ================================================================
+# 本 playground は three-elements-harness の self-apply 検証場なので、
+# Opus 固定判断の KPI を実装リファレンスとして記録する。
+# 詳細: .docs/knowledge/kpi/opus-fixation-validity.md
+
+kpi:
+  opus_fixation_validity:
+    ticket_success_rate_min: 0.80        # Opus 固定 ticket の成功率下限
+    replan_chain_max_avg: 2.5            # retry_chain の window 内平均上限
+    measurement_window_days: 30          # 測定窓 (日数)
+    escalation: notify_section_8_13      # 閾値割れ時の扱い

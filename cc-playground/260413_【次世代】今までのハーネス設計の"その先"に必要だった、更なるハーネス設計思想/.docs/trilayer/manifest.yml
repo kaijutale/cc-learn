@@ -1,7 +1,7 @@
 # trilayer manifest — このファイルは trilayer がプロジェクトに導入されていることを宣言する。
 # schema: ~/.claude/skills/three-elements-harness/references/manifest-schema.md#1
 
-trilayer_version: "0.1.0"              # semver 必須
+trilayer_version: "0.1.2"              # semver 必須 (v0.1.2 アップグレード実施)
 project: three-elements-harness-playground               # init-trilayer.sh が置換
 created: 2026-04-15               # init-trilayer.sh が置換 (YYYY-MM-DD)
 mode_default: interactive               # interactive | auto
@@ -10,6 +10,13 @@ micro_team_style: 5-role                # 将来拡張用
 project_os_root: .docs/                 # EKP ディレクトリへの参照
 macro_policies_ref: .docs/trilayer/macro-policies.yml
 status_ref: .docs/trilayer/status.yml
+
+# ---- Agent Teams experimental flag 状態 (v0.1.2 追加, optional) ----
+# scaffold (or upgrade) 時点のフラグ状態を記録。§8 #6 の将来 fallback 判断用
+agent_teams_flag:
+  enabled: true                         # CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+  detected_at: 2026-04-15T23:07:16+09:00   # v0.1.2 アップグレード時検知
+  source: env                            # env | settings_json | unset
 
 # ---- 任意フィールド ----
 # notes: |
