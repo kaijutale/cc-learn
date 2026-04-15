@@ -1,0 +1,50 @@
+# trilayer macro policies — Macro 層 5 職務のプロジェクト固有パラメータ。
+# schema: ~/.claude/skills/three-elements-harness/references/manifest-schema.md#2
+#
+# 重要原則: このファイルは YAML DSL で完結させる。Python コード禁止。
+
+# ================================================================
+# 職務 2: 優先順位付け (Prioritization)
+# ================================================================
+
+priority_rules:
+  - name: kpi-drift-first
+    when: "kpi.delta > 0.1"              # KPI が 10% 以上 drift
+    weight: 100
+
+  - name: deadline-nearest
+    when: "deadline != null"
+    weight: 50
+
+  # - name: <custom rule>
+  #   when: "<DSL 式>"
+  #   weight: <0-1000>
+
+# ================================================================
+# 職務 3: チケット化 (Ticketing)
+# ================================================================
+
+ticket_conventions:
+  id_prefix: "TICKET-"
+  id_digits: 3                           # TICKET-001, TICKET-002, ...
+  status_flow: [todo, in_progress, review, done, failed]
+
+# ================================================================
+# 職務 4: 定期実行と監視 (Scheduling & Monitoring)
+# ================================================================
+
+scheduler:
+  enabled: false                         # 初期値は対話モードのみ
+  trigger: cron                          # cron | launchagent | systemd | manual
+  expression: "0 */6 * * *"              # 6時間おき (cron 形式)
+  # launchagent の場合: StartCalendarInterval を YAML で記述
+  # 参考: references/auto-mode-setup.md (Phase 3.5)
+
+# ================================================================
+# 職務 5: 失敗時の再計画 (Failure Replanning)
+# ================================================================
+
+failure_replanner:
+  auto_retry_count: 1                    # 0-5 (無限リトライ防止)
+  root_cause_template: .docs/knowledge/decisions/_ROOT_CAUSE_TEMPLATE.md
+  escalate_after_count: 3                # retry_of チェーンが 3 を超えたら強制 escalate

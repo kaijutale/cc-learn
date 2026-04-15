@@ -1,0 +1,34 @@
+# trilayer status — append-only 実行履歴。
+# schema: ~/.claude/skills/three-elements-harness/references/manifest-schema.md#3
+#
+# 注意: 既存エントリの書き換え・削除は禁止。validate-trilayer.py が reject する。
+
+entries:
+  - timestamp: 2026-04-15T20:55:00+09:00
+    layer: macro
+    action: ticket_created
+    ticket_id: TICKET-001
+    summary: "trilayer-harness-playground README を team-documenter で生成"
+    rationale: ".docs/knowledge/decisions/2026-04-15-smoke-test-5-role-boundary.md"
+  - timestamp: 2026-04-15T20:55:30+09:00
+    layer: micro
+    action: status_transition
+    ticket_id: TICKET-001
+    from: todo
+    to: in_progress
+    assignee: team-documenter
+  - timestamp: 2026-04-15T20:57:00+09:00
+    layer: micro
+    action: status_transition
+    ticket_id: TICKET-001
+    from: in_progress
+    to: review
+    assignee: team-documenter
+    summary: "README.md 生成完了 (124行, 8.8KB, 7 sections)"
+  - timestamp: 2026-04-15T20:57:30+09:00
+    layer: macro
+    action: status_transition
+    ticket_id: TICKET-001
+    from: review
+    to: done
+    summary: "受入条件 5/5 pass、Macro→Micro round trip 1周完走"

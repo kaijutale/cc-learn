@@ -1,0 +1,19 @@
+# trilayer manifest — このファイルは trilayer がプロジェクトに導入されていることを宣言する。
+# schema: ~/.claude/skills/three-elements-harness/references/manifest-schema.md#1
+
+trilayer_version: "0.1.0"              # semver 必須
+project: three-elements-harness-playground               # init-trilayer.sh が置換
+created: 2026-04-15               # init-trilayer.sh が置換 (YYYY-MM-DD)
+mode_default: interactive               # interactive | auto
+ekp_required: true                      # EKP 前提チェック
+micro_team_style: 5-role                # 将来拡張用
+project_os_root: .docs/                 # EKP ディレクトリへの参照
+macro_policies_ref: .docs/trilayer/macro-policies.yml
+status_ref: .docs/trilayer/status.yml
+
+# ---- 任意フィールド ----
+# notes: |
+#   運用メモや導入経緯を自由記述
+# adopted_at: 2026-04-15T10:00:00+09:00
+# maintainers:
+#   - name@example.com
