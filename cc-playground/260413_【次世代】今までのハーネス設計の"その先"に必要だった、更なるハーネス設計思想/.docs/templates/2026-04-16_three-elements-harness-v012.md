@@ -1,0 +1,110 @@
+機能名: three-elements-harness v0.1.1 → v0.1.2 + Agent Teams 並列検証 (TICKET-002)
+
+- セッション名: <未設定: /rename 実行時に記載>
+- 日付: 2026-04-16 00:04:00
+- 概要: 2026-04-15 の v0.1.0 リリース後、「Agent Teams で動かしたんだ？」というかもねの指摘で、Phase 3 検証が subagent fallback でしかなかった gap が判明。Agent Teams (experimental flag + tmux pane + git worktree) 経由で TICKET-002 として **記事「次世代ハーネス設計」の前提に 100% 合致する再検証** を実施。並行して `review-agent-essence` 原則レビューで指摘された 8 件のうち 文書系 3 件 を v0.1.1 として即時反映 (status 格下げ + §2.4 物理分離明文化 + Gotchas 拡張)、さらに code/schema 系 3 件 と設計系 2 件 を v0.1.2 / v0.2.0 として段階実装。破壊的変更の有無を判断軸に patch/minor を分離し、後方互換性を厳守した。
+- 実装内容:
+  - **Part 1: Agent Teams 並列検証 (TICKET-002)** — 記事前提への 100% 合致検証
+    - `activate-agent-teams` skill pre-flight: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` (settings.json) / Claude Code v2.1.109 / direct CLI の 3 条件を確認
+    - `TeamCreate("trilayer-v012-review")` → `~/.claude/teams/trilayer-v012-review/config.json` 自動生成
+    - `TaskCreate` × 2 (team task list: #1 v0.1.2 CHANGELOG draft / #2 validate-trilayer test cases)
+    - `Agent` tool × 2 を**同一メッセージで並列 spawn** (team_name + name + subagent_type 指定):
+      - `documenter@trilayer-v012-review` (team-documenter) → `.docs/knowledge/decisions/2026-04-15_at-changelog-v012-draft.md` (99行/8KB, `## 5 本 + ### 6 本`)
+      - `tester@trilayer-v012-review` (team-tester) → `.docs/tests/validate-trilayer-test-cases.md` (156行/9KB, 正例 7 + 異常系 12 = 19 ケース + S-E4 追加補強)
+    - spawn 応答が `"The agent is now running and will receive instructions via mailbox."` を返し、**別プロセス非同期実行**を確認 (subagent の同期応答と決定的に異なる)
+    - 両 teammate が完了レポートを mailbox 経由で main Claude に自動 delivery、両 artifact の file stat が **22:37 同秒内**(真の並列実行の物理証拠)
+    - `SendMessage` で shutdown_request × 2、両 shutdown_approved を受信 (paneId=%0/%1, backendType=tmux)
+    - `TeamDelete` で `"Cleaned up directories and worktrees for team trilayer-v012-review"` 成功 — **"worktrees" という語**が git worktree ベースの物理分離を示す最終的証拠
+    - main Claude 成果物: `.docs/tickets/TICKET-002-agent-teams-parallel-verification.md` (60行, status: done) + `.docs/knowledge/decisions/2026-04-15_agent-teams-verification-result.md` (107行, team lead 検証結果)
+    - `.docs/trilayer/status.yml` に TICKET-002 lifecycle 4 エントリ append (ticket_created → todo→in_progress → in_progress→review → review→done)
+  - **Part 2: v0.1.1 文書系 review 反映** — agent-essence 原則 #2/#6/#8 に破壊的変更なく対応
+    - `references/three-layer-contract.md` frontmatter `status: canonical → active` に格下げ、タイトルから `(正典)` 削除、冒頭に `> ⚠ Status 明示` ブロック追加(記事由来の hypothesis_v0.1 として扱う旨を明記)、本文中の「満たさなければならない」を「満たすことが望ましい」に緩和。frontmatter に `article_source` + `design_stage: hypothesis_v0.1` の 2 フィールド追加(E-3 非決定論性 / C-4 自己申告)
+    - `references/three-layer-contract.md` **§2.4 新設**: 「Macro/Micro の物理分離 (interactive モードでも維持)」を独立セクション化。T-1 (関心ごとの分離) / T-1.1 (並行エージェント間の状態隔離) / T-2.3 (統合判断を委任しない) の 3 原則を不変条件として明文化し、「Macro が親セッションで動く ≠ Macro が team-\* を直接呼べる」の誤読防止を記載
+    - `references/macro-five-duties.md` 同様に `status: active` 格下げ + 冒頭 Status 明示 + frontmatter 2 フィールド追加(記事 §4-1-2 由来の 5 職務設計仮説)
+    - `SKILL.md` Gotchas 拡張: `v0.1 の status-poller.py は検知のみ。drift 検知後の Macro 再起動経路は v0.2 以降で、現 v0.1 では手動 orchestration が必要` を明記(C-4 自己申告 = 完了の証拠にならない)
+    - `CHANGELOG.md` に `[0.1.1]` section 追加、v0.1.1 で対応した 3 件と v0.1.2/v0.2.0 送りの 5 件を列挙、scope boundary と verification 結果を記録
+  - **Part 3: v0.1.2 code/schema 実装** — #3 append-only / #4 Opus KPI / #7 Agent Teams flag
+    - `scripts/init-trilayer.sh` に `detect_agent_teams_flag()` 関数追加: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 環境変数を scaffold 時に検知し `true|env` or `false|unset` の形式で返す。sed 置換で manifest.yml に注入
+    - `assets/manifest.yml.template`: `trilayer_version: "0.1.2"` に更新、`agent_teams_flag: {enabled, detected_at, source}` optional field を `__AGENT_TEAMS_ENABLED__` / `__AGENT_TEAMS_DETECTED_AT__` / `__AGENT_TEAMS_SOURCE__` placeholder で追加
+    - `assets/macro-policies.yml.template`: `kpi.opus_fixation_validity: {ticket_success_rate_min: 0.80, replan_chain_max_avg: 2.5, measurement_window_days: 30, escalation: notify_section_8_13}` section を optional として追加 (§8 #13 新設)
+    - `references/manifest-schema.md`: agent_teams_flag の optional field schema + 検知元 enum (`env` / `settings_json` / `unset`) + kpi.opus_fixation_validity の詳細節 (背景 / 計測 / 成功率計算式 / 閾値割れ時の挙動 / 再オープン条件) 追記
+    - `scripts/validate-trilayer.py`:
+      - `from git import Repo, InvalidGitRepositoryError` を try/except で optional import、`HAS_GITPYTHON` flag 導入(GitPython 未インストールでも subprocess fallback で動作継続、後方互換性維持)
+      - `agent_teams_flag` 検証ロジック追加: dict 型確認 / `enabled: bool` / `detected_at: ISO 8601 + TZ` / `source: enum` 必須チェック(optional field なので存在時のみ検証)
+      - **DSL parser 手書き実装 (v0.2.0 #1 validate-only)**: `_dsl_tokenize()` + `_dsl_parse()` recursive descent。`eval`/`exec` を一切使わず、`kpi.<name>(.delta)?` / `deadline` / `null` / number / string / 比較演算子 (`>` `<` `>=` `<=` `==` `!=`) / 論理演算子 (`and` `or` `not`) / 括弧 を tuple ベース AST に変換。syntax check のみで実際の evaluate は status-poller.py 側 (#4) が担当
+    - `scripts/status-poller.py`:
+      - `compute_opus_validity_kpi()` 関数追加: `macro-policies.yml#kpi.opus_fixation_validity` から閾値取得、`status.yml` の最新 `measurement_window_days` 日分から `status_transition to=done|failed` を集計、`success_rate = done / (done + failed)` 計算、閾値割れ時に drift info 辞書を返す
+      - `append_kpi_drift_entry()` 関数追加: 閾値割れ時に `kpi_drift_detected` エントリを append (`.docs/trilayer/status.yml` に日本語 summary + rationale 付き)
+      - `main()` 拡張: `opus_kpi` 計算結果を print、drift 時は `[DRIFT]` prefix で §8 #13 再検討トリガーを通知
+    - `references/adoption-checklist.md`: GitPython を Python 環境の「**推奨 (v0.1.2 追加)**」として追記、subprocess fallback があるため必須ではない旨明記、`python3 -c "import git"` チェック例追加、チェック実行例の bash スクリプトに GitPython オプショナル分岐を追加
+  - **Part 4: v0.2.0 partial design 先行反映** — #5 Spec 差分提案
+    - `references/failure-replanner.md` **Step 3.5 新設**: `failure_category=design` のみで発動する Spec 差分提案フロー。処理手順 (対象 spec 特定 → 差分理由記述 → 提案 patch の before/after 形式 → 適用判定 auto_apply|require_review) + 出力 (.bak 保存 + frontmatter `related_spec_patch` + 異なる assignee_team 推奨) + Gotcha (再失敗時は Step 3.5 再実行せず escalate) を記載。agent-essence V-2 (フィードバックループを閉じる) への応答
+    - `assets/_ROOT_CAUSE_TEMPLATE.md`: `failure_category: <environmental | design | implementation | data>` を frontmatter に追加(enum 固定化)、`## 5. Spec 差分提案 (failure_category=design のみ)` section 追加 (対象 spec / 差分理由 / 提案 patch diff / 適用判定 / 適用後の再 dispatch)、`## 6. 新 ticket` に `related_spec_patch: <path>#5` フィールド追加
+- 設計意図:
+  - **Agent Teams 検証 gap の honest 修正 (Part 1)**: v0.1.0 リリース時の CHANGELOG に「Phase 3 1 周完走」と書いたが、実際の検証は `Agent` tool 直叩き (subagent fallback) で、記事の前提である「別プロセス並列実行」までは届いていなかった。かもねの一言で自覚し、TICKET-002 を retroactively 設定して補完。status: canonical → active 格下げ (v0.1.1) も同じ honest 路線。事実を隠さず CHANGELOG に残すことで、将来の判断コンテキストを保持
+  - **tmux pane + git worktree という実装レイヤーの把握**: `shutdown_approved` の `paneId` + `backendType: tmux` + `TeamDelete` の `"directories and worktrees"` メッセージから、Agent Teams が **tmux パネル** と **git worktree** を組み合わせた物理分離機構だと初めて具体的に判明。これは今後 §8 #6 (flag 廃止リスク) 対応時の fallback 設計の基礎情報になる
+  - **review-agent-essence 8 件を 3 分割したリリース戦略**: 破壊的変更なし = v0.1.1 patch / code 追加 = v0.1.2 patch / 機能追加 = v0.2.0 minor。同時に全部実装せず段階リリースにすることで (1) 各リリースの責任範囲明確化 (2) revert 容易性 (3) ユーザーが patch レベルで追従できる という 3 つの benefit
+  - **agent_teams_flag を optional にした後方互換戦略**: v0.1.0 で scaffold された既存 manifest は `agent_teams_flag` field を持たないが、validate-trilayer.py が「存在時のみ検証」する設計なので壊れない。additive-only な拡張を徹底することで、`breaking-changes-policy.md` の semver 約束を守る
+  - **agent_teams_flag を「記録」に留め「強制」はしない**: scaffold 時に flag が unset でも init-trilayer.sh は成功する。これは「記録すれば将来の判断材料になる」と「強制すると導入障壁が高まる」のトレードオフで前者を選んだ。将来 flag 廃止時に `source: env / settings_json / unset` を見て fallback 選択可能にする基礎データ
+  - **GitPython を optional primary path とした理由**: subprocess fallback が既に動作しているため必須にする必要がない。ただし GitPython はエラーメッセージ品質が高く、future の診断機能追加 (例: 行番号付き差分表示) で primary path の優位性が生きる。依存追加の hesitance と future-proof の balance
+  - **DSL parser の eval 禁止 + 手書き recursive descent**: セキュリティ (信頼できない input からの任意コード実行を防ぐ、macro-policies.yml はプロジェクトごとに編集される) + 静的検証可能性 (AST を dump 可能で、future の型付け拡張が容易) の両面。行数制約で tuple ベースに圧縮した (dict より 1/3 コンパクト)
+  - **kpi.opus_fixation_validity で §8 #1 CLOSED への信念レベル指摘に応える**: agent-essence E-2 (ルールより理由で汎化) の精神で、「Opus 固定は信念じゃなく計測可能な判断」に昇格させる。閾値割れ 2 週連続で #1 再検討トリガーになることで、撤退条件が文書化される。これは「決定を不可逆にせず KPI で監視する」設計思想
+  - **Spec 差分提案を failure_category=design のみに限定**: 環境障害 (external API down) や実装ミス (team-\* の誤読) で spec を修正すると spec が腐敗する。設計不備のみ spec へフィードバックを閉じることで V-2 (フィードバックループを閉じる) を守る。category 分類を enum 固定したのは、手動分類の揺らぎを排除するため
+  - **failure_category enum 固定化の副次効果**: Step 3.5 の発動条件を enum 一致で判定できるため、future の自動化 (Macro が failure_category を自動推論して Step 3.5 を起動) がそのまま動く設計。v0.1 は手動記入、v0.2 で自動推論の拡張余地を残した
+  - **§2.4 物理分離を独立セクションに格上げ**: v0.1.0 では §2.3 制約末尾に 1 行埋もれていたが、review-agent-essence で「interactive モードで Macro が team-\* を直接呼べる誤読可能性」を指摘されて格上げ。独立セクション化することで、reader が §2.3 を読み飛ばしても §2.4 は目に入る(progressive disclosure の逆パターン = 重要性で格上げ)
+- 副作用:
+  - **v0.1.2 の init-trilayer.sh を既存 playground で再実行できない**: `check_existing()` が `.docs/trilayer/` 存在時に exit 2 するため、v0.1.0/v0.1.1 で scaffold された既存プロジェクトに `agent_teams_flag` を retrofit する手段がない。v0.1.3 で `--retrofit-flag` オプション追加を検討(本 session の playground 自体もこの影響を受ける)
+  - **DSL parser の tuple ベース AST が読みにくい**: 行数制約で dict より tuple を選んだため、他 reviewer が `("or", ("and", ...), ...)` 構造を読解するのに時間がかかる。v0.2.0 #4 (evaluate 実装時) に dict ベースへのリファクタリング余地を残した
+  - **kpi.opus_fixation_validity のサンプル不足問題**: `measurement_window_days: 30` だと個人用 playground では window 内に 30 ticket 遷移が発生しない可能性が高い (2026-04-15 時点で TICKET-001 と TICKET-002 の 2 件のみ)。サンプル不足時は `return None` で drift 判定 skip する安全側設計だが、実運用で「KPI 機能が動作していないように見える」状態が長期化するリスク
+  - **Agent Teams 検証結果の `[0.1.0]` retroactive 訂正判断**: CHANGELOG の `[0.1.0]` は「Phase 3 1 周完走」と書いたが、事後的に gap が判明。`[0.1.1]` で status 格下げして対応したが、`[0.1.0]` 自体を訂正するかは未決定。semver 的には過去リリースの CHANGELOG は不変とすべきで、現状維持が妥当
+  - **v0.1.2 manifest の agent_teams_flag が v0.1.0 validator と非互換リスク**: 古い validate-trilayer.py は `agent_teams_flag` を未知 field として無視するだけ(spec 的に green 維持)だが、将来 strict mode を導入すると後方互換を破るリスクがある。breaking-changes-policy.md の additive-only 原則で対応
+  - **`.docs/specs/<feature>-spec.md.bak` の EKP validator 検査対象問題**: Step 3.5 の auto_apply で spec を上書きする際の backup が `.bak` 拡張子で、EKP validate-knowledge.py の走査対象 (`.docs/**/*.md` glob) に含まれる可能性。実装時に `.bak` を skip するよう EKP 側の拡張が必要かも
+  - **v0.2.0 #5 Spec 差分提案の auto_apply リスク**: `auto_apply` 判定時に Macro が spec を自動上書きする仕様は、spec が team の認識共有媒体である以上、副作用が大きい。v0.2.0 実装時は default=require_review を強く推奨、auto_apply は明示 opt-in に
+  - **大量の外部変更と session 内変更の混在**: main Claude (Part 1 Agent Teams 検証) + 外部実装 (Part 2-4 の v0.1.1/v0.1.2/v0.2.0 partial) が並行して skill を編集。`~/.claude/skills/` は git 管理外なので diff 追跡が難しく、「いつ何を誰が変更したか」は CHANGELOG の記述に依存。session をまたぐ context 共有は memory + CHANGELOG + 実装ログ の 3 層でしか実現できない
+  - **status-poller.py の opus KPI が naive datetime を skip する実装**: `ts.tzinfo is None` の場合 `continue` するため、timezone 欠落エントリは KPI 集計に入らない。status.yml を手書きした場合 timezone を忘れやすく、KPI 過小評価リスクがある。validate-trilayer.py の既存の「timestamp は ISO 8601 + TZ 必須」validation で防げるが、append-only 性との両立で future 問題の余地あり
+  - **Step 3.5 の spec 修正が波及する他 ticket の再評価問題**: 1 つの spec を修正すると、その spec を参照する他 ticket が stale 化する可能性。現 v0.2.0 design では「深い変更は require_review を選ぶべき」と gotcha 記載のみで、波及検出の自動化は未定。v0.2.1 以降の課題
+- 関連ファイル:
+  - **設計書 (plan, 不変参照)**:
+    - `.docs/plans/2-layer-harness-framework-construction.md` (§4-4 / §8 #1 CLOSED / §8 #9 更新済、Claude Opus 固定方針反映)
+    - `.docs/plans/2-layer-harness-framework-plan-prompt.md` (要求仕様)
+    - `.docs/plans/three-elements-harness-v0.2-update-plan.md` (v0.2 更新プラン、CHANGELOG v0.1.1 section で参照)
+  - **Part 1: TICKET-002 Agent Teams 検証成果物** (playground 内):
+    - `.docs/tickets/TICKET-002-agent-teams-parallel-verification.md` (60行, status: done, Agent Teams 検証 ticket)
+    - `.docs/knowledge/decisions/2026-04-15_agent-teams-verification-result.md` (107行, team lead 検証結果まとめ)
+    - `.docs/knowledge/decisions/2026-04-15_at-changelog-v012-draft.md` (99行, documenter 生成、v0.1.2 CHANGELOG candidate draft)
+    - `.docs/tests/validate-trilayer-test-cases.md` (156行, tester 生成、19 ケース + S-E4 追加補強)
+    - `.docs/trilayer/status.yml` (TICKET-002 lifecycle 4 エントリ append 済、合計 8 entries)
+  - **Part 2-4: skill 内変更ファイル** (`~/.claude/skills/three-elements-harness/`):
+    - `SKILL.md` (v0.1.1 Gotchas 拡張: status-poller.py 検知のみ明記)
+    - `CHANGELOG.md` (`[0.1.1]` section 新設、agent-essence review 対応 3/8 件の詳細)
+    - `references/three-layer-contract.md` (v0.1.1: status active + §2.4 Macro/Micro 物理分離独立セクション + frontmatter 2 フィールド)
+    - `references/macro-five-duties.md` (v0.1.1: status active + Status 明示ブロック + frontmatter 2 フィールド)
+    - `references/manifest-schema.md` (v0.1.2: agent_teams_flag optional / kpi.opus_fixation_validity 詳細 / validate rules)
+    - `references/adoption-checklist.md` (v0.1.2: GitPython 推奨、subprocess fallback あり)
+    - `references/failure-replanner.md` (v0.2.0 #5: Step 3.5 Spec 差分提案フロー)
+    - `scripts/init-trilayer.sh` (v0.1.2 #7: detect_agent_teams_flag() + sed 置換)
+    - `scripts/validate-trilayer.py` (v0.1.2 #7: agent_teams_flag 検証 + GitPython optional import / v0.2.0 #1: 手書き DSL parser)
+    - `scripts/status-poller.py` (v0.2.0 #4: compute_opus_validity_kpi() + append_kpi_drift_entry())
+    - `assets/manifest.yml.template` (v0.1.2: trilayer_version 0.1.2 + agent_teams_flag placeholder)
+    - `assets/macro-policies.yml.template` (v0.2.0 #4: kpi.opus_fixation_validity section)
+    - `assets/_ROOT_CAUSE_TEMPLATE.md` (v0.2.0 #5: failure_category enum + §5 Spec 差分提案 section)
+  - **Part 1 で使用した Agent Teams インフラ** (session 内で生成 → TeamDelete 済):
+    - `~/.claude/teams/trilayer-v012-review/config.json` (TeamCreate 生成、TeamDelete で cleanup)
+    - `~/.claude/tasks/trilayer-v012-review/` (team task list、Task #1 / #2 → 両 completed)
+    - tmux panes: %0 (documenter) + %1 (tester) — backendType=tmux で物理分離
+    - git worktrees: TeamDelete で "directories and worktrees" として cleanup 確認
+  - **前回実装ログ (参照)**:
+    - `.docs/templates/2026-04-15_three-elements-harness.md` (v0.1.0 初版リリースログ)
+    - `.docs/templates/2026-04-13_5-role-separation-framework.md` (Micro 層 5-Role の起源)
+  - **依存資産** (本 session では変更せず、依存のみ):
+    - `~/.claude/skills/establishing-knowledge-persistence/scripts/validate-knowledge.py` (EKP validator、trilayer と並列実行)
+    - `~/.claude/skills/activate-agent-teams/SKILL.md` (Part 1 の pre-flight check + force Agent Teams)
+    - `~/.claude/skills/orchestrating-team-development/SKILL.md` (trilayer skill の Micro 層エントリポイント)
+    - `~/.claude/agents/team-documenter.md` (Part 1 の documenter spawn 対象)
+    - `~/.claude/agents/team-tester.md` (Part 1 の tester spawn 対象)
+    - `~/.claude/agents/team-reviewer.md` (前回 2026-04-15 の smoke test 対象、本 session では未使用)
+  - **永続メモリ** (本 session では新規追加なし、参照のみ):
+    - `~/.claude/projects/-Users-camone-.../memory/feedback_skill-naming-vs-description.md`
+    - `~/.claude/projects/-Users-camone-.../memory/feedback_claude-opus-only-for-multi-agent.md`
+  - **原典**:
+    - `.docs/references/pdf/screencapture-note-masa-wunder-n-n40f97558c6d9-2026-04-13-13_54_09.pdf` (記事「次世代ハーネス設計」masao@AI駆動開発 2026-04-08、§4-1 / §4-1-2 由来の設計仮説根拠)
