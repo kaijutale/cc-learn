@@ -1,0 +1,90 @@
+機能名: three-elements-harness (Trilayer Harness Framework v0.1.0)
+
+- セッション名: <未設定: /rename 実行時に記載>
+- 日付: 2026-04-15 21:23:17
+- 概要: note記事「次世代ハーネス設計」で提唱された **Macro判断 × Micro実装 × Project OS状態** の3層契約を、既存 EKP (establishing-knowledge-persistence) + 5-Role team agents の上に薄く敷く汎用メタフレームワークとして Claude Code skill (`~/.claude/skills/three-elements-harness/`) に実装。設計書 (`.docs/plans/2-layer-harness-framework-construction.md`) の Phase 0-5 を1セッション内で完走し、同 playground で自己適用 dogfooding まで実施。記事が推奨する OpenCrew/GPT-5.4 等の外部マクロツール連携は不採用とし、Macro/Micro 両層の全エージェントを **Claude Opus 固定** にする方針を確定 (§8 #1 CLOSED)。
+- 実装内容:
+  - **Phase 0 (抽象契約の文書化)**: `SKILL.md` hub (122行, ≤120目標+2) + `references/three-layer-contract.md` (§4-1 正典, 3層入出力 schema) + `references/macro-five-duties.md` (5職務: 要件整理/優先順位付け/チケット化/定期実行と監視/失敗時の再計画)
+  - **Phase 1 (最小骨格)**: `references/manifest-schema.md` + `references/macro-interactive-stub.md` (AskUserQuestion 駆動 6 ステップ) + `scripts/init-trilayer.sh` (EKP 前提チェック + scaffold) + `scripts/validate-trilayer.py` (manifest/policies/status 検証, EKP validator と並列実行, append-only 強制) + `assets/` × 3 (manifest.yml.template / macro-policies.yml.template / _ROOT_CAUSE_TEMPLATE.md)
+  - **Phase 2 (scaffold 機構)**: `scripts/update-claudemd.sh` (`.claude/CLAUDE.md` 冪等追記) + SKILL.md Adoption Workflow 5 ステップ
+  - **Phase 3 (自己適用 dogfooding)**: 本 playground で以下を実動作検証
+    - 前提条件: 5-Role agents smoke test 実施 — `team-reviewer` agent に「ファイル編集して」依頼 → 構造的に不可能 (tools から Edit/Write 物理除外) を物理検証し PASS
+    - `.docs/trilayer/{manifest, macro-policies, status}.yml` を `init-trilayer.sh` で生成 (project=three-elements-harness-playground)
+    - `.docs/specs/trilayer-readme-generation.md` + `.docs/tickets/TICKET-001-generate-readme.md` を Macro 疑似実行で生成
+    - `team-documenter` agent を Agent tool で起動 → `README.md` (124行/7 sections/8.8KB) を 98 秒で生成 (手動 Edit 介入 0 回、受入条件 5/5 PASS)
+    - ticket status 遷移: todo → in_progress → review → done を `.docs/trilayer/status.yml` に 4 エントリ append
+    - smoke test decision log を `.docs/knowledge/decisions/2026-04-15-smoke-test-5-role-boundary.md` に記録
+  - **Phase 3.5 (PDCA 自律 loop)**: `scripts/status-poller.py` (cron/LaunchAgent から叩かれる poller, dry-run 対応, drift/failed 検知) + `references/auto-mode-setup.md` (macOS LaunchAgent / Linux cron / systemd timer の3経路セットアップガイド) + `references/failure-replanner.md` (職務 5 の 5 ステップ root cause → 再計画フロー, retry_of チェーン管理)
+  - **Phase 4 (採用ドキュメント)**: `references/quickstart-30min.md` (7 ステップ 30 分導入) + `references/adoption-checklist.md` (6 カテゴリ必須チェック + bash 自動チェックスクリプト例) + `references/troubleshooting.md` (13 項目 Q&A)
+  - **Phase 5 (進化の仕組み)**: `references/breaking-changes-policy.md` (semver 規約 + deprecation 手順 + `0.x` 系列特例) + `CHANGELOG.md` (v0.1.0 リリースノート + known limitations)
+  - **Claude Opus 固定方針の反映 (後修正)**: 設計書 §4-4 ツール依存性表に Claude Opus 必須行追加、OpenCrew/GPT-5.4 を不採用に変更 / §8 #1 を CLOSED (2026-04-15) / §8 #9 から外部ツール接続を除外 / SKILL.md に Agent モデル固定方針 1 行追加 / `references/three-layer-contract.md` §6 新設 (別実装者は SHOULD レベル遵守) / CHANGELOG.md に Design decision section 追加
+  - **永続メモリ**: `~/.claude/projects/-Users-camone-.../memory/` に 2 件の feedback memory 追加
+    - `feedback_skill-naming-vs-description.md`: skill の name は人間 invoke 用、trigger は description 経由
+    - `feedback_claude-opus-only-for-multi-agent.md`: multi-agent skill は Macro/Micro 両方 Claude Opus 固定、外部モデル/エージェント連携なし
+- 設計意図:
+  - **EKP (establishing-knowledge-persistence) の片方向依存で再発明回避**: Project OS 概念の約 80% を既に EKP が実装済 (`.docs/{specs,designs,tickets,knowledge,tests}/` + YAML frontmatter + validate-knowledge.py)。trilayer は EKP を改造せず、新規追加を `.docs/trilayer/` と `.docs/knowledge/{decisions,runbooks}/` のみに限定。validator も別ファイル並列実行で衝突ゼロ。プロンプト制約「既存スキルと重複する機能を新規実装しない」を遵守
+  - **5-Role Separation の物理的強制を Micro 層の実体として固定**: 2026-04-13 構築済の team-ui-designer/implementer/tester/reviewer/documenter を Micro 層の実体として採用。`team-reviewer` の tools から Edit/Write 除外を物理的強制として尊重し、trilayer は `orchestrating-team-development` 経由のみで呼出 (直接 team-\* 呼出禁止)。smoke test で境界強制を実動作確認
+  - **空白だった Macro 層 5 職務の統一エントリポイント**: 記事の「要件整理/優先順位付け/チケット化/定期実行と監視/失敗時の再計画」5職務がプロジェクトごとにバラバラに実装されていた問題を、単一 skill の対話スタブ + cron 駆動 poller で統合
+  - **file-as-message で新プロトコル発明を回避**: 層間メッセージは YAML frontmatter 付きファイル書込に統一。JSON-RPC/event bus/gRPC を発明せず、EKP の既存 validation (dangling ref / 循環依存検出) がそのままメッセージ整合性チェックとして機能
+  - **パラメータ化は YAML DSL で完結、Python コード禁止**: `macro-policies.yml` の `priority_rules` を YAML 式文字列で表現することで、プロジェクト固有実装への堕落を回避。ハードコード 0
+  - **Claude Opus 固定方針**: 記事の "specialized model per layer" (Macro=OpenCrew/GPT-5.4, Micro=Claude) 推奨よりも Claude Code エコシステム統一 + Opus の推論能力 + 外部ツール連携コスト回避を優先。かもね個人用 skill のスコープ判断
+  - **hub/spoke pattern を徹底**: SKILL.md は 122 行に抑え、詳細は `references/` に push-out。Claude が初動で読む量を最小化し、必要に応じて references を引く progressive disclosure 設計 (authoring-skills の推奨)
+  - **§8 要決定事項は "CLOSED" prefix で残す**: 決定済み項目も削除せず判断履歴を保持。future の判断コンテキスト散逸を防ぐ
+  - **description に trigger words を手厚く書き、name は人間可読性優先**: かもねの feedback 「Claude の skill 選択は description で行われる、name は人間 invoke 用」を反映し、skill 名は短く (`three-elements-harness`)、description に「3層ハーネス / trilayer / Macro Micro Project OS / 次世代ハーネス / 自律loop」等 20+ trigger を列挙
+- 副作用:
+  - **SKILL.md の行数オーバー (122 > 120)**: 目標 ≤120 行を +2 超過。Agent モデル固定方針の段落追加分で、トリムしても 120 に収まらなかった。許容範囲とした
+  - **EKP validator との潜在衝突 (対処済)**: 当初 `init-trilayer.sh` が `_ROOT_CAUSE_TEMPLATE.md` を `.docs/knowledge/decisions/` に配置していたが、EKP の skip パターン (`_TEMPLATE.md` 固定名) にマッチせず validator がプレースホルダ日付をエラー検出。init から該当コピーを削除し、失敗時の再計画フローで必要になったら `assets/` から都度コピーする運用に変更
+  - **playground 内の pre-existing EKP validation 問題**: `.docs/plans/` のカスタム type (`framework-construction-plan`) や `.docs/templates/*.md` の frontmatter なしが EKP validator にブロックされる状態。trilayer 起因ではない既存問題だが、全体 validator green を達成するには EKP 側の skip pattern 拡張が必要。トラブルシューティング Q8 に記録
+  - **PDCA 自動モードの v0.1 制約**: `status-poller.py` は検知のみ実装で、Macro 再起動の自動化は Claude Code skill 実行経路の制約により v0.2 以降。`scheduler.enabled=true` にしても 1 周完走の自動化は手動介入が必要 (設計書撤退基準に該当する状況で、v0.2 延期を明示)
+  - **ticket frontmatter の手動 status 更新**: Phase 3 dogfooding で ticket を todo → done に手動 Edit した (Macro を疑似実行しているため)。本来は Macro skill が自動で frontmatter を更新すべき。v0.2 で Macro ticket writer を実装する際に整備
+  - **priority_rules YAML DSL 評価器の未実装**: v0.1 は「手動判断で優先順位付け」のみ。YAML 式文字列 (`kpi.delta > 0.1`) を安全に parse する evaluator は v0.2 以降。現状は AskUserQuestion で人間に聞く fallback
+  - **Agent Teams experimental flag 依存**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` が将来廃止されたら Micro 層経路が破綻するリスク。§8 #6 に記載、fallback として通常 subagents への退避を v0.2 で検討
+  - **ローカル永続化のみ**: skill を GitHub 公開せず個人用 `~/.claude/` に閉じる方針のため、他ユーザーへの配布は adoption-checklist.md + quickstart-30min.md の手動参照に依存。v0.2 で `gh repo create --template` 方式を検討するかは未定
+- 関連ファイル:
+  - **設計書 (plan)**:
+    - `.docs/plans/2-layer-harness-framework-construction.md` (601 行、8 セクション + §4-4/§8 Claude Opus 固定方針反映済)
+    - `.docs/plans/2-layer-harness-framework-plan-prompt.md` (要求仕様、本実装の前提)
+  - **skill 本体 (`~/.claude/skills/three-elements-harness/`, 19 files)**:
+    - `SKILL.md` (122 行, hub)
+    - `CHANGELOG.md` (v0.1.0 リリースノート)
+    - `references/three-layer-contract.md` (3 層契約正典 + §6 Agent モデル固定方針)
+    - `references/macro-five-duties.md` (5 職務詳細)
+    - `references/manifest-schema.md`
+    - `references/macro-interactive-stub.md`
+    - `references/auto-mode-setup.md`
+    - `references/failure-replanner.md`
+    - `references/quickstart-30min.md`
+    - `references/adoption-checklist.md`
+    - `references/troubleshooting.md`
+    - `references/breaking-changes-policy.md`
+    - `scripts/init-trilayer.sh` (実行権限付与済)
+    - `scripts/validate-trilayer.py` (実行権限付与済)
+    - `scripts/status-poller.py` (実行権限付与済)
+    - `scripts/update-claudemd.sh` (実行権限付与済)
+    - `assets/manifest.yml.template`
+    - `assets/macro-policies.yml.template`
+    - `assets/_ROOT_CAUSE_TEMPLATE.md`
+  - **playground 内 dogfooding 証跡**:
+    - `.docs/trilayer/manifest.yml` (project=three-elements-harness-playground)
+    - `.docs/trilayer/macro-policies.yml` (scheduler.enabled=false)
+    - `.docs/trilayer/status.yml` (4 エントリ: ticket_created + status_transition × 3)
+    - `.docs/specs/trilayer-readme-generation.md`
+    - `.docs/tickets/TICKET-001-generate-readme.md` (status: done)
+    - `.docs/knowledge/decisions/2026-04-15-smoke-test-5-role-boundary.md`
+    - `README.md` (124 行, team-documenter 生成)
+  - **依存する既存資産** (改造禁止):
+    - `~/.claude/skills/establishing-knowledge-persistence/SKILL.md` (Lv2 基盤、片方向依存)
+    - `~/.claude/skills/establishing-knowledge-persistence/scripts/validate-knowledge.py` (並列実行対象)
+    - `~/.claude/skills/orchestrating-team-development/SKILL.md` (Micro 層エントリポイント)
+    - `~/.claude/agents/team-ui-designer.md`
+    - `~/.claude/agents/team-implementer.md`
+    - `~/.claude/agents/team-tester.md`
+    - `~/.claude/agents/team-reviewer.md` (smoke test 対象、tools 除外の物理強制を確認)
+    - `~/.claude/agents/team-documenter.md` (Phase 3 で README 生成に使用)
+  - **永続メモリ**:
+    - `~/.claude/projects/-Users-camone-dev-claude-code-claude-code-learn/memory/feedback_skill-naming-vs-description.md`
+    - `~/.claude/projects/-Users-camone-dev-claude-code-claude-code-learn/memory/feedback_claude-opus-only-for-multi-agent.md`
+    - `~/.claude/projects/-Users-camone-dev-claude-code-claude-code-learn/memory/MEMORY.md` (index 更新)
+  - **起点となった原典**:
+    - `.docs/references/pdf/screencapture-note-masa-wunder-n-n40f97558c6d9-2026-04-13-13_54_09.pdf` (全32ページ読取済、Macro 層に OpenCrew/GPT-5.4 を推奨するが本 skill では不採用)
+    - `.docs/templates/2026-04-13_5-role-separation-framework.md` (Micro 層 5-Role が物理実装済であることの証跡、smoke test 未実施問題の出典)
