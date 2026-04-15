@@ -32,3 +32,32 @@ entries:
     from: review
     to: done
     summary: "受入条件 5/5 pass、Macro→Micro round trip 1周完走"
+  - timestamp: 2026-04-15T22:35:00+09:00
+    layer: macro
+    action: ticket_created
+    ticket_id: TICKET-002
+    summary: "Agent Teams による Micro 層並列実行の物理検証 (TICKET-001 の subagent fallback 再検証)"
+    rationale: ".docs/knowledge/decisions/2026-04-15_agent-teams-verification-result.md"
+  - timestamp: 2026-04-15T22:35:30+09:00
+    layer: micro
+    action: status_transition
+    ticket_id: TICKET-002
+    from: todo
+    to: in_progress
+    assignee: "documenter+tester (team trilayer-v012-review, Agent Teams parallel spawn)"
+    summary: "TeamCreate + Agent tool × 2 並列 spawn、別プロセスで mailbox 経由開始"
+  - timestamp: 2026-04-15T22:37:00+09:00
+    layer: micro
+    action: status_transition
+    ticket_id: TICKET-002
+    from: in_progress
+    to: review
+    assignee: "documenter+tester"
+    summary: "同秒内 (22:37) 並列完了: documenter→v012-changelog-draft.md (99行/8KB), tester→validate-trilayer-test-cases.md (156行/9KB)"
+  - timestamp: 2026-04-15T22:38:00+09:00
+    layer: macro
+    action: status_transition
+    ticket_id: TICKET-002
+    from: review
+    to: done
+    summary: "受入条件 5/5 pass、Agent Teams 経由の真の並列実行を物理証明、TICKET-001 の gap 解消"
