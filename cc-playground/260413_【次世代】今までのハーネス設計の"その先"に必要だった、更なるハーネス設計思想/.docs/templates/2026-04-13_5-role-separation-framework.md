@@ -1,0 +1,53 @@
+機能名: 5-Role Separation Framework（常駐サブエージェント × 専用スキル）
+
+- セッション名: flickering-floating-leaf
+- 日付: 2026-04-13 22:35:09
+- 概要: note記事「次世代ハーネス設計」の「実装・テスト・レビュー・ドキュメントを分けて並列に走らせる方が強い」という主張を受け、動的生成に頼らず常駐フレームワークとして5役のサブエージェントとそれぞれ専用スキルを構築した。記事の核心思想「責務と状態を分ける」をファイル構造として物理実装する試み。
+- 実装内容:
+  - **5体の常駐サブエージェント作成** (`~/.claude/agents/`):
+    - `team-ui-designer.md` — UI/UX設計専任（実装には触らない）
+    - `team-implementer.md` — REDテストをGREENにする最小実装専任
+    - `team-tester.md` — spec.mdからRED先行、実装コードは読まない
+    - `team-reviewer.md` — severity判定専任（`tools:`からEdit/Write除外で物理的に修正不可）
+    - `team-documenter.md` — git diffからMarkdown生成専任
+    - 全員統一構造: 役割 / 関心事 / やらないこと / 判断軸 / 出力フォーマット
+    - 電報体・日本語・40-80行で揃えた（既存 `code-reviewer.md` 28行スタイルを踏襲）
+  - **5つの専用スキル作成** (`~/.claude/skills/`):
+    - `injecting-ui-aesthetic/` — **アイデンティティ型**（LLMデフォルト美学剥がし / 5軸極値表 / references/aesthetic-extremes-table.md）
+    - `narrowing-implementation-scope/` — **辞書型**（"触るべきか判断"辞書10ケース / GREEN until refactor原則）
+    - `deriving-test-from-spec/` — **手順型**（Step1→4のTask Progress checklist / references/case-enumeration-checklist.md）
+    - `judging-review-severity/` — **辞書型**（Critical/High/Medium/Low rubric / references/severity-examples.md）
+    - `generating-doc-from-diff/` — **生成手順型**（git+template駆動パイプライン / references/template-mapping.md）
+  - **統合編集** (1箇所のみ): `~/.claude/skills/orchestrating-team-development/SKILL.md` のStep 2冒頭に1行追記、5-Role Separation優先の指示を追加
+- 設計意図:
+  - **責務境界を構造的に強制**: `team-reviewer` の `tools:` からEdit/Writeを物理除外することで、「レビュアーは修正しない」をお願いではなく不可能にした。CLAUDE.mdの"L1壁"思想と同じ構造的制約アプローチ
+  - **スキル4分類の網羅**: 辞書型×2 / 手順型×1 / 生成手順型×1 / アイデンティティ型×1 で4分類すべてをカバー。authoring-skills/SKILL.md L93-125の分類基準に従い、各エージェントの責務の本質（判断辞書 vs 決定的手順 vs 美学注入 vs CLI駆動生成）から型を選択
+  - **既存エージェント保護**: `code-reviewer.md` / `test-ai-tdd-expert.md` / `frontend-developer.md` は一切変更せず共存。executing-ai-development-workflow など既存callerへの影響ゼロ。5-Role Separation は**追加レイヤー**
+  - **team-* プレフィックス**: 5体が視覚的にグルーピングされ、ls/globで一括発見可能。既存 `code-reviewer` との名前衝突回避
+  - **動的生成を廃した理由**: 筆者「作り込み」発言から、フレームワークとしての構築を意図していると解釈。動的生成だと責務境界がタスクごとにブレる。常駐化で5役の「やらないこと」が固定化される
+- 副作用:
+  - **スキル trigger 重複の可能性**: "テスト"キーワードで `team-tester` agent と `enforcing-strict-tdd-cycle` skill が両方発火する可能性。実運用で絞り込みが必要な場合はdescription調整
+  - **`injecting-ui-aesthetic` と `designing-beautiful-frontends` の役割重複**: 新スキルは team-ui-designer 専用の圧縮プリセット、既存は汎用版。team-ui-designer の `skills:` に両方リストしているので使い分けは agent 側の判断
+  - **既存 `code-reviewer` agent との severity rubric ドリフト懸念**: 新スキル `judging-review-severity` が 5-Role 文脈の正典になる。既存は legacy 形式として共存。backport不要と判断したが、長期的に揃えるかは要議論
+  - **`team-implementer` の柔軟性低下**: 小タスク時に「ついでに直して」が全拒否される。Lightning/PoC modeでは team 構成を使わない設計なので影響は限定的だが、`orchestrating-team-development` 経由以外で呼ぶと使いづらいケースあり
+  - **10ファイル追加によるハーネス肥大**: `~/.claude/agents/` と `~/.claude/skills/` の総ファイル数が増加。プレフィックス規約で緩和しているが長期的には index 導入の可能性
+  - **`agent-teams-patterns` への5-Roleパターン未登録**: 今回はスコープ外。経験的検証後のフォローアップ課題として残した
+  - **smoke test未実施**: 11タスクすべて作成完了したが、実運用による責務境界テスト（最重要）は未実施。次セッションで `team-reviewer` に「実装も書いて」と依頼して拒否されるか物理検証する必要あり
+- 関連ファイル:
+  - `~/.claude/plans/flickering-floating-leaf.md` — 承認済みプラン（Context / Design Decisions / 全ファイル仕様 / Verification Plan / Risks）
+  - `~/.claude/agents/team-ui-designer.md`
+  - `~/.claude/agents/team-implementer.md`
+  - `~/.claude/agents/team-tester.md`
+  - `~/.claude/agents/team-reviewer.md`
+  - `~/.claude/agents/team-documenter.md`
+  - `~/.claude/skills/injecting-ui-aesthetic/SKILL.md`
+  - `~/.claude/skills/injecting-ui-aesthetic/references/aesthetic-extremes-table.md`
+  - `~/.claude/skills/narrowing-implementation-scope/SKILL.md`
+  - `~/.claude/skills/deriving-test-from-spec/SKILL.md`
+  - `~/.claude/skills/deriving-test-from-spec/references/case-enumeration-checklist.md`
+  - `~/.claude/skills/judging-review-severity/SKILL.md`
+  - `~/.claude/skills/judging-review-severity/references/severity-examples.md`
+  - `~/.claude/skills/generating-doc-from-diff/SKILL.md`
+  - `~/.claude/skills/generating-doc-from-diff/references/template-mapping.md`
+  - `~/.claude/skills/orchestrating-team-development/SKILL.md` (Step 2 に1行追記)
+  - `.docs/references/pdf/screencapture-note-masa-wunder-n-n40f97558c6d9-2026-04-13-13_54_09.pdf` — 起点となったnote記事（まさお氏「次世代ハーネス設計」）
