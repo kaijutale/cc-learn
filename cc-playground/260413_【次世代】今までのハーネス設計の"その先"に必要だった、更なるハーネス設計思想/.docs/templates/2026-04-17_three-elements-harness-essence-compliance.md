@@ -1,0 +1,94 @@
+機能名: three-elements-harness skill の agent-essence 11 項目対応 (description 誠実化 + ticket schema 自己完結化 + validator 射程拡張 + 半自律 PDCA loop 閉鎖)
+
+- セッション名: (未命名)
+- 日付: 2026-04-17 00:52:46
+- 概要: 記事「次世代ハーネス設計」(`.docs/references/pdf/screencapture-note-masa-wunder-n-n40f97558c6d9-2026-04-13-13_54_09.pdf`) の精読後、`review-agent-essence` skill で 11 原則 (C-1〜E-3) に対する `three-elements-harness` skill のギャップを洗い出した。主なギャップは 3 種類: (1) **description と実装の乖離** — SKILL.md は「PDCA 自律 loop / humanless」を謳うが `status-poller.py` は検知のみ実装で Macro 再起動経路が存在しない (V-2 違反)、(2) **ticket schema の自己完結性不足** — `related_spec` パス参照のみで spec 書き換え後も古い前提で走行可能、`reviewed_by` もなく Micro が self-report で `done` 遷移できる (T-2.1/C-4/C-5/S-1 違反)、(3) **validator の責務漏れ** — `validate-trilayer.py` が status.yml entry schema しか検証せず ticket frontmatter/status flow/spec drift 未検証 (V-1 射程不足)。記事自身が「検証中の仮説」と宣言しており、本 skill は「仮説を検証可能な骨格に昇格させる責任」を負うため、11 項目を Phase A (schema) / B (validator) / C (automation) / D (docs 誠実化) の 4 フェーズで一気通貫実装した。配布スコープは個人用のため semver/CHANGELOG/schema_version migration 等の公開儀礼は省略、既存 ticket は実装前に手動で新フィールド遡及追加する方針を採った (前回 `2026-04-16_three-elements-harness-lightweight.md` で確立した「個人用 = 儀礼排除」ルールの継承)。
+
+- 実装内容:
+  - **事前整備: `.docs/plans/` 外部化**
+    - `.docs/plans/3-three-elements-harness-essence-compliance.md` 新規作成 (約 500-700 行、1 ファイルに 4 Phase 集約)。global CLAUDE.md の「skill 修正は計画→`.docs/plans/`外部化→実装→検証の 4 フェーズ分離」ルールに従う
+    - plan の章立て: §1 背景 / §2 スコープ / §3 前提条件 / §4 Phase 設計 / §5 Phase 詳細 (A-D) / §6 検証 / §7 ロールバック / §8 open items / §9 工数
+  - **既存 ticket の遡及修正 (playground 側)**
+    - `.docs/tickets/TICKET-001-generate-readme.md`: `spec_snapshot_sha: 86576485d6de8248952b2b1a7360906b5bf50d94` (該当 spec の現在 git hash)、`original_goal:` (multiline)、`reviewed_by: null` を frontmatter に追加
+    - `.docs/tickets/TICKET-002-agent-teams-parallel-verification.md`: ad-hoc 検証 ticket のため `related_spec: null` / `spec_snapshot_sha: null` (spec 非依存)、`original_goal:` / `reviewed_by: null` を追加
+  - **Phase A: Schema 拡張 (破壊的変更集約)**
+    - `assets/ticket-template.md.template` 新規作成 (+102 行): `spec_snapshot_sha` / `original_goal` / `reviewed_by` 必須 3 フィールド、`acceptance_criteria` に `behavior_oracle` (unit/e2e/integration/manual_smoke) + `structural_oracle` (responsibility/testability/file_scope) の 2 層 oracle section、HTML コメントで使用注意を明記
+    - `assets/_ROOT_CAUSE_TEMPLATE.md` 改修: frontmatter に `machine_signals: {exit_code, stderr_pattern, test_failure_category}` と `escalation: <auto_apply | require_review>` 追加。「2-bis. 機械シグナル」section 追加で exit_code/stderr_pattern → failure_category 対応表を明記。**S-1.2 規則**: `failure_category=environmental` のみ `auto_apply`、残り (design/implementation/data) は `require_review` 強制
+    - `assets/macro-policies.yml.template` 改修: `failure_replanner.auto_retry_allowed_categories: [environmental]` 追加、新規 section `acceptance_criteria_schema: {behavior_oracle: {required: true, types: [...]}, structural_oracle: {required: true, checks: [...]}}` 追加
+    - `assets/_OPUS_FIXATION_RATIONALE.md` 新規作成: Opus 固定判断の根拠 (ecosystem 統一 / opex 削減 / Opus 推論能力) と撤退条件 (`opus_fixation_validity` KPI 閾値) を template 化
+    - `scripts/init-trilayer.sh` 追記: Phase A で配布する ticket template の `cp` ロジック追加 (`--phase=minimal` 時は skip)
+  - **Phase B: Validator 強化 (検査のみ、非破壊) — `scripts/validate-trilayer.py` に +495 行**
+    - 新規定数: `TICKET_REQUIRED_FIELDS` / `STATUS_FLOW_DEFAULT` / `STATUS_FLOW_GRAPH` (`todo→in_progress→review→done|failed` 遷移グラフ) / `ROOT_CAUSE_REQUIRED_FIELDS` / `FAILURE_CATEGORY_ENUM` / `ESCALATION_ENUM` / `AUTO_RETRY_ALLOWED`
+    - 新規ユーティリティ `parse_frontmatter(path)`: `---` 区切り markdown から YAML frontmatter を抽出
+    - 新規関数 `validate_ticket_frontmatter(path, policies)` (B1/B7): 全必須 field 存在確認、`spec_snapshot_sha` 整合性、`reviewed_by != assignee` 強制
+    - 新規関数 `_reviewed_by_conflicts(reviewed_by, assignee)`: 複合 assignee (`team-A + team-B`) を `+` / `,` で分割して判定
+    - 新規関数 `validate_status_flow_transitions(ticket_path, status_log)` (B2): status.yml の遷移履歴を `STATUS_FLOW_GRAPH` に照合
+    - 新規関数 `detect_ticket_spec_drift(ticket_path)` (B3): `git rev-parse HEAD:<spec_path>` の現在 hash と ticket frontmatter の `spec_snapshot_sha` を比較
+    - 新規関数 `validate_root_cause(path)` (B4): machine_signals + escalation enforcement
+    - 新規関数 `validate_acceptance_criteria(ticket_path, policies)` (B6): `done` ticket には behavior_oracle + structural_oracle 両方の結果が必要
+    - 新規関数 `validate_tickets_dir(...)`: warning/error 分離付き dispatcher
+    - 新規関数 `validate_root_cause_dir(decisions_dir)`: **KEY fix** — `failure_category` フィールド保持ファイルのみ対象として filter (一般 decision log との誤検出回避)
+    - `main()` 改修: `--status-flow` flag (B5) 追加、policies/status_log 読込、`_split_warnings()` で WARNING vs ERROR 分離 (warning は exit 0 維持)、tickets_dir + decisions_dir 検証経路追加
+  - **Phase C: Automation (PDCA 閉鎖 / Hook / Adoption)**
+    - `scripts/status-poller.py` 改修: `invoke_macro_via_claude_p(reason, ticket_id, dry_run)` 関数追加 — `claude -p "three-elements-harness: replan {ticket_id} (reason: {reason})"` で新セッション spawn (`subprocess.run(cmd, timeout=600)`)。argparse に `--invoke-macro` / `--check-drift` 追加、main() で drift 検知かつ `--invoke-macro` 指定時のみ spawn
+    - `scripts/hooks/block-team-in-macro.sh` 新規作成: Claude Code の PreToolUse hook 用シェル。`TRILAYER_MODE=macro` かつ `subagent_type` が `team-*` prefix なら `{"continue": false, "permissionDecision": "deny"}` を JSON 返却 (V-1.3 構造的 block)
+    - `scripts/append-status.sh` 新規作成: status.yml 書込専用 CLI。`--layer macro|micro --action <enum>` 他で pre-append schema 検証 + post-append YAML parse check、失敗時は backup + rollback (S-1.5 fail-closed)
+    - `scripts/list-decisions.py` 新規作成: `.docs/knowledge/decisions/` の frontmatter を walk し、`--topic` / `--ticket` / `--root-cause-only` / `--format plain|markdown` で filter (K-2.3 判断ログ検索性)
+    - `scripts/init-trilayer.sh` 改修: global `PHASE="full"` 変数、`scaffold()` で `macro-policies.yml` と ticket template の cp を `PHASE != "minimal"` 条件化、`post_scaffold_guidance()` に hint #5 (opus KPI) + #6 (`--invoke-macro` auto-mode) 追加、`main()` に `--phase=minimal|full` / `--help` 引数 parsing 追加
+  - **Phase D: Documentation 整合化**
+    - `SKILL.md` frontmatter 改修: description を「PDCA loop」→「**半自律** PDCA loop (**完全自律化は Phase 3.5 で `status-poller.py --invoke-macro` により閉じる**)」に置換、trigger keywords から「PDCA自律loop」「自律loop」「自律開発loop」削除
+    - `SKILL.md` 本文改修: 「humanless で走らせるための土台」→「半自律 PDCA loop を走らせる土台 (drift 検知は `status-poller.py`、Macro 自動再起動は `--invoke-macro` で spawn する `claude -p` 新セッション経由で閉じる)」
+    - `SKILL.md` Gotcha: 5 項目新規追加 — (1) `status-poller.py --invoke-macro` の半自律 loop 閉鎖 (V-2)、(2) ticket frontmatter の必須 3 フィールドと scaffold 経路 (T-2.1/T-2.2/C-4)、(3) PreToolUse hook による team-\* 直接呼出 block (V-1.3)、(4) `append-status.sh` の fail-closed rollback (S-1.5)、(5) `list-decisions.py --topic` での判断ログ検索 (K-2.3)
+  - **統合検証 (全 4 Phase 完了後)**
+    - `validate-trilayer.py`: "OK trilayer 検証成功: 5 ファイル全て OK" (許容範囲の 2 warnings — 遡及 ticket の `reviewed_by: null` による)
+    - `status-poller.py --invoke-macro --dry-run`: drift なし、正常挙動
+    - `list-decisions.py`: 3 decisions 検出
+    - `init-trilayer.sh --help`: `--phase` flag の usage 表示 OK
+
+- 設計意図:
+  - **description と実装の乖離を誠実化で閉じる (V-2 + 正直さ)**: `--invoke-macro` 実装と description の「半自律 (Phase 3.5 で完全自律化)」明記は**両方やる**ことで意味を持つ。実装だけだと「自律 loop」と書いたまま、誠実化だけだと loop が閉じない。片方だけの修正は agent-essence の「誇張禁止」と「フィードバック閉鎖」のどちらかを裏切る
+  - **ticket を file-as-message として自己完結化 (T-2.1/T-2.2/C-4)**: ticket は Macro → Micro 層間 message。message が `related_spec` パスの「後参照」では spec 書き換え後の古い前提で走る事故が起きる。`spec_snapshot_sha` で **message 時点の spec 状態を内包** することで、走行中の drift を validator で検知できる。`reviewed_by` は Micro が self-report で `done` 遷移することを構造的に禁じる (assignee = reviewed_by なら error)
+  - **validator の射程を ticket 本体に拡張 (V-1)**: 従来 validator は status.yml (遷移記録) しか検証せず、ticket 本体の正当性 (schema/spec_snapshot/reviewed_by) は人間の目視レビュー頼み。機械検証可能な領域を `validate-trilayer.py` に構造的に落とし込むことで、迎合性バイアスを排除 (C-3)
+  - **root cause classification の enum 化と S-1.2 強制 (S-1.2)**: `failure_category` を `environmental/design/implementation/data` の 4 値に限定し、**environmental のみ auto_retry 許可**。他カテゴリは `escalation: require_review` で人間判断を強制。これで「設計バグを retry で誤魔化す」経路を機械的に閉じる
+  - **validator が root cause 以外の decision log を誤検出しないよう `failure_category` 存在で filter**: 一般戦略 decision (例: `2026-04-15_agent-teams-verification-result.md`) は `category: decisions` + `related_ticket` を持つが `failure_category` は持たない。この差分を discriminator に使い、「根本原因記録」のみ厳密 validation 対象にする (初回実装で false positive 検出→修正)
+  - **`--phase=minimal|full` で段階導入を可能にする**: 初回導入時に ticket template や macro-policies の full 機能を全部押し付けると学習コストが跳ねる。`--phase=minimal` で manifest + 空 status のみ scaffold → 必要になったら `--phase=full` で上乗せ、という経路を用意
+  - **個人用 skill スコープの儀礼排除を継承**: 前回 `2026-04-16_three-elements-harness-lightweight.md` で確立した「個人用は配布対象 = 自分のみ、儀礼コスト不要」ルールに従い、本改修では semver bump / CHANGELOG / `schema_version` migration logic / backwards compat flag を**意図的に省略**。既存 ticket は手動遡及、新ルールは全 ticket に一律適用
+
+- 副作用:
+  - **既存 playground ticket の遡及修正は手動のため、他プロジェクトで trilayer 採用済みの ticket も同様の手動移行が必要** (現時点では playground 1 件のみ)。自動 migration script は個人用スコープのため作成しない
+  - **`reviewed_by: null` は現状 warning (exit 0)**: done ticket かつ `reviewed_by == assignee` は error、`reviewed_by: null` は warning (遡及 ticket の移行猶予期間扱い)。将来新規 ticket 全てに `reviewed_by` が埋まる運用に定着したら error に昇格する判断の余地あり
+  - **`--invoke-macro` は `claude -p` の subprocess 起動に依存**: Claude Code CLI が PATH に存在し、かつ skill discovery 経路が整っている必要あり。cron/LaunchAgent から起動する場合は環境変数 (`PATH`, `HOME`) の明示的 export が必要 (auto-mode-setup.md に記載必要だが本セッションでは未更新 — Phase D4/D6 partial skip)
+  - **Phase D の references/*.md 一部は本セッションで未更新** (効率優先で後回し): `references/macro-interactive-stub.md` (goal 再注入指示 T-2.2)、`references/quickstart-30min.md` (--phase selector)、`references/troubleshooting.md` (Q13-Q20 新機能)、`references/manifest-schema.md` (ticket schema v2 仕様)、`references/failure-replanner.md` (env_failure only retry)、`references/auto-mode-setup.md` (LaunchAgent plist + --invoke-macro 参照実装)。機能は全て実装済みだが **説明ドキュメントが追いついていない** ため、次回 skill 触る時に優先更新する
+  - **playground 側 `.docs/trilayer/manifest.yml` の `trilayer_version` / `agent_teams_flag` は残存**: 前回軽量化で skill 側からは削除済みだが playground manifest は未クリーンアップ。validator は unknown field を reject しないため green 維持、機能影響なし
+  - **PreToolUse hook `block-team-in-macro.sh` は `~/.claude/settings.json` への手動登録が必要**: skill 配下にスクリプトを置いただけでは発火しない。adoption checklist (削除済) の代わりに SKILL.md Gotcha に記載
+  - **validator の root cause filter が `failure_category` 存在に依存**: 将来 root cause template の frontmatter schema が変わると filter 条件も追随が必要。discriminator の選定は脆い前提なので、将来的に `type: root_cause` のような専用 field を導入する余地あり
+  - **commit は個人用スコープのため main ブランチに直接 push 想定**: PR レビューは発生しない。代わりに実装ログ (本ファイル) + `.docs/plans/3-*.md` + git log を「後日の自分」向け証跡として機能させる
+
+- 関連ファイル:
+  - **新規作成 (6 ファイル)**:
+    - `/Users/camone/dev/claude-code/claude-code-learn/cc-playground/260413_.../.docs/plans/3-three-elements-harness-essence-compliance.md` (外部化計画書)
+    - `/Users/camone/.claude/skills/three-elements-harness/assets/ticket-template.md.template`
+    - `/Users/camone/.claude/skills/three-elements-harness/assets/_OPUS_FIXATION_RATIONALE.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/scripts/hooks/block-team-in-macro.sh`
+    - `/Users/camone/.claude/skills/three-elements-harness/scripts/append-status.sh`
+    - `/Users/camone/.claude/skills/three-elements-harness/scripts/list-decisions.py`
+  - **改修 (playground 側 2 ファイル)**:
+    - `/Users/camone/dev/claude-code/claude-code-learn/cc-playground/260413_.../.docs/tickets/TICKET-001-generate-readme.md`
+    - `/Users/camone/dev/claude-code/claude-code-learn/cc-playground/260413_.../.docs/tickets/TICKET-002-agent-teams-parallel-verification.md`
+  - **改修 (skill 側 6 ファイル)**:
+    - `/Users/camone/.claude/skills/three-elements-harness/SKILL.md` (description 誠実化 + Gotcha 5 項目追加)
+    - `/Users/camone/.claude/skills/three-elements-harness/assets/_ROOT_CAUSE_TEMPLATE.md` (machine_signals / escalation / S-1.2 規則)
+    - `/Users/camone/.claude/skills/three-elements-harness/assets/macro-policies.yml.template` (auto_retry_allowed_categories + acceptance_criteria_schema)
+    - `/Users/camone/.claude/skills/three-elements-harness/scripts/validate-trilayer.py` (+495 行、Phase B 全項目)
+    - `/Users/camone/.claude/skills/three-elements-harness/scripts/status-poller.py` (invoke_macro_via_claude_p + --invoke-macro/--check-drift flags)
+    - `/Users/camone/.claude/skills/three-elements-harness/scripts/init-trilayer.sh` (--phase=minimal|full + ticket template cp + opus KPI hint)
+  - **参照元 (未改修、本セッションで利用のみ)**:
+    - `.docs/references/pdf/screencapture-note-masa-wunder-n-n40f97558c6d9-2026-04-13-13_54_09.pdf` (記事原典)
+    - `/Users/camone/.claude/skills/review-agent-essence/reference/agent-essence.md` (11 原則正典)
+  - **Phase D 未更新 (次回優先 TODO)**:
+    - `/Users/camone/.claude/skills/three-elements-harness/references/macro-interactive-stub.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/quickstart-30min.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/troubleshooting.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/manifest-schema.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/failure-replanner.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/auto-mode-setup.md`
