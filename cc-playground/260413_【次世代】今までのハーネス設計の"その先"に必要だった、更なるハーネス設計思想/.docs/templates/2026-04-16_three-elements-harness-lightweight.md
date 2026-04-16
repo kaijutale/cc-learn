@@ -1,0 +1,80 @@
+機能名: three-elements-harness skill 軽量化 (公開配布儀礼の除去)
+
+- セッション名: (未命名)
+- 日付: 2026-04-16 14:39:22
+- 概要: 同日 00:07 に完了した v012 (Phase C, v0.1.2+v0.2.0) 実装 + その後の v0.2.1 (post-append fail-safe / resume-digest / evaluation_window / drift warning / source optional / path placeholder) 追加実装の直後、かもねから「このskillは別に公開用のskillじゃないじゃん？なぜそのバージョンがどうのこうのとかCHANGELOG.mdとかを用意してるわけ？」「完全個人用のローカルなグローバルskill。勝手に公開用と解釈してCHANGELOG.mdとかを作成したのはそっち」という率直な指摘を受けた。記事「次世代ハーネス設計」のメンタルモデルに引きずられて積み重ねていた semver / CHANGELOG / breaking-changes-policy / adoption-checklist / 段階的 optional→必須化 / "2 週間 dogfood" といった公開 OSS ライブラリ水準の儀礼を、かもねの判断基準「skill 自体の機能・質に関わるか? YES/NO」で全面的に篩にかけ直し、機能・質に関わらない layer を完全除去した。
+
+- 実装内容:
+  - 4 ファイル完全削除 (`trash` 経由):
+    - `~/.claude/skills/three-elements-harness/CHANGELOG.md` (5 entries / 370 行、公開 OSS 標準の release notes 形式)
+    - `~/.claude/skills/three-elements-harness/references/breaking-changes-policy.md` (破壊的変更ポリシー、周知対象 = 自分のみで空回り)
+    - `~/.claude/skills/three-elements-harness/references/adoption-checklist.md` (採用手順、`init-trilayer.sh` で自動化済)
+    - `/Users/camone/.claude/plans/floating-roaming-avalanche.md` (v0.2.1→v0.3.0 段階リリース計画)
+  - `assets/manifest.yml.template` から `trilayer_version` と `agent_teams_flag` 全セクションを削除。両 field とも scaffold 時に記録されるのみで scripts の実行経路で一度も参照されない「状態メタデータ」だったため、機能に関わらないと判定
+  - `scripts/validate-trilayer.py` から SEMVER_RE / ISO8601_TZ_RE / MANIFEST_AGENT_TEAMS_SOURCE_ENUM 定数、`trilayer_version` semver 検証ブロック、`agent_teams_flag` 検証ブロック (約 30 行) を削除。MANIFEST_REQUIRED から `"trilayer_version"` を外し、v0.x.x / v0.1.2 #N / §8 #N コメント tag を機能説明に書き換え
+  - `scripts/status-poller.py` から v0.2.0 #4 / v0.2.1 見落1 / v0.2.1 #2 等の section header の version tag 削除、`§8 #13` / `§8 #1 (CLOSED)` 言及削除、`(v0.2.1 fail-safe 経路)` / `(v0.1.x 後方互換)` 等の docstring 修飾削除、`[DRIFT] ... → §8 #13 再検討トリガー` を `[DRIFT] Opus 固定 KPI が閾値割れ` に簡潔化
+  - `scripts/init-trilayer.sh` から `detect_agent_teams_flag()` 関数、`v0.1.2 #7 Agent Teams flag 状態を検知` コメント、agent_teams 関連の sed 置換 (3 変数) を全削除。`echo "three-elements-harness init (v0.1.0)"` を `echo "three-elements-harness init"` に変更
+  - `scripts/update-claudemd.sh` の `.docs/trilayer/manifest.yml ... 採用宣言 + semver` を `... 採用宣言` に変更
+  - `assets/macro-policies.yml.template` の `v0.2.1 #5 (C-7 校正盲)` を `(C-7 校正盲)` に、`v0.2.0 #4 追加: Opus 固定判断の検証 KPI (§8 #13)` を `Opus 固定判断の検証 KPI` に変更、背景説明から記事リンク / §8 / v0.1.x 言及削除
+  - `assets/_ROOT_CAUSE_TEMPLATE.md` frontmatter から `# v0.2.1 #6 ... v0.3.0 で必須化予定` コメントを `# S-1.1 記憶の出所追跡` に簡潔化、`> **v0.2.0 #5 追加**:` の version tag 削除
+  - `references/manifest-schema.md` から semver 管理記述、`trilayer_version` 必須 field、`agent_teams_flag` schema セクション全体、`v0.1.2 追加` / `v0.2.0 #4 追加` / `v0.2.1 追加` tag、`§8 #6` / `§8 #13` 参照、`adoption-checklist.md` 参照、v0.3.0 必須化予定記述を全削除
+  - `references/three-layer-contract.md` frontmatter の `design_stage: hypothesis_v0.1` 削除、本文の `trilayer_version: "0.1.0" # semver 必須` 削除、`(採用宣言 + semver + macro policy ref)` → `(採用宣言 + macro policy ref)`、`v0.1 は Claude Code skill として実装されるが、将来の多面配布...breaking-changes-policy.md で semver 規約を固定し...` 全削除、`## 6. Agent モデル固定方針(v0.1 設計原則)` → `## 6. Agent モデル固定方針`、`§8 #1(closed)参照` 削除、Reference Navigation から adoption-checklist / breaking-changes-policy 削除
+  - `references/macro-five-duties.md` frontmatter の `design_stage: hypothesis_v0.1` 削除、`v0.2 で機能強化` / `v0.3+` 記述簡潔化、Reference Navigation から同様削除
+  - `references/failure-replanner.md` `## Step 3.5: ... — v0.2.0 #5 追加` の version tag 削除、`## v0.1 の制約` section 全体 (6 行) 削除
+  - `references/auto-mode-setup.md` `v0.1 では poller は「検知のみ」実装。Macro 再起動の自動化は Claude Code skill 呼出経路の制約により v0.2 以降。` を現行版に、`## パス記法の注意 (v0.2.1 見落3)` → `## パス記法の注意`、`(v0.1 手動)` → `(手動)`、`## Step 3.5: pickup skill からの状態復元 (v0.2.1 追加)` → `## Step 3.5: pickup skill からの状態復元`、`v0.3.0 以降で検討` → `将来検討`、`## v0.1 の制約と撤退基準` section 全体削除
+  - `references/macro-interactive-stub.md` `Phase 1 の v0.1 実装では...` / `v0.1 ではユーザー相談...Phase 3.5 で YAML DSL 評価器を実装する` を現行版に、`## v0.2 以降の拡張ポイント` → `## 将来の拡張ポイント`、`OpenCrew / GPT-5.4 ... §8 要決定事項 #1` 削除
+  - `references/troubleshooting.md` Q4 `trilayer_version が semver 形式ではない` section 全削除 (validator から削除したため存在しないエラー)、Q5-Q13 を Q4-Q12 に番号繰り上げ、`v0.1 では scaffold 時に...` / `v0.1 では対応 1 を推奨。` の version 記述削除、Reference Navigation から adoption-checklist / breaking-changes-policy 削除
+  - `references/quickstart-30min.md` `references/adoption-checklist.md の全項目を確認。以下...` を `以下...` に、`three-elements-harness init (v0.1.0)` 出力例を `three-elements-harness init` に、`破壊的変更への追従 → breaking-changes-policy.md` / `前提チェックリスト → adoption-checklist.md` 削除
+  - `SKILL.md` 前提セクションの `未整備なら references/adoption-checklist.md 参照` 削除、`manifest.yml の trilayer_version は semver 必須。破壊的変更は breaking-changes-policy.md(Phase 5)に従う` 削除、`v0.1 の status-poller.py は検知のみ...(§8 要決定事項 #3)` を現行版に、`v0.2.1 追加` tag 3 個を機能説明として残す形で削除、`(§8 要決定事項 #6)` / `§8 #10` 削除、Reference Navigation から adoption-checklist / breaking-changes-policy 2 行削除
+  - feedback memory 新規作成: `/Users/camone/.claude/projects/-Users-camone-dev-claude-code-claude-code-learn/memory/feedback_personal-skill-context-first.md` に再発防止用の構造化記録
+  - MEMORY.md index を更新し feedback entry を追加
+
+- 設計意図:
+  - **個人用 skill (`~/.claude/skills/three-elements-harness/`) の配布スコープは配布対象 = 自分のみ**。利用者が自分しかいない文脈では semver / CHANGELOG / breaking-changes-policy / adoption-checklist は「他人を壊さないため」の儀礼なので全て空回り。壊したら自分で直せば済む
+  - **agent-essence C-3 迎合性・確証バイアス**: 記事「次世代ハーネス設計」(2026-04-08, masao@AI駆動開発) の設計言語 (公開パッケージ前提の記述スタイル) に引きずられ、skill 設計時にその構造を無批判に借用した。文脈確認 (「これは公開 skill か、個人用 skill か?」) を飛ばしていた
+  - **agent-essence E-2 ルールより理由で汎化**: semver というルールを「変更履歴の追跡」「rollback 経路」「指摘との突合」という理由に分解すると、**指摘との突合**だけが個人用での本質的価値。残り 2 つは git log で代替可能
+  - **かもねの判断基準 "skill 自体の機能・質に関わるか?" YES/NO**: これを厳密に適用した結果、
+    - YES (機能・質に関わる、残す): post-append fail-safe / resume-digest / evaluation_window policy / reference drift warning / fcntl 排他 / DSL parser (syntax check) / Opus KPI 検証 / 3 層契約 / Macro 5 職務 / manifest schema 定義本体 / scaffold 機構
+    - NO (記録/儀礼のみ、削除): `trilayer_version` field / `agent_teams_flag` field / CHANGELOG 履歴 / breaking-changes-policy / adoption-checklist / `v0.x.x` tag / `§8 #N` 参照 / `design_stage: hypothesis_v0.1` label / "2 週間 dogfood" / 段階昇格戦略
+  - **本質を「機能 + 設計ドキュメント + scaffold 機構」に純化**: skill の構成要素を最小限に絞り、かもねが読み返した時に目的外ノイズが視界に入らないようにした
+  - **再発防止として feedback memory を保存**: skill 作成時の判断ステップとして「配布スコープを最初に確認」を構造化。次回は同じ道を辿らない
+
+- 副作用:
+  - **playground (`cc-playground/260413_...`) の既存 `.docs/trilayer/manifest.yml`** に `trilayer_version: "0.2.0"` と `agent_teams_flag: {...}` が残存している。ただし validate-trilayer.py は unknown field を reject しない既存ロジック (YAML の追加 field を無視) のため green 維持 → **playground への後方互換性は保たれている**
+  - **playground の実運用価値は損なわれていない**: v0.2.1 で導入した機能コード (post-append fail-safe / resume-digest / evaluation_window / reference drift) は全て残っており、playground で dogfood 中の検証が続けられる
+  - **将来 skill を公開配布する判断をした場合**、semver / CHANGELOG / breaking-changes-policy を再導入する必要がある。ただし現時点で公開予定はないため、その判断は「公開すると決めた時」に行う
+  - **feedback memory を保存したので、次回 skill 作成時に同種の失敗は構造的に防げる**。判断ステップとして「この skill は公開配布するか、個人用か」を最初に確認するルールが記憶される
+  - **agent-essence レビュー履歴の追跡性は失われた**: 過去 3 ラウンドの `/review-agent-essence` レビュー指摘と対応の突合記録は CHANGELOG 削除で消失した。ただし git log には全変更が記録されており、実装ログ (本ファイル + 過去の `2026-04-16_three-elements-harness-v012.md` 等) に対応経緯が残る。矛盾なし
+  - **playground 側 manifest.yml の手動クリーンアップは実施していない**: `trilayer_version` / `agent_teams_flag` field は残ったまま (validator は通る)。必要なら手動で削除可能だが機能影響なし
+
+- 関連ファイル:
+  - 削除 (4 ファイル):
+    - `/Users/camone/.claude/skills/three-elements-harness/CHANGELOG.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/breaking-changes-policy.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/adoption-checklist.md`
+    - `/Users/camone/.claude/plans/floating-roaming-avalanche.md`
+  - 改修 (15 ファイル):
+    - `/Users/camone/.claude/skills/three-elements-harness/SKILL.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/scripts/validate-trilayer.py`
+    - `/Users/camone/.claude/skills/three-elements-harness/scripts/status-poller.py`
+    - `/Users/camone/.claude/skills/three-elements-harness/scripts/init-trilayer.sh`
+    - `/Users/camone/.claude/skills/three-elements-harness/scripts/update-claudemd.sh`
+    - `/Users/camone/.claude/skills/three-elements-harness/assets/manifest.yml.template`
+    - `/Users/camone/.claude/skills/three-elements-harness/assets/macro-policies.yml.template`
+    - `/Users/camone/.claude/skills/three-elements-harness/assets/_ROOT_CAUSE_TEMPLATE.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/three-layer-contract.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/macro-five-duties.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/manifest-schema.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/failure-replanner.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/auto-mode-setup.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/macro-interactive-stub.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/quickstart-30min.md`
+    - `/Users/camone/.claude/skills/three-elements-harness/references/troubleshooting.md`
+  - 新規 (feedback memory):
+    - `/Users/camone/.claude/projects/-Users-camone-dev-claude-code-claude-code-learn/memory/feedback_personal-skill-context-first.md`
+  - 更新 (memory index):
+    - `/Users/camone/.claude/projects/-Users-camone-dev-claude-code-claude-code-learn/memory/MEMORY.md`
+  - 過去ログとの関係:
+    - `2026-04-15_three-elements-harness.md` (v0.1.0 初版作成) — 基盤として継続
+    - `2026-04-16_three-elements-harness-v012.md` (Phase C 実装) — 基盤として継続、本ログは **その後の軽量化** として独立に追加
+    - 本ログは上記 2 件と矛盾しない。機能コードは全て保持されており、削除したのは公開配布儀礼の layer のみ
