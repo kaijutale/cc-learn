@@ -5,8 +5,16 @@ type: ticket
 status: done
 priority: high
 created: 2026-04-15
-updated: 2026-04-15
+updated: 2026-04-16
 related_team: trilayer-v012-review
+related_spec: null  # 検証系 ad-hoc ticket、spec ファイル不在
+spec_snapshot_sha: null  # T-2.1 遡及追加: related_spec 不在のため null (validator で null 許容)
+original_goal: |
+  設計書 §4-4 の「Agent Teams experimental flag 必須」および
+  three-layer-contract.md §2.4 の「interactive モードでも Macro/Micro 物理分離維持」を
+  実動作で満たすことを証明する。
+  # T-2.2 遡及追加: Macro が受け取った自然言語 goal を保全
+reviewed_by: null  # C-4 遡及追加: 当時レビュー担当の記録なし、null で optional 扱い
 assignee_team: team-documenter + team-tester
 artifact:
   - .docs/knowledge/decisions/2026-04-15_at-changelog-v012-draft.md

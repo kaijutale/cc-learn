@@ -5,8 +5,14 @@ type: ticket
 status: done
 priority: high
 created: 2026-04-15
-updated: 2026-04-15
+updated: 2026-04-16
 related_spec: .docs/specs/trilayer-readme-generation.md
+spec_snapshot_sha: 86576485d6de8248952b2b1a7360906b5bf50d94  # T-2.1 生成時の spec blob hash (遡及追加)
+original_goal: |
+  本 playground の README.md を `team-documenter` agent で生成する。
+  Phase 3 自己適用の対話モード round trip を実証する。
+  # T-2.2 遡及追加: Macro が受け取った自然言語 goal を保全
+reviewed_by: null  # C-4 遡及追加: 当時レビュー担当の記録なし、null で optional 扱い
 assignee_team: team-documenter
 artifact: README.md
 ---
