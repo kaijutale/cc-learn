@@ -1,0 +1,84 @@
+機能名: マルチエージェント協調の 3 要素ハーネス (記事思想 → 2 skill 実装) の構造理解整理
+
+- セッション名: (未命名)
+- 日付: 2026-04-17 10:30:11
+- 概要: 同日 00:55 に完了した `three-elements-harness` skill の essence-compliance 実装 (commit `4a1be3f`) 後、その構造的意味をかもねと対話で整理したセッション。記事「次世代ハーネス設計」が提唱した 3 要素 (Macro/Micro/Project OS) を Claude Code エコシステムで実装する時の **skill 間責務分担** / **レイヤー階層** / **Project OS 設計哲学** / **記事思想から 2 skill へのマッピング** を一本の筋道で言語化した。これは「実装記録」ではなく「実装経験を経て結晶化した概念地図」であり、次回 skill を触る時に「なぜこの構造なのか」を即座に想起するための北極星として残す。過去の `2026-04-15_context-engineering-understanding.md` (コンテキストエンジニアリング基礎) と同系譜の理解整理ログで、抽象度と射程が違うので互いに補完する対になる。
+
+- 実装内容:
+  本セッションは具体的な code/config 変更を含まない**概念整理**。主要論点を以下に記録する:
+  - **1. `/three-elements-harness` と `/orchestrating-team-development` の責務比較**:
+    - orchestrating = Micro 層の**指揮者** (1 タスク実行のパイプライン、Mode 選択 / xxDD ゲート / 5-Role 並列 / 相互レビュー / spec 照合)
+    - trilayer = Macro + Project OS を含む**メタ層** (意図→ticket 変換 / KPI 監視 / 半自律 loop / 失敗再計画 / 状態永続化)
+    - 単位の違い: orchestrating は「1 タスク = 1 回実行」、trilayer は「プロジェクト全体を状態機械として連続稼働」
+    - トリガーの違い: orchestrating は毎回人間 goal、trilayer は ticket 駆動 + 定期 poll + drift 検知による半自律起動
+  - **2. 両者の階層関係を「ラッパー」ではなく「上位層」と精密化**:
+    - かもねの直感「trilayer は orchestrating のラッパー？」は 80% 正しいが、ラッパー (同責務の被覆) ではなく**上位 orchestration meta 層** (新責務の上積み) と言う方が実態に合う
+    - 類比: `Kubernetes : Docker = trilayer : orchestrating`。K8s は Docker のラッパーではなく、Docker を道具として使う上位 state machine。同じ構造
+    - 単方向依存: trilayer → orchestrating は知る、orchestrating → trilayer は知らない (orchestrating は単体で完結)
+  - **3. レイヤー分解の確定図**:
+    - L4 = `/three-elements-harness` (Macro + Project OS 統合)
+    - L3 = `/orchestrating-team-development` (Micro 指揮)
+    - L2 = `~/.claude/agents/team-*.md` (Agent Teams 5 体の実体)
+    - L1 = Claude Code CLI + Agent Teams flag (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)
+  - **4. 3 要素 → skill マッピング**:
+    - Macro 層 = trilayer が専任
+    - Micro 層 = orchestrating (指揮) + team-*.md (実体) の 2 資産
+    - Project OS 層 = EKP (`.docs/{specs,designs,tickets,knowledge,tests}/`) + trilayer (`.docs/trilayer/`) の合作
+    - file-as-message = 両 skill 共通の層間通信規約 (YAML frontmatter + Markdown)
+  - **5. 「3 要素で走らせる」最小構成 = 4 資産**:
+    - 中核 2 skill: trilayer + orchestrating
+    - 基盤 2 資産: team-*.md (5 体) + EKP
+    - どれ 1 つ抜くと 3 要素契約が成立しない (trilayer 抜く→Macro ×、orchestrating 抜く→Micro 指揮機能 ×、team-* 抜く→Micro 実行体 ×、EKP 抜く→Project OS 基盤 ×)
+  - **6. Project OS の設計哲学 (かもねの要約から精密化)**:
+    - 「長い議事録」ではなく**「次の行動に必要な結論を AI が読める形で残す」**ための状態基盤
+    - 具体的形式制約: append-only / 結論先出し (YAML frontmatter) / 1 決定 = 1 ファイル (grep 可能)
+    - ローカル正本 vs 外部正本 (Linear 等) の判断軸: **「誰が主役か」で決まる** — 人間中心なら Linear、AI 中心ならローカル .docs/。排他ではなくハイブリッドも可能 (Linear webhook → ticket 自動生成)
+    - 副次効果: git log = 改ざん困難な監査ログ / rate limit ゼロ / オフライン動作 / LLM 得意領域 (ファイル読み書き) に寄る
+  - **7. 責務境界の物理化が 2 skill 分離の理由**:
+    - 1 skill に詰め込むと Macro 判断 (長期) と Micro 実行 (短期) が同じ context で混ざり迎合バイアス発生
+    - 分離することで trilayer は自前で team-* を呼ばない (PreToolUse hook で物理 block = essence-compliance 実装の V-1.3)
+    - orchestrating は過去 ticket を記憶せず毎回 fresh 起動 → 迎合バイアス構造的防御
+  - **8. ドラクエ 11 比喩による定着** (かもねのペルソナに合わせた概念定着装置):
+    - Macro 層 = マスタードラゴン / 賢者ロウ (神託と大局観)
+    - Micro 層 = 勇者パーティ 8 人 (戦闘実行体)
+    - Project OS 層 = 冒険の書 (全進行記録、ふっかつのじゅもん相当)
+    - orchestrating = 戦闘 1 回の指揮 (作戦指示 = Mode 選択)
+    - trilayer = 王国運営 + 神託スケジューラ (複数戦闘の統合管理)
+  - **9. 記事が「検証中の仮説」だった部分を essence-compliance 実装で埋めた自覚**:
+    - 記事は思想を語ったが具体的 validator / hook / schema は未定義
+    - 今朝の実装 (ticket schema / status flow validator / --invoke-macro / PreToolUse hook) は記事が触れなかった**実装上の穴を塞ぐ作業**でもあった
+    - これは記事の丸写しではなく「思想の純化と再構築 + 未定義領域の補完」
+
+- 設計意図:
+  - **「実装経験を経た概念整理」の価値を残す**: 今朝 essence-compliance を commit するまでに「思想→レビュー→プラン→実装→commit」を通った。その経験を経た上での概念整理は、表層的な skill 説明とは違う**実体に接続した理解**になっている。この状態の言語化を残さないと、数週間後に同じ抽象度まで戻るのに再度手を動かす必要が出る
+  - **北極星としての役割**: 次回 trilayer / orchestrating を触る時、あるいは新しい multi-agent skill を設計する時、この理解整理ログが「設計判断の物差し」として機能する。具体的には「ラッパーか上位層か」「1 skill にまとめるか分離するか」「ローカル正本か外部正本か」といった設計ミスを事前に防ぐ
+  - **かもねの認知的成長の記録**: 今日 1 日で「マスタードラゴン→勇者パーティ→冒険の書」という自作の比喩が定着するまでに到達した。この定着状態は時間が経つと薄れるので、言語化してアンカーを打つ
+  - **迎合せず精密化する方針の実証**: かもねの「ラッパー？」「両方必要？」といった直感に対し、Yes/No で終わらせず**精密化して違いを明示**した。この作業自体が agent-essence C-3 (迎合性バイアス回避) の実践であり、その記録としても価値がある
+  - **過去 understanding ログとの対化**: 2026-04-15 がコンテキストエンジニアリングの**基礎理論** (LLM と context の関係)、本ログがマルチエージェント協調の**応用アーキテクチャ** (複数 skill と Agent Teams の関係)。抽象度が違うが連続する筋道を形成
+
+- 副作用:
+  - **git log と対応しない記録になる**: 実装ログは commit ハッシュと紐付くが、本ログは概念整理なので commit 証跡を持たない。`.docs/templates/` は `.gitignore` 対象なのでリポジトリにも残らない。ただしローカルで参照する分には十分
+  - **「この整理に囚われる」リスク**: 現時点の Claude Code エコシステム + Opus 固定を前提にした整理なので、将来的に外部モデル連携や新しい orchestration パターンが登場した場合、この言語化を上書きする必要が出る。特に「trilayer : orchestrating = K8s : Docker」類比は今後の実装変更で崩れる可能性
+  - **他者配布時の再解釈コスト**: 個人用スコープで書いているので、かもね自身のペルソナ (セーニャ / ドラクエ 11 比喩) が混ざっている。他者に共有する時はドラクエ比喩を抽象化する必要あり
+  - **時刻スナップショットが essence-compliance ログと混ざらないよう分離**: 同日 2 ログが併存するが、前者 (00:55) = 実装時点、本ログ (10:30) = 概念整理時点。AI 読込時にこの時刻差を読み取る必要あり。命名で `-understanding` vs `-essence-compliance` と明確に性格分離済
+  - **将来的な統合の可能性**: 今後 trilayer skill 本体の `references/` セクションを整備する時、本ログの「3 要素→skill マッピング表」「レイヤー図」「4 資産最小構成」の一部を正典化する候補になる。ただし個人用ログの内容を skill references に昇格させるかはその時判断
+  - **この対話 (10:30 時点) の理解がベストとは限らない**: あくまで essence-compliance 実装直後の理解。1 週間運用してみると「この部分は違った」と気付く可能性あり。その時点で updated フィールドで補正するか新ログを起こすか要判断
+
+- 関連ファイル:
+  - **参照した既存資産 (読込のみ、改変なし)**:
+    - `/Users/camone/.claude/skills/three-elements-harness/SKILL.md` (trilayer skill 本体)
+    - `/Users/camone/.claude/skills/orchestrating-team-development/SKILL.md` (orchestrating skill 本体)
+    - `/Users/camone/dev/claude-code/claude-code-learn/cc-playground/260413_.../.docs/references/pdf/screencapture-note-masa-wunder-n-n40f97558c6d9-2026-04-13-13_54_09.pdf` (記事原典)
+  - **今日のログ対 (同日 2 本の相互補完ペア)**:
+    - `.docs/templates/2026-04-17_three-elements-harness-essence-compliance.md` (00:55 作成、実装記録、commit `4a1be3f` と対応)
+    - `.docs/templates/2026-04-17_multi-agent-harness-understanding.md` (本ファイル、10:30 作成、概念整理)
+  - **同系譜の過去 understanding ログ (参考対比)**:
+    - `.docs/templates/2026-04-15_context-engineering-understanding.md` (コンテキストエンジニアリング基礎理論、本ログと抽象度が違う対)
+  - **本ログから将来参照される可能性がある資産**:
+    - trilayer skill の `references/troubleshooting.md` Q13-Q20 TODO (本ログの「なぜこの構造か」を FAQ 形式で転記する候補)
+    - trilayer skill の `references/macro-interactive-stub.md` T-2.2 TODO (goal 再注入時の「Macro の役割」説明に本ログの定義を引用する候補)
+    - 新規に `references/harness-architecture.md` を起こして本ログの「4 資産最小構成」「K8s 類比」を正典化する候補 (個人用スコープなので急がない)
+  - **直近の対話で言及した skill 群 (本ログの文脈理解に必要な周辺知識)**:
+    - `establishing-knowledge-persistence` (Project OS 層の基盤、`.docs/{specs,designs,tickets,knowledge,tests}/`)
+    - `review-agent-essence` (11 原則で skill をレビューする基礎、今朝の essence-compliance 作業の起点)
+    - `logging-implementation` (本スキル、本ログ作成の起動者)
