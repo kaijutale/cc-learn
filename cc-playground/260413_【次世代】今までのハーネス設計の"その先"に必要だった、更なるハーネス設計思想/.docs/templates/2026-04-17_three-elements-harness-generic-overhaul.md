@@ -1,0 +1,88 @@
+機能名: three-elements-harness skill 全面改修 (project-os準拠 6dir 構造化 + 記事出典の完全除去 + scheduler/failure_replanner 削除 + EKP 完全非依存化)
+
+- セッション名: (未命名)
+- 日付: 2026-04-17 20:03:20
+- 概要: 記事「次世代ハーネス設計」(`.docs/references/pdf/screencapture-note-masa-wunder-...pdf`) の Project OS 図示(`project-os/{kpi,stories,specs,tickets,artifacts,logs}` の 6 ディレクトリ + .yaml 単一形式) と、現 skill 実装(`.docs/trilayer/{manifest,macro-policies,status}.yml` の 3 ファイル固定 + EKP 流用) の構造的乖離を指摘された。かもね(ユーザー)から「記事を"答え"として採用してるなら、ディレクトリ構成は絶対合わせるべき」「skill が勝手に"こっちのほうがいい"と自己判断で迂回している」「`.docs/trilayer/` は記事に無い発明」と指摘。`review-agent-essence` skill で再評価したところ、T-1(関心事の分離)に × 判定、記事のコア主張「KPI→Story→Spec→Ticket→Subtask→Artifact の一本の依存チェーン」が未実装、skill 内 15 箇所以上で記事名・著者名・PDF パス・arXiv 論文・絶対パス等への出典依存が確認された(全プロジェクト共有 skill なのに特定プロジェクト依存 = "ゴミskill" 化リスク)。前回 `2026-04-17_three-elements-harness-essence-compliance.md` で追加した scheduler/failure_replanner/invoke-macro は記事の「マクロ自動化は最後で良い、最小版から始めろ」思想と矛盾するため全削除を決定。Plan モードで 7 ステップ実装計画を立案、かもねの合意を得て Auto モードで一気通貫実装した。ディレクター判断(かもね): (1) skill 名維持 three-elements-harness (2) EKP 完全非依存 + orchestrating-team-development 協調再設計 (3) scheduler/failure_replanner 完全削除 (4) 既存 trilayer プロジェクトへの互換性考慮不要。
+
+- 実装内容:
+  - **Plan 文書外部化**
+    - `/Users/camone/.claude/plans/todo-1-note-2-sprightly-flask.md` 新規作成: Context + 確定事項 + ディレクトリ構造 + ファイル別改修 + ticket schema + validator 分割設計 + 実装順序(7 Step) + 検証方法 + Critical Files
+    - Plan agent (subagent_type=Plan) で計画立案、Explore agent 2 並列で記事本質抽出 + skill inventory を事前調査
+  - **Step 1-2: 出典依存除去 + scheduler/failure_replanner 完全削除**
+    - `trash ~/.claude/skills/three-elements-harness/scripts/status-poller.py` (18KB 削除)
+    - `trash references/auto-mode-setup.md` (6.9KB 削除)
+    - `trash references/failure-replanner.md` (8.7KB 削除)
+    - `trash assets/_ROOT_CAUSE_TEMPLATE.md` (4.7KB 削除)
+    - `trash references/manifest-schema.md` (旧 trilayer schema, 9.3KB 削除)
+    - `trash scripts/init-trilayer.sh` (旧 scaffold, 6.7KB 削除)
+    - `trash scripts/append-status.sh` (旧 status.yml 専用, 3.4KB 削除)
+    - `trash scripts/validate-trilayer.py` (旧 51KB 巨大 validator 削除)
+    - `trash scripts/list-decisions.py` (EKP decisions/ 依存なので削除)
+    - `trash assets/manifest.yml.template` / `assets/macro-policies.yml.template` (新 .yaml 拡張子版で置換)
+  - **Step 3: project-os 6dir ディレクトリ構造への刷新**
+    - `SKILL.md` 全面書換: frontmatter description の trigger keyword から「次世代ハーネス」「next-gen harness」「trilayer」「半自律PDCA loop」「scheduler setup」等を削除、新 trigger「Macro Micro Project OS」「依存チェーンハーネス」「KPI Story Spec Ticket」「agent teams harness」等を追加。本文 L23「記事「次世代ハーネス設計」で提唱された」削除 → 自立記述化。L25「ハーネス成熟度モデルの Lv2.5〜Lv3 相当」削除(EKP 依存表現)。L33「記事の OpenCrew / GPT-5.4 等の外部ツール連携は不採用」削除 → 「Macro/Micro 両層を Claude Opus 固定」のみ記述。Macro 職務を 5→4 に削減(「定期実行と監視」「失敗時の再計画」削除)
+    - `references/three-layer-contract.md` 全面書換 (~10KB): frontmatter から `article_source` フィールド削除、「⚠ Status 明示: active hypothesis」ブロック全削除、本文 L21「記事『次世代ハーネス設計』の核心は責務と状態の分離」→「本skillの核心は責務と状態の分離」。Project OS dir 記述を `.docs/{specs,designs,tickets,knowledge,tests}` EKP 流用版から `.docs/project-os/{kpi,stories,specs,tickets,artifacts,logs}` 6 dir 構造に全面書換。§5 に「Agent Teams 協調契約」新規セクション追加 (orchestrating-team-development との接続点明示)。§6 実装非依存性 / §7 Agent モデル固定方針は保持(出典参照部分のみ削除)
+    - `references/macro-four-duties.md` 新規作成 (旧 macro-five-duties.md 置換, ~9KB): Macro 職務を 5→4 に削減(「定期実行と監視」「失敗時の再計画」セクション削除)、frontmatter から `article_source` 削除、冒頭 Status 明示ブロック削除、職務 3「チケット化」に依存チェーン構築(`related_kpi` / `related_story` / `related_spec` / `subtasks` / `artifacts` フィールド埋め)を責務として明示、呼出先 skill (spec-based-development / kpidd) を「optional 連携」に緩和 (EKP 完全非依存方針)
+    - `references/project-os-schema.md` 新規作成 (旧 manifest-schema.md 置換, ~10KB): `.docs/project-os/` 配下の 6 dir 各 schema 定義 (kpi/stories/specs/tickets/artifacts/logs 各 frontmatter 必須フィールド + validator 検証ルール + ファイル命名規約)、§9 ファイル間整合性検証ルール (上方リンク/下方リンク/append-only/DSL/opus_fixation_validity 検証の責務分担)
+    - `references/ticket-schema.md` 新規作成 (~6KB): ticket frontmatter の完全 schema 定義、依存チェーンフィールド(`related_kpi` / `related_story` / `related_spec` / `spec_snapshot_sha` / `subtasks` / `artifacts`)の role + validator 検証ルール、2 層オラクル(behavior_oracle + structural_oracle)の使い方、権限分離(`assignee_team != reviewed_by` on done)
+    - `references/macro-interactive-stub.md` 全面書換: AskUserQuestion 駆動の Macro 対話 6 ステップフロー、依存チェーン入力ステップ追加 (Step 4b 新設)、パス参照を全て `.docs/project-os/` に書換、`article_source` frontmatter 削除
+    - `references/quickstart.md` 新規作成 (旧 quickstart-30min.md 置換): "30分" 時間表記削除 (プロジェクト規模に依存するため)、`init-project-os.sh` / `validate-project-os.py` への全置換、EKP 前提チェック記述削除、`config/macro-policies.yaml` 配置を full phase のみに
+    - `references/troubleshooting.md` 全面書換: 依存チェーン integrity error (Q6〜Q10: related_spec 不在 / 上方整合性違反 / done+artifacts[] 空 / reviewed_by==assignee_team / spec_snapshot_sha drift) の対応ガイド追加、EKP validator 衝突ガイダンス削除 (非依存方針)、`HARNESS_MODE=macro` hook 動作確認 Q14 追加
+  - **Step 4: ticket schema + validator 分割再構築**
+    - `assets/ticket-template.md.template` 全面書換 (~4KB): 依存チェーンフィールド placeholder 追加 (`__RELATED_KPI__` / `__RELATED_STORY__` / `__RELATED_SPEC__` / `__SPEC_SHA__`)、2 層オラクル(behavior_oracle + structural_oracle)セクション保持、reviewed_by + original_goal 必須フィールド保持
+    - `assets/{kpi,story,spec,artifact,log}-template.*.template` 新規作成 (計 5 ファイル, ~1KB each): 各 dir 対応の frontmatter template (軽量、必須フィールドのみ)
+    - `assets/manifest.yaml.template` 新規作成: `.docs/project-os/manifest.yaml` 用、`ekp_required: true` フィールド削除 (非依存方針)、`project_os_root: .docs/project-os/` 固定
+    - `assets/macro-policies.yaml.template` 新規作成: scheduler / failure_replanner セクション全削除、arXiv 論文引用コメント(L62)削除、残す: priority_rules DSL / ticket_conventions / acceptance_criteria_schema / kpi.opus_fixation_validity
+    - `assets/_OPUS_FIXATION_RATIONALE.md` 改修: L17「記事「次世代ハーネス設計」の仮説を実装するメタフレームワーク」→「本skillの設計方針として採択」、L18-19「記事自身は Macro 層を OpenCrew / GPT-5.4 等の外部モデルで動かすことを推奨しているが」完全削除、L33「OpenCrew / GPT-5.4 等を接続すると」削除、L61 PDF 絶対パス削除、L62 agent-essence 絶対パス → 相対参照「review-agent-essence skill」。判断根拠 3 項 + 撤退条件 + `kpi.opus_fixation_validity` 閾値参照は保持
+    - `scripts/init-project-os.sh` 新規作成 (~5KB, 旧 init-trilayer.sh 置換): `--phase=minimal` (デフォルト: `tickets/` + `logs/` + `manifest.yaml` + `TICKET-TEMPLATE.md` のみ) / `--phase=full` (6 dir 全部 + `config/macro-policies.yaml`)、EKP 前提チェック完全削除 (`.docs/` 存在確認のみ、無ければ作成)
+    - `scripts/append-log.sh` 新規作成 (~3KB, 旧 append-status.sh 置換): 書込先を `.docs/project-os/logs/YYYY-MM-DD-<kind>.md` に変更、形式を Markdown bullet + YAML frontmatter に変更 (単一 YAML ファイル肥大化回避)、post-append YAML parse check + rollback on failure を保持
+    - `scripts/validate-project-os.py` 新規作成 (~10KB, 旧 51KB validate-trilayer.py から軽量化, エントリのみ): 引数 parse → 各 validator 呼出 → exit code 集約、`--check-chain` / `--validators tickets,logs` フラグ対応、exit code 0/1/2
+    - `scripts/validators/__init__.py` + `schema_common.py` 新規作成: 共通定数 (ID pattern / DATE_RE / ISO8601_TZ_RE / TICKET_STATUSES / TICKET_STATUS_FLOW / TEAM_NAMES / LOG_ACTIONS / LOG_LAYERS)、parse_frontmatter / list_files / collect_ids ユーティリティ
+    - `scripts/validators/validate_tickets.py` 新規作成 (~10KB): ticket schema + 依存チェーン整合性 (上方/下方) + 2 層オラクル + spec_snapshot 整合 + subtasks 完了網羅 + 権限分離 + DAG 循環検出 + status 遷移有効性
+    - `scripts/validators/validate_logs.py` 新規作成 (~6KB): logs/*.md schema (type/layer/action/timestamp) + append-only 検証 (git staging + history 2 path)
+    - `scripts/validators/validate_kpi.py` 新規作成 (~3KB): kpi yaml schema + opus_fixation_validity 閾値チェック (ticket_success_rate_min 0.0-1.0 / replan_chain_max_avg >=1.0 / measurement_window_days >=1)
+    - `scripts/validators/validate_stories.py` + `validate_specs.py` 新規作成 (~2KB each): yaml schema + 上方リンク存在確認 (related_kpi / related_story)
+    - `scripts/validators/validate_dsl.py` 新規作成 (~6KB): priority_rules DSL の recursive descent parser 移設 (eval/exec 非使用、or/and/cmp/term/dotted access)
+    - `scripts/list-logs.py` 新規作成 (旧 list-decisions.py rename + 書換): 対象 dir を `.docs/project-os/logs/` に変更 (EKP `.docs/knowledge/decisions/` 依存削除)、`--ticket` / `--action` / `--layer` / `--kind` フィルタ保持
+  - **Step 5-6: Agent Teams 協調再設計 + hook + CLAUDE.md 追記更新**
+    - three-layer-contract.md §5 Agent Teams 協調契約で EKP 非依存版に書換: orchestrating-team-development への ticket path 渡し方を `.docs/project-os/tickets/TICKET-NNN-*.md` で明示、team agents の契約(assignee_team 一致確認 / 責務範囲外に触れない / artifacts/ への pointer 生成 / logs/ への append)を記述
+    - `scripts/hooks/block-team-in-macro.sh` 改修: `.docs/trilayer/manifest.yml` 参照 → `.docs/project-os/manifest.yaml`、環境変数 `TRILAYER_MODE` → `HARNESS_MODE` rename (後方互換なし、かもね決定: 移行対応不要)、stopReason メッセージから「trilayer V-1.3」→「three-elements-harness V-1.3」に書換
+    - `scripts/update-claudemd.sh` 改修: MARKER を `# Trilayer Harness` → `# Project OS Harness` に変更、追記文言を 6 dir 構造に合わせて全面書換 (manifest.yaml / kpi/ / stories/ / specs/ / tickets/ / artifacts/ / logs/ / config/macro-policies.yaml の説明)、依存チェーン(KPI→Story→Spec→Ticket→Subtask→Artifact)を明記、バリデータ呼出を `validate-project-os.py` に更新
+    - 全 scripts を `chmod +x`
+  - **Step 7: 最終検証 (V-1 汚染除去 / V-2 scaffold / V-3 schema error 検出 / V-6 EKP 非依存)**
+    - V-1 汚染除去 grep: `(masao|masa@|wunder|次世代ハーネス|note\.com|arXiv:?2603|screencapture|GPT-5|OpenCrew|/Users/camone/|trilayer|scheduler|failure_replanner|status-poller|_ROOT_CAUSE|半自律PDCA|invoke-macro|TRILAYER_MODE)` で skill 全体検索 → **0 hit**
+    - V-2 scaffold: `/tmp/test-project-os-v2/` で `init-project-os.sh my-test-v2 --phase=minimal` → `validate-project-os.py` exit 0 (空 manifest + 0 ticket)、`--phase=full` → `validate-project-os.py` exit 0 (6 dir 全部 + config/macro-policies.yaml)
+    - V-3 schema 検証: KPI→Story→Spec→Ticket の完全依存チェーン ticket 作成 + `git hash-object` で spec_snapshot_sha 設定 → **validator green** / 意図的違反 ticket (status=done + reviewed_by==assignee_team + artifacts=[] + 依存チェーン全 null) 作成 → **validator が 2 error + 1 warning を正しく検出** (artifacts 必須違反 / 権限分離違反 / ad-hoc warning)
+    - V-6 EKP 非依存: `/tmp/test-project-os-v2/` は `.docs/specs/` / `.docs/knowledge/` 等の EKP ディレクトリ不在、それでも init + validate が全て exit 0 → EKP 完全非依存動作を確認
+  - **Task 管理**: TaskCreate で 7 ステップを task 化、各ステップ完了時に TaskUpdate で status 更新 (Step 1-7 全 completed)
+
+- 設計意図:
+  - **skill は全プロジェクト共有のグローバル資産**: `~/.claude/skills/` 配下は全プロジェクトで呼ばれる汎用資産なので、**特定プロジェクトの固有情報(note 記事 / masao 氏 / PDF パス / arXiv 論文 / 絶対パス)を skill 内に残すと、他プロジェクトで呼ばれた時に文脈不明のゴミ skill になる**。設計思想は skill 自身の言葉で完全に内在化し、出典参照を全削除することで汎用性を担保 (agent-essence T-1 関心事の分離 + C-3 迎合性防御)
+  - **記事の Project OS 設計への原典回帰**: 前回の essence-compliance 作業では `.docs/trilayer/` という skill 独自発明を採用したが、これは記事の 6 dir 構造(`project-os/{kpi,stories,specs,tickets,artifacts,logs}`)を「EKP 流用の方が合理的」という自己判断で迂回したもの。かもねから「skill が勝手に迂回している」と指摘され、記事の依存チェーン核心主張(「上に遡れば"なぜ"が分かる、下に辿れば"今何が動いているか"が分かる」)が実装できていない問題を認識。skill の責任は「記事の思想を汎用的に実装する」ことであって「記事を自分流に再解釈する」ことではない、という原則に戻った
+  - **最小版から始めろ思想への準拠**: 記事の導入ロードマップ (Step1: Project OS 最小版 → Step2: Micro 標準レーン → Step3: Macro 自動化) を重視し、scheduler/failure_replanner/invoke-macro 等の Macro 自動化機能を削除。前回 Phase C で追加した `status-poller.py --invoke-macro` は記事の「マクロ自動化は最後で良い」警告に逆行する実装だった。min phase 導入を推奨し、scaffolder で軽量 (`--phase=minimal` がデフォルト) を強制
+  - **EKP 完全非依存**: かもね選択「完全非依存 + orchestrating-team-development 協調の再設計」により、`establishing-knowledge-persistence` への前提依存を解除。`.docs/knowledge/decisions/` への書込も削除し、全ログを `.docs/project-os/logs/` に集約。他 skill (spec-based-development / kpidd) 呼出は「optional 連携」に緩和(未導入でも本 skill 単独で 4 職務成立)。これにより skill 単独で意味が通じる汎用性を最大化
+  - **validator 分割設計**: 旧 51KB 巨大 validate-trilayer.py を分割し、責務単位の 6 validator (tickets/logs/kpi/stories/specs/dsl) + schema_common に分離。各 validator は ~3-10KB の軽量単位、読解性 + 改修保守性向上。また root_cause validation / drift detection / append-status は削除 (scheduler/failure_replanner 連動機能のため)
+  - **ticket frontmatter への依存チェーンフィールド追加**: 記事のコア主張「KPI→Story→Spec→Ticket→Subtask→Artifact の一本の鎖」を構造で担保するため、`related_kpi` / `related_story` / `related_spec` / `spec_snapshot_sha` / `subtasks` / `artifacts` を ticket frontmatter に追加。上方整合性(`related_spec` の spec の `related_story` と ticket の `related_story` が一致) + 下方整合性(status=done なら `artifacts[].ref` 実在) を validator で強制。これで「上に遡れば"なぜ"が分かる、下に辿れば"今何が動いているか"が分かる」trace 性が構造保証される
+  - **Auto mode での一気通貫実装**: Plan モードで 7 ステップ計画を確定させた後、Auto mode で連続実行することで、ステップ間の context 切断コストを最小化。削除 → 新規作成 → 部分修正 の順で依存関係を整理、削除対象ファイルの内容を新規ファイルに継承する前に先に新版を作成、旧版削除は trash (復元可能)で安全性担保。TaskCreate/TaskUpdate でステップ進捗を可視化
+  - **Claude Opus 固定の継続**: かもねの既存 feedback memory (`feedback_claude-opus-only-for-multi-agent.md`) に従い、Macro/Micro 両層を Claude Opus 固定のまま維持。`_OPUS_FIXATION_RATIONALE.md` の判断根拠 + 撤退条件(`kpi.opus_fixation_validity` の 3 閾値)は保持、記事出典参照のみ削除して skill 自立化
+
+- 副作用:
+  - **既存 playground プロジェクトの `.docs/trilayer/` は放置**: かもね選択「互換性考慮不要」により、現 playground には旧 `.docs/trilayer/{manifest,macro-policies,status}.yml` が残存している可能性あり。次回 skill を使う時は `.docs/project-os/` に手動で切り替え必要 (移行スクリプト未提供)
+  - **過去の実装ログとの矛盾**: `2026-04-16_three-elements-harness-v012.md` / `2026-04-17_three-elements-harness-essence-compliance.md` に記録された `status-poller.py --invoke-macro` / `_ROOT_CAUSE_TEMPLATE.md` / trilayer 3 ファイル構造等は **全て今回削除**。これらのログは歴史的経緯として残すが、「現行 skill の仕様」としては無効。CLAUDE.md 等で「最新は本ログ参照」を明示する必要あり
+  - **Macro 自動化能力の喪失**: 前回 Phase C で実装した「半自律 PDCA loop を閉じる `--invoke-macro`」機能が消えた。将来 Macro 自動化を復活させる場合は、新たに別 skill (例: project-os-automation) として分離実装するか、本 skill に optional 機能として追加する設計変更が必要
+  - **orchestrating-team-development との再配線コスト**: EKP 非依存化により、既存 team-* agents が `.docs/specs/` 前提で動いている場合は本 skill との連動で adapter が必要になる可能性。three-layer-contract.md §5.2 で team agents の契約を明文化したが、実際の連動テストは未実施(V-4 E2E テスト未実行、skill 単独の scaffold + validator 検証まで)
+  - **skill サイズの若干増加**: 目標は旧 200KB → 新 100KB だったが、実績 216KB。依存チェーン schema 詳細化 + 7 validator 分割 + ticket-schema.md / project-os-schema.md 新規作成で markdown が増えたため。削除(scheduler/failure_replanner/invoke-macro で -40KB 程度)と新規追加(validator 7 分割 + schema 2 新規 + 5 template 新規で +70KB 程度)の差し引き結果
+  - **validator の drift detection / root_cause validation / failure_category 分類機能を喪失**: 前回 Phase B で追加した spec drift 検知 + root_cause 自動分類 + auto_retry_allowed_categories 強制は全削除。必要なら今後再実装するが、現状は Macro の手動判断で代替
+  - **hook の後方互換性なし**: `TRILAYER_MODE=macro` 環境変数を設定している既存セッションは、`HARNESS_MODE=macro` に書き換え必要。かもね決定により後方互換コードは実装していない
+
+- 関連ファイル:
+  - **Plan 文書**: `/Users/camone/.claude/plans/todo-1-note-2-sprightly-flask.md` (本改修の計画書 / Context / ファイル別改修 / 実装順序)
+  - **skill root**: `~/.claude/skills/three-elements-harness/` (全 31 ファイル / 216KB)
+    - `SKILL.md` (全面書換, ~6KB)
+    - `references/` (7 files, ~55KB): three-layer-contract / macro-four-duties / project-os-schema / ticket-schema / macro-interactive-stub / quickstart / troubleshooting
+    - `scripts/` (主要): init-project-os.sh / append-log.sh / validate-project-os.py / list-logs.py / update-claudemd.sh / hooks/block-team-in-macro.sh
+    - `scripts/validators/` (7 files): __init__.py / schema_common.py / validate_tickets.py / validate_logs.py / validate_kpi.py / validate_stories.py / validate_specs.py / validate_dsl.py
+    - `assets/` (9 files): ticket-template.md.template / {kpi,story,spec,artifact,log}-template.*.template / manifest.yaml.template / macro-policies.yaml.template / _OPUS_FIXATION_RATIONALE.md
+  - **参照元記事 PDF** (本 playground のみに存在): `.docs/references/pdf/screencapture-note-masa-wunder-n-n40f97558c6d9-2026-04-13-13_54_09.pdf` — **skill 内には参照記述なし**、本ログ + playground プロジェクトの `.docs/` のみで参照
+  - **関連 memory**: `~/.claude/projects/-Users-camone-dev-claude-code-claude-code-learn/memory/feedback_claude-opus-only-for-multi-agent.md` (Opus 固定方針の既存 feedback)
+  - **前回実装ログ**: `.docs/templates/2026-04-17_three-elements-harness-essence-compliance.md` (前回 essence-compliance 作業で追加した一部機能を今回削除した経緯)
