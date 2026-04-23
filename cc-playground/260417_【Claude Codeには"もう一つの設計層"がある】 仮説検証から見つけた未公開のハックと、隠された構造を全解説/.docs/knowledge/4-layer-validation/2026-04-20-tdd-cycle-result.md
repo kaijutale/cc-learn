@@ -270,3 +270,162 @@ Layer 2: 孫の Step 0 で `cd <展開されたパス>` を強制実行
 **「失敗で終わらせず完成に到達」の好例**:
 Round 1 の❌は学びの起点になり、skill側の構造的修正で Round 2 の✅に変換された。grayzone も設計パターンで飼い慣らせる = 記事のUnix哲学「小さい部品の組み合わせ」の実践価値が実証された。
 
+---
+
+# 🔄 Round 3 (2026-04-21): grayzone仕様変更と再改修
+
+Round 2 の翌日、**同一呼出パスで ✅ が ❌ に変化**する事態が発生。その追跡・改修・再実証の記録。
+
+## Phase D: 事象の発見（2026-04-21）
+
+### 症状
+
+Round 2 で通った呼出パス (`coder agent → Skill(red-test-fork)` 等) で、以下の新規エラーが発生:
+
+```
+Shell command permission check failed for pattern
+"!`REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); ...`":
+Contains expansion
+```
+
+また別の呼出経路では `Unhandled node type: string` も観測。
+
+### 特徴
+
+- 昨日 ✅ だった Round 2 の **skill改修 (2層防御パターン) は不変**
+- 昨日 ✅ だった **呼出パスも不変** (メインClaude → Agent(coder) → Skill(red-test-fork))
+- **harness側の permission check が `$()` / `${VAR:-default}` / `{a,b,c}` 展開を構造的に禁止**するよう仕様変更された
+
+## Phase E: 原因分析と仮説検証
+
+### 検証1: 辞書型スキル誤実行仮説（→ 棄却）
+
+`enforcing-strict-tdd-cycle` は team-tester にpreloadされる辞書型スキルで手動実行想定外、という仮説を当初立てた。しかし **同じ harness で `coder経由` でも `/red-test-fork` でも再現しない** 事実が判明し棄却。
+
+### 検証2: harness 側の permission check 変更仮説（→ 採用）
+
+エラー文言 `Contains expansion` は **Claude Code 側が意図的に追加したバリデーションルール**の文言と推察。記事本文 (PDF p.23-26) のサンプルは `!`cat /path/to/REQUIREMENTS.md`` のような**単純コマンド**のみ使用しており、`$()` 展開は記事サンプル外の「公開版環境非依存化」で追加された grayzone だった。
+
+公式docs `Extend Claude with skills` の `!`<command>`` 例示 (`!`gh pr diff``) も全て単純コマンド。**公式想定は単純コマンドのみ**であり、展開を含む複合式は記事 p.34 の分類マップでいう **grayzone → 想定外の挙動**領域。
+
+## Phase F: 改修範囲の完全チェック
+
+team-* agents の `skills:` preload 辞書を含めて全スキャン実施:
+
+| skill | 役割 | `!構文`内の `$()`/`${}` 展開 | 判定 |
+|---|---|---|---|
+| red-test-fork / implement-fork / verify-test-fork | fork skills (L1) | あり | 🔴 要改修 |
+| enforcing-strict-tdd-cycle | team-tester preload辞書 | あり | 🔴 要改修 |
+| deriving-test-from-spec | team-tester preload辞書 | あり | 🔴 要改修 |
+| logging-validation-result | 独立ログ生成 | あり | 🟡 要改修（TDD外） |
+| generating-doc-from-diff | team-documenter preload辞書 | あり | 🟡 要改修（TDD外） |
+| narrowing-implementation-scope / guiding-tdd-development | team-implementer preload辞書 | なし | 🟢 無改修 |
+| judging-review-severity / logging-implementation / injecting-ui-aesthetic / designing-beautiful-frontends | 他 preload 辞書 | なし | 🟢 無改修 |
+
+### 🌟 非対称性の発見
+
+**team-tester だけが preload 辞書両方に grayzone を抱えていた**。結果として「RED phase と VERIFY phase で team-tester を使うパスが最も影響を受ける」という構造的リスクが顕在化。
+
+## Phase G: 改修実施（7 skills）
+
+各 skill の `!構文` から以下を除去:
+- `REPO_ROOT=$(git rev-parse --show-toplevel)` コマンド置換
+- `${SPEC_PATH:-default}` parameter expansion
+- `${ARGUMENTS:-default}` 引数フォールバック
+- `{a,b,c}` brace expansion
+
+置き換え方針:
+- 親(coder)cwd基準の**相対パス**で ファイル探索
+- 固定候補を `||` 連鎖で試行 (`cat .docs/specs/CURRENT/spec.md 2>/dev/null || cat REQUIREMENTS.md 2>/dev/null || echo "..."`)
+- `!`pwd`` (Layer 1) と Step 0 の `cd <PARENT_CWD>` (Layer 2) は維持
+- `find ... -exec cat {} \;` パターン (`{}` は find placeholder、bash展開ではない) で `xargs -I{} sh -c '...'` を代替
+
+## Phase H: 再検証結果（2026-04-21 same day）
+
+Round 2 と同一手順 (`メインClaude → Agent(coder) → Skill(red-test-fork)` 等) で再実行:
+
+| Stage | Round 2 (04-20) | Round 3 (04-21改修前) | Round 3 (04-21改修後) |
+|---|---|---|---|
+| Stage 1 (red-test-fork) | ✅ 43件 RED | ❌ `Contains expansion` | ✅ **35件 RED** |
+| Stage 2 (implement-fork) | ✅ GREEN | — (到達せず) | ✅ **GREEN 35/35** |
+| Stage 3 (verify-test-fork) | ✅ GREEN 43/43 | — (到達せず) | ✅ **GREEN 35/35, Coverage 100%** |
+
+### 改修後の決定的証拠
+
+```
+[Coder Cycle Complete]
+Feature: String Utils Module (5関数)
+Red count: 35
+Loop count: 0 / 3 (初回verifyでGREEN到達、調整不要)
+Final result: GREEN 35/35 ✅
+Coverage: 100% (Stmts/Branch/Funcs/Lines)
+```
+
+**全3 skill で `(forked execution)` マーカーが復活**。4層エージェントチェーン (coder → fork skills → team-*) が完全復旧。
+
+## Round 3 最終判定: 完全復旧 🎊
+
+| 観点 | Round 2 (04-20) | Round 3 改修前 | Round 3 改修後 |
+|---|---|---|---|
+| `Contains expansion` エラー | 未発生 | **発生** | **解消** |
+| `(forked execution)` マーカー | ✅ | ❌ | ✅ |
+| 3孫エージェント連鎖 | ✅ 安定 | ❌ Stage 1 で停止 | ✅ **3連続成功** |
+| 調整ループ回数 | 0 | — | 0 |
+| Coverage | 100% | — | **100%** |
+| **総合** | ✅ 完成 | ❌ grayzone仕様変更で破壊 | ✅ **構造的修正で完全復旧** |
+
+## 🌟 Round 3 で獲得した知見
+
+### 知見1: grayzone依存はハーネス更新で破綻する永続リスク
+
+記事 (p.34) が明示警告していた **「グレーゾーンは将来のアップデートで挙動が変わる」** が **翌日** 現実化した。`$()` / `${VAR:-default}` は bash 標準機能だが、Claude Code の permission check が意図的に禁止。記事公開時 (2026-03-21) から5週間で grayzone が実行不可領域に変化。
+
+### 知見2: 公式想定と記事サンプル本文は一致、公開版のみ grayzone
+
+- **記事本文** (PDF p.23-26): `!`cat /path/to/REQUIREMENTS.md`` — **単純コマンド**
+- **公開リポジトリ版** (sample/.claude/skills/red-test/SKILL.md): `!`REPO_ROOT=$(...); cat "$REPO_ROOT/REQUIREMENTS.md"`` — **展開あり**
+- **公式docs** (Extend Claude with skills): `!`gh pr diff`` — **単純コマンド**
+
+→ 公開版の環境非依存化 (`REPO_ROOT` 展開) は記事執筆者が善意で追加した改善だが、**Claude Code のセキュリティ境界を越える**書き方だった。
+
+### 知見3: preload辞書スキルの !構文は "爆発半径の大きい失敗モード"
+
+辞書型スキル (preload対象) の !構文展開失敗は単一skillでは済まず、**その skill を preload するすべての agent が道連れに起動不能**になる。fork skills (呼出型) の失敗は呼出側でエラー検出できて局所化するが、preload経路の失敗は subagent 全体を巻き込む。
+
+→ **辞書型スキルは静的テキストに寄せる**のが堅牢。動的情報収集は呼出型skillに押し込む設計が安全。
+
+### 知見4: 完全チェックの価値
+
+最初 "3 fork skills だけ改修すれば足りる" と判断したが、かもねの「完全チェックしろ」指示で preload 経路を全スキャンした結果、**追加2 skill (deriving-test-from-spec / enforcing-strict-tdd-cycle)** の改修が必須と判明。**team-tester preload 辞書の grayzone が、fork skill 経由で間接的に team-tester 起動を不能にする連鎖**を見逃さずに済んだ。
+
+## Round 3 最終結論
+
+**grayzone API依存は永続的リスク**:
+- 動いた実績は「再現可能」を意味しない
+- 記事の3要素のうち `!構文` は**単純コマンドのみの公式想定**に戻すのが安全
+- preload辞書は `!構文`自体を減らし静的情報に寄せる
+- 動的情報注入は fork skills (呼出型) に集約し、失敗の局所化を確保
+
+**今日の教訓を汎用設計原則に抽象化**:
+
+```
+skill設計原則（2026-04-21 Round 3 で獲得）:
+1. !構文は単純コマンドのみ使用 ($()/${}/{,} 展開禁止)
+2. 動的情報収集は呼出型skillに集約、辞書型は静的テキスト
+3. preload辞書は爆発半径が大きい → 可能な限り !構文を使わない
+4. grayzoneに依存するskillは harness更新時に動作確認を義務化
+5. cwd依存は親cwd前提 + Layer 2 (cd <PARENT_CWD>) で補償
+```
+
+## 改修済み skill 一覧
+
+- `~/.claude/skills/red-test-fork/SKILL.md`
+- `~/.claude/skills/implement-fork/SKILL.md`
+- `~/.claude/skills/verify-test-fork/SKILL.md`
+- `~/.claude/skills/enforcing-strict-tdd-cycle/SKILL.md`
+- `~/.claude/skills/deriving-test-from-spec/SKILL.md`
+- `~/.claude/skills/logging-validation-result/SKILL.md`
+- `~/.claude/skills/generating-doc-from-diff/SKILL.md`
+
+各 skill 内に `> **2026-04-21 改修**:` 注記で変更履歴を保持。
+
