@@ -1,0 +1,28 @@
+{
+  "name": "sample-nextjs-vitest",
+  "version": "0.1.0",
+  "private": true,
+  "description": "R-12 validation sample - Next.js App Router + Vitest + RTL for harness dispatch test",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.8"
+  }
+}
