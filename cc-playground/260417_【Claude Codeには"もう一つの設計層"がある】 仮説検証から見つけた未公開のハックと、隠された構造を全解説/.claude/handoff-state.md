@@ -1,41 +1,69 @@
 # Handoff State
 
-2026-04-25T06:10:00+0900
+2026-04-28T14:38:00+0900
 
 ## スコープ/状態
 
-- Session 5: `debating-roles` skill Phase 3 改修 + 実測検証 + cleanup + ドキュメント永続化を実施
-- 継承元: 2026-04-24T17:29:11+0900 の Session 4 handoff (debating-models → debating-roles リネーム + Agent Teams 基盤改訂、SendMessage 使用率 1/6 問題が残存)
+- llm-debate skill 群 (master 1 + sub 5 + agent 5 = 11 ファイル) の **構築完了 + 全 14 検証完走**
+- 記事ロードマップ⑥「LLM Debate 応用」が **構築完了 100% + 検証完了 100%** に到達
+- 本セッション (2026-04-28) で前セッション (2026-04-27) からの handoff を pickup → V14 完走 → アーキテクチャ整理 Q&A まで 1 セッションで完走
 
-### 完了
+### 完了 (本セッション 2026-04-28)
 
-- **Phase 3 改修実装** (既存 `team-*.md` は完全無変更、新規作成で影響隔離):
-  - 新規作成 6 体: `~/.claude/agents/debater-{ui-designer,implementer,tester,reviewer,documenter,pm}.md` (全て `model: opus`、`tools:` に `SendMessage` 明示配線、本文冒頭に「起動時の絶対ルール 4 項」埋込)
-  - `skills:` frontmatter を意図的に非付与 (公式仕様で teammate mode では適用されないため混乱回避)
-  - `debater-implementer` / `debater-tester` / `debater-reviewer` / `debater-documenter` / `debater-pm` は `Edit/Write` を tools から除外 (teammate は批評のみ、ファイル書込しない思想)
-  - `debater-ui-designer` は `Read/Grep/Glob/SendMessage` のみ (既存 team-ui-designer と同等)
-- **`debating-roles/SKILL.md` 参照切替**:
-  - 5 agent 名 (ui-designer / implementer / tester / reviewer / documenter) を `team-*` → `debater-*` に replace_all (20 箇所)
-  - `team-pm` → `debater-pm` に replace_all (20 箇所)
-  - glob パターン (line 43, 388) と Phase 3 記述 (line 362, 371) を個別 Edit で更新
-  - Gotchas に Session 5 実測知見を追加
-- **実測検証 (D-2) 実施**: 議題「`test-tdd-cycle-validation/` を Git 管理下に入れるべきか」(Session 4 と同一) で 6 体並列 spawn → **SendMessage 使用率 5/6 (83.3%) を実測**、Session 4 (1/6, 16.7%) から 5 倍改善
-- **対照実験結果**: 改修済 debater-*.md 5 体 = 5/5 (100%) / 無改修 team-pm.md 1 体 = 0/1 (0%) → Phase 3 改修効果を定量切り分け確定
-  - 本検証後、`debater-pm.md` 新規作成 + SKILL.md 参照切替完了 → 次回検証で 6/6 到達見込み
-- **Cleanup 3 段ゲート** (途中まで完了):
-  - Gate 1: 全 6 teammate に `shutdown_request` SendMessage 送信 ✅ (request_id は system 自動生成、`shutdown-<timestamp>@<agent>` 形式)
-  - Gate 2: `TeamDelete()` 実行 ✅ (`~/.claude/teams/debating-roles-phase3-validation/` クリーンアップ成功)
-  - Gate 3: session exit 時の CLI "Background work is running" 画面目視確認 **未実施** (次回セッション終了時にユーザー目視必要)
-- **検証ログ永続化**: `.docs/knowledge/debating-roles-agent-teams/2026-04-25-phase3-result.md` 作成 (Session 4 vs Session 5 完全比較、5 体批評サマリ、Phase 3 改修の決定的要因 2 点の特定、対照実験設計の再利用可能性)
-- **memory 更新**: `~/.claude/projects/.../memory/feedback_multi-agent-debate-design.md` を Session 5 結果 + 2 系統並存の設計原則 + 共有 agent definition 改修パターン (新規作成による影響隔離) で更新
-- **Plan archive**: `~/.claude/plans/plan-mutable-pretzel.md` → `~/.claude/plans/archived/` に `mv` 完了 (frontmatter status: completed、outcome_summary 記載)
+#### Phase 0: pickup
+- `/pickup` skill で前セッション state 復元
 
-### 未完了
+#### Phase 1: V1 再実施 + V3 + Plan archive 1件目
+- V1 ドライラン (議題未配置時のフォールバック) 再実施 ✅
+- 議題ファイル `.docs/debate/CURRENT/topic.md` に「test-tdd-cycle-validation/ の扱い」配置
+- V3 (5 sub-skill 並列起動 + Lead 統合判断) ✅ 🟡 条件付き実行
+- Plan ファイル `~/.claude/plans/team-pm-agile-rainbow.md` archive ✅
 
-- **Gate 3 zombie teammate 目視確認**: 次セッション終了時に Claude Code CLI の "Background work is running" 画面を目視、6 体の teammate process が残存していないか確認。Session 4 では 6/6 が zombie 状態だった (shutdown_response 未返却のため)。Session 5 では改修済 5 体が shutdown_response JSON 返却ルール組込済、実際の返却有無は不明 (shutdown_request 送信後すぐに TeamDelete したため response 観測機会なし)
-- **Session 6 再検証**: `debater-pm.md` 作成済のため、次回同じ議題で再検証すれば 6/6 到達が予測可能。対照実験として実施価値あり
-- **既存 `team-*.md` 5 体の扱い**: 現状は既存 3 skill (three-elements-harness / orchestrating-team-development / enforcing-strict-tdd-cycle) の subagent mode 用として継続使用。debating-roles 専用化された `team-pm.md` は他 skill から参照ゼロだが、削除せず無変更で残している (将来 debater-pm.md が破損した時の fallback 候補として保管)
-- **議題 "`test-tdd-cycle-validation/` を Git 管理下に入れるべきか" の実際の処理**: 5 体全員が 🔴 却下 + 蒸留 or 退避を提案したが、実装判断は Lead (メインClaude) が Macro 責務として実行する必要あり。今回の検証セッションでは skill の実測検証が目的だったため、議題の最終処理は未実施。次セッションで着手可能
+#### Phase 2: logging-implementation (V1/V3 検証ログ作成)
+- `.docs/templates/2026-04-27_llm-debate-skill-verify.md` 作成
+
+#### Phase 3: 全 14 検証 Plan 設計
+- Plan モード (Explore + Plan agent + AskUserQuestion) で 14 検証 (P0/P1/P2) を設計
+- Plan ファイル `~/.claude/plans/mighty-wiggling-noodle.md` 書出 → ExitPlanMode 承認
+
+#### Phase 4: 全 14 検証実行 (V2-V14、本セッションの主役)
+- **P0**: V2 (単体起動) ✅ / V4 (公式 grayzone 4 層チェーン動作実証) ✅
+- **P1**: V5 (空議題) ✅ / V6 (不正 Markdown) ✅ / V7 (巨大議題、harness persisted-output 自動保護発見) ✅ / V8 (特殊文字シェル injection 耐性) ✅ / V9 (出力契約遵守 100%) ✅ / V10 (debating-roles 比較対照、メタ構造比較で代替) ✅
+- **P2**: V11 (反インフレ原則、sub-skill 階層先回り発火発見) ✅ / V12 (抽象語検出、🔴 初出現) ✅ / V13 (推測禁止、メタ認識到達) ✅ / V14 (Opus 固定 4 軸間接証拠) ✅
+
+#### Phase 5: 結果集約 + Plan archive 2件目
+- `.docs/templates/2026-04-28_llm-debate-skill-verify-full.md` (490+ 行) 作成
+- Plan ファイル `~/.claude/plans/mighty-wiggling-noodle.md` を frontmatter に key_findings 追記後 archive
+
+#### Phase 6: アーキテクチャ整理 Q&A
+- llm-debate vs debating-roles の整理 (subagent + context:fork vs Agent Teams)
+- llm-debate は **Agent Teams を使用しない skill** であることを明確化
+- 検証対象は llm-debate のみ、debating-roles は V10 比較対照のみであることを整理
+
+#### Phase 7: セッション総括ログ作成
+- `.docs/templates/2026-04-28_llm-debate-session-summary.md` 作成 (Phase 0-6 整理 + 5 つの想定外発見)
+
+### 5 つの想定外発見 (本セッションの本質的価値)
+
+1. **公式 grayzone (subagent → skill 呼出) の 4 層チェーン動作実証** (V4) — 記事原典の主用途 (パターン B) 機能確証
+2. **harness の `<persisted-output>` 自動保護機構を発見** (V7) — skill 設計外の防御層
+3. **反インフレ防御が sub-skill 階層で先回り発火** (V11) — 設計予測を超えた良い挙動
+4. **documenter agent のメタ認識力** (V13) — ARGUMENTS から検証意図を逆算
+5. **🔴 Critical 判定の閾値が LLM デフォルト美学への抵触** (V12) — 反インフレの実用閾値判明
+
+### 検証で発見した skill 改善余地 (次回セッションで実装候補)
+
+1. master skill `!`構文を `[ -s topic.md ]` 判定に変更 (V1/V5 統一)
+2. Gotchas に「議題は 2KB 以内推奨」追記 (V7 発見の harness preview 上限)
+3. master skill に議題契約自動チェック導入 (V5/V6 を skill 内完結化)
+4. skill description に「反インフレ防御は sub-skill 階層で先回り発火」を反映 (V11 発見)
+
+### 未完了 (本セッション完了直前時点)
+
+- 本プロジェクト未コミット 9 ファイル超のコミット (今これからやる)
+- 議題ファイル `.docs/debate/CURRENT/topic.md` の最終整理 (V13「foo を bar」議題のまま残存)
+- グローバル領域コミット判断 (`~/.claude/skills/llm-debate*/`, `~/.claude/agents/llm-debater-*.md`, memory) — git 管理状態未確認
+- V3 Lead 統合判断結果の実行 (test-tdd-cycle-validation/ サルベージ + trash 7 ステップ、別セッション推奨)
 
 ### ブロッカー
 
@@ -43,73 +71,137 @@
 
 ## 作業ツリー
 
-- `git status -sb`: `## main...origin/main`
-- 本プロジェクト内の tracked 変更: `M .claude/handoff-state.md` (本ファイル、Session 5 反映)
-- 本プロジェクト内の untracked:
-  - `.claude/team-messages/` (Session 4 実行副産物、未処理)
-  - `.claude/teammate-messages/` (Session 4 実行副産物、未処理)
-  - `.docs/knowledge/debating-roles-agent-teams/` (Session 4 + Session 5 検証ログ格納)
-  - `test-tdd-cycle-validation/` (別セッション由来、Session 5 debate で 5 体が 🔴 却下、実処理未実施)
-- `git log @{u}..HEAD`: 未 push コミットなし
-- 本セッションの成果物の大半は `~/.claude/` 配下 (agents / skills / memory / plans) で本プロジェクト git には現れない
+- 現ブランチ: `main`
+- 上流: `origin/main` と同期 (未push コミットなし)
+- 本プロジェクト内の tracked 変更:
+  - `M .claude/CLAUDE.md` (PDF ファイル名リネーム追従、本セッション関連なし)
+  - `M .claude/handoff-state.md` (本ファイル、本セッションで更新)
+- 本プロジェクト内の untracked (本セッション関連、これからコミット対象):
+  - `.docs/specs/CURRENT/spec.md` (V4 用最小 spec)
+  - `.docs/debate/CURRENT/topic.md` (議題ローテーション最終状態 = V13 議題のまま)
+  - `.docs/debate/BACKUP/topic-V3-test-tdd-cycle-validation.md` (V3 議題バックアップ)
+  - `.docs/templates/2026-04-27_llm-debate-skill-decision.md` (前セッション)
+  - `.docs/templates/2026-04-27_llm-debate-skill-build.md` (前セッション)
+  - `.docs/templates/2026-04-27_llm-debate-skill-verify.md` (本セッション Phase 2)
+  - `.docs/templates/2026-04-28_llm-debate-skill-verify-full.md` (本セッション Phase 5、490+ 行)
+  - `.docs/templates/2026-04-28_llm-debate-session-summary.md` (本セッション Phase 7)
+- 本プロジェクト内の untracked (本セッション無関係、Session 4 持ち越し):
+  - `.claude/team-messages/`
+  - `.claude/teammate-messages/`
+- ~/.claude/plans/ の archive 状況:
+  - `archived/team-pm-agile-rainbow.md` (前セッション Plan archive、本セッション Phase 1 で実施)
+  - `archived/mighty-wiggling-noodle.md` (本セッション検証 Plan archive、Phase 5 で実施)
 
 ## ブランチ/PR
 
-- 現ブランチ: main
-- 上流: origin/main と同期
+- ブランチ: `main`
 - PR: なし
+- CI ステータス: 該当なし
 
 ## テスト/チェック
 
-### 実行したコマンド
+### 実行したコマンド (本セッション)
 
-- Pre-flight Check (Bash): Claude Code 2.1.119 確認、`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 確認、clean state 確認、debater-*.md 5 体 + team-pm.md 存在確認
-- ToolSearch: TeamCreate / SendMessage / TeamDelete schema 取得
-- TeamCreate: `debating-roles-phase3-validation` team 作成成功
-- Agent × 6 parallel: ui-designer / implementer / tester / reviewer / documenter / pm を `team_name=debating-roles-phase3-validation` で spawn
-- SendMessage (batch 1): 改修済 4 体から高品質批評を 1 batch 目で受信 (SendMessage 使用率の即応性を初実測)
-- SendMessage (batch 2): reviewer から最高品質批評 (🔴 Critical + 9 項目整理表 + 実行手順 6 step) を受信
-- SendMessage (batch 3): documenter から実ファイル調査込みの新発見 (HOW_TO_VALIDATE.md と REQUIREMENTS.md の題材齟齬) を受信、pm は plain text 応答で Lead 不達
-- shutdown_request 6 体並列送信: system 自動 request_id 生成成功
-- TeamDelete: cleanup 成功
-- Write × 6: debater-*.md 新規作成 6 体
-- Edit (replace_all): SKILL.md team-* → debater-* 切替 6 回 + 個別 Edit 6 箇所
-- Read: 既存 team-*.md 全 6 体読込 (本文コピー元として)
-- Write: `.docs/knowledge/debating-roles-agent-teams/2026-04-25-phase3-result.md` 新規作成
-- Write: `~/.claude/projects/.../memory/feedback_multi-agent-debate-design.md` 更新
-- Edit (Plan frontmatter): status: planning → implementing → completed
-- Bash: Plan archive (`mv` で `~/.claude/plans/archived/` へ)
+#### Phase 0: pickup
+- `/pickup` skill 実行
+- `.claude/handoff-state.md` Read
+
+#### Phase 1
+- `Skill(llm-debate)` 起動 (V1 ドライラン)
+- 議題ファイル Write
+- `Skill(llm-debate)` 再起動 (V3)
+- 5 sub-skill 並列起動 (Skill ツール 5 回呼出を 1 メッセージ)
+- Plan ファイル frontmatter 編集 + `mv` archive
+
+#### Phase 2
+- `/logging-implementation` skill 実行
+- `2026-04-27_llm-debate-skill-verify.md` Write
+
+#### Phase 3 (Plan モード)
+- `Agent(Explore)` 1 体起動
+- `Agent(Plan)` 1 体起動
+- `AskUserQuestion` 3 軸確認
+- Plan ファイル `~/.claude/plans/mighty-wiggling-noodle.md` Write
+- `ExitPlanMode`
+
+#### Phase 4 (全 14 検証)
+- `TaskCreate` × 5 (事前準備 / P0 / P1 / P2 / 結果集約)
+- 議題ファイル Write × 9 (議題ローテーション全 9 種類)
+- `Skill(llm-debate)` 起動 × 5 (V1 + V3 + V5 + V6 + V7 + V8、合計 6 回)
+- `Skill(llm-debate-{role})` 起動 × 12 (V2 + V3×5 + V11×5 + V12 + V13)
+- `Agent(coder)` 1 体起動 (V4)
+- `Skill(debating-roles)` 起動 (V10、ただし TeamCreate 以降は未実施)
+
+#### Phase 5
+- `2026-04-28_llm-debate-skill-verify-full.md` Write
+- Plan ファイル frontmatter 編集 + `mv` archive
+
+#### Phase 6
+- AskUserQuestion (アーキテクチャ整理の意図確認)
+- 質問への回答出力 (Q&A 整理)
+
+#### Phase 7
+- `2026-04-28_llm-debate-session-summary.md` Write
 
 ### 未実行
 
-- session exit 前の CLI 警告 UI 目視確認 (Gate 3)
-- 他 skill (three-elements-harness / orchestrating-team-development / enforcing-strict-tdd-cycle) の subagent mode smoke test (D-1 は静的 grep のみ完了、実走 smoke test は未実施)
-- `test-tdd-cycle-validation/` の最終処理 (debate 結論に基づくアクション)
+- 本プロジェクト未コミットのコミット (今これから)
+- グローバル領域コミット判断
+- V3 Lead 統合判断結果の実行 (別セッション)
 
 ## 次のステップ
 
-1. `/pickup` で本 handoff 復元
-2. (必要なら) `debater-*.md` 全 6 体が揃った状態で再検証、6/6 達成を数値で確認
-3. **Session 5 で 5 体が全員 🔴 却下した議題 "`test-tdd-cycle-validation/` を Git 管理下に入れるべきか" の最終処理**: Lead (メインClaude) として判断実行が必要。各視点からの提案は以下:
-   - Designer 視点: 蒸留 (`.docs/knowledge/` + `.docs/references/patches/`) + `.gitignore` 除外
-   - Engineer 視点: 抽出 (`src/`+`tests/`+`REQUIREMENTS.md` 数十 KB) を `.docs/knowledge/` へ + 本体を `~/dev/.../_archive/` に `mv` 退避
-   - Tester 視点: 受入基準 spec 化 (validate.sh 化 + 境界値 5 項目 + 不変条件 + reward hacking 耐性) が前提条件
-   - Reviewer 視点: 🔴 Critical 却下、整理 5 工程 → 蒸留 → 最小コアのみ取り込み可
-   - Documenter 視点: 3 層分離モデル (Durable 15KB / Volatile 109M / Snapshot) で確定、nested `.git/` 破棄
-   - (pm 視点は plain text 漏出で未回収、今回の collective decision から除外)
-4. `.claude/team-messages/` と `.claude/teammate-messages/` の処理 (Session 4 からの持ち越し、gitignore or 削除判断未決)
-5. Session 6 以降の検証候補:
-   - debater-pm.md 完備後の 6/6 到達検証
-   - 既存 3 skill (three-elements-harness 等) の subagent mode smoke test (D-1 実走検証)
-   - 「共有 agent definition の改修パターン = 新規作成で影響隔離」を他 skill に適用する試行
-6. 必要に応じて `debater-*.md` 6 体の skills frontmatter 再付与判断 (現在は非付与、KPIDD や injecting-ui-aesthetic 等の判断軸は spawn prompt に埋め込み済のため不要だが、subagent mode で使うシナリオが将来出たら再考)
+1. **本ファイル更新後にコミット**: handoff-state.md 更新 (本タスク) → 本プロジェクト 9 ファイル超のコミット (`docs(260417): ...` 系列で 3 コミット程度に分割推奨)
+2. **議題ファイル最終整理**: `.docs/debate/CURRENT/topic.md` を V13 議題のままにするか、V3 議題に戻すか、空にするか判断
+3. **グローバル領域コミット判断**: `~/.claude/skills/llm-debate*/`, `~/.claude/agents/llm-debater-*.md`, memory `feedback_multi-agent-debate-design.md` の git 管理状態を確認後、コミット要否判断
+4. **skill 改善余地 4 件の実装**: 上記「検証で発見した skill 改善余地」を次回セッションで実装
+5. **V3 Lead 統合判断結果の実行**: test-tdd-cycle-validation/ サルベージ + trash 7 ステップ (別セッション推奨)
 
 ## リスク/注意点
 
-- **Gate 3 未実施**: session 終了時に Claude Code CLI の確認画面で teammate 残存が出る可能性あり。出ていれば "Exit anyway" で強制停止。Session 4 では 6/6 全員 zombie で残存した (shutdown_response 未返却)。Session 5 では改修済 5 体が JSON 返却ルール組込済、実際の返却有無は未観測 (shutdown_request 後の観測機会を TeamDelete 前に挟まなかったため)
-- **MAX プラン rate limit**: Session 5 では 6 体並列 Opus で到達せず、Session 4 と同じく杞憂だった。ただし 6 体 × 複数 round の場合は注意必要
-- **team-*.md 5 体の運用方針の明文化不足**: 本セッションで `team-*.md` (subagent mode 用) と `debater-*.md` (teammate mode 用) の 2 系統並存パターンを確立したが、既存 3 skill の documentation にはまだ反映していない。Session 6 以降で `three-elements-harness/references/` 等に「team-*.md は subagent mode 専用、Agent Teams teammate mode は debater-*.md を使う」の方針を明記すべき
-- **debater-implementer / debater-tester の Edit/Write 除外**: teammate として批評のみ返す思想で除外したが、将来「teammate 経由でテスト/実装させる」ニーズが出た場合は再付与が必要。現状は debate 用途のみを想定
-- **SKILL.md line 389 の記述**: 「既存 subagent 定義 (他 skill が subagent mode で使用、無変更): `~/.claude/agents/team-{ui-designer,implementer,tester,reviewer,documenter}.md`」は意図的に残存。2 系統並存を skill の読者に伝える目的、削除しないこと
-- **検証再現性**: Phase 3 改修は「tools frontmatter への SendMessage 配線」+「本文冒頭の絶対ルール埋込」の 2 点が決定的。片方だけでは効果が薄い可能性 (未検証)。再現時は両方揃える
-- **context:fork との関係**: 本 skill は Agent Teams 基盤で独立インスタンスのため context:fork は不要。enforcing-strict-tdd-cycle 等の context:fork 利用 skill とは設計思想が異なる点に注意
+- **議題ファイル `.docs/debate/CURRENT/topic.md` の最終状態が V13 議題のまま残存**: コミットすると V13「foo を bar」が永続化される。意図的に V13 議題で残す or V3 議題に戻す or 空にする の判断を要する
+- **本プロジェクト未コミット 9 ファイル超**: 1 コミット にまとめると粒度大きすぎ、3 コミット程度に分割推奨 (decision/build/verify 3 ログ + verify-full + session-summary + 議題関連 + spec)
+- **handoff-state.md は本ファイル自身の更新含む**: コミット時に handoff-state.md の更新を含めるか別 commit にするかは粒度判断
+- **`.claude/CLAUDE.md` の M (PDF リネーム追従) は本セッション無関係**: 別 commit で扱うべき
+- **`~/.claude/skills/`, `~/.claude/agents/` の git 管理状態未確認**: グローバル領域は dotfiles repo 別管理の可能性、要確認
+
+## 関連ファイル
+
+### 本セッションで新規作成 (本プロジェクト)
+
+- `.docs/specs/CURRENT/spec.md` (V4 用最小 spec)
+- `.docs/debate/CURRENT/topic.md` (議題ローテーション、最終 V13 状態)
+- `.docs/debate/BACKUP/topic-V3-test-tdd-cycle-validation.md` (V3 議題バックアップ)
+- `.docs/templates/2026-04-27_llm-debate-skill-verify.md` (V1/V3/Plan archive 検証ログ)
+- `.docs/templates/2026-04-28_llm-debate-skill-verify-full.md` (V2-V14 全 13 検証ログ、490+ 行)
+- `.docs/templates/2026-04-28_llm-debate-session-summary.md` (本セッション全体総括、Phase 0-7)
+
+### 本セッションで更新
+
+- `.claude/handoff-state.md` (本ファイル、本セッションで更新)
+- `~/.claude/plans/archived/team-pm-agile-rainbow.md` (前セッション Plan archive、本セッション Phase 1 完了)
+- `~/.claude/plans/archived/mighty-wiggling-noodle.md` (本セッション検証 Plan archive、Phase 5 完了)
+
+### 既存 (変更なしで参照)
+
+- `~/.claude/skills/llm-debate/SKILL.md` + `llm-debate-{role}/SKILL.md` × 5 (検証対象)
+- `~/.claude/agents/llm-debater-{role}.md` × 5 (検証対象)
+- `~/.claude/agents/coder.md` (V4 で起点)
+- `~/.claude/skills/debating-roles/SKILL.md` (V10 比較対象)
+- `~/.claude/agents/team-{role}.md` × 5 + `team-pm.md` (本セッションでは非使用、debating-roles 専用ではない既存 agent)
+- `~/.claude/agents/debater-{role}.md` × 5 + `debater-pm.md` (debating-roles 専用、本セッションでは非起動)
+
+### 関連 memory (検証時参照、変更なし)
+
+- `feedback_skill-fork-asymmetry.md`
+- `feedback_disable-model-invocation-blocks-skill-tool.md` (V2 仮説却下の根拠)
+- `feedback_multi-agent-debate-design.md`
+- `feedback_claude-opus-only-for-multi-agent.md`
+
+### 関連実装ログ (シリーズ)
+
+- `2026-04-27_llm-debate-skill-decision.md` (朝、設計判断)
+- `2026-04-27_llm-debate-skill-build.md` (午後、構築)
+- `2026-04-27_llm-debate-skill-verify.md` (前セッション、V1/V3 検証)
+- `2026-04-28_llm-debate-skill-verify-full.md` (本セッション、V2-V14 全 13 検証)
+- `2026-04-28_llm-debate-session-summary.md` (本ファイル系列、本セッション全体総括)
