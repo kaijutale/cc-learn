@@ -1,8 +1,8 @@
 # reference
 
-応答する際は以下を参照すること：
+応答する際は必ず必ず必ず以下を参照すること：
 
-- `.docs/references/pdf/screencapture-note-masa-wunder-n-n437340205161-2026-04-17-18_46_39.pdf`
+- `.docs/references/pdf/Claude-Codeもう一つの設計層_まさお_2026-03-21.pdf`
 
 # Gitルール
 
