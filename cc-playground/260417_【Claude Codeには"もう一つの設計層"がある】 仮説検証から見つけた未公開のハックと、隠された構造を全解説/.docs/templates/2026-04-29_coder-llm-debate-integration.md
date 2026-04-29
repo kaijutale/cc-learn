@@ -201,3 +201,196 @@ note 記事の理想「専門サブエージェントが LLM Debate を呼び出
 ただし、note 記事の前提は「**Codex/Cursor/Claude の異ベンダー議論で観点独立性を物理的に担保**」であり、わたしのハーネスは Claude Only 原則で **役割分離による視点独立性に置き換えている**。同モデル5体での議論精度がベンダー横断議論と同等かは Phase 2 で実測検証する。
 
 撤退条件を多軸 (GREEN改善 / 偽陽性率 / コスト倍率) で固めることで、「実装したから使い続ける」サンクコスト的継続を構造的に防いでいる。Phase 2 で 3 条件中 2 つ該当したら Phase 3 に行かず撤退する。
+
+---
+
+# Session 7 続き: Phase 1 実機ドライラン経過 (2026-04-29 同日午後)
+
+## 経緯
+
+Phase 1 完了直後、当初予定外だった「Phase 1 動作確認 (実機ドライラン)」を実施。連鎖的に複数の重大な発見と修正が発生したため、本セクションで追記記録する。
+
+## 発覚した issue 1: master SKILL.md line 43 の session sandbox 違反
+
+実機ドライラン (`Skill("llm-debate")` 起動) で初発覚:
+
+```
+!`ls -la ~/.claude/skills/debating-roles/SKILL.md 2>/dev/null && echo "[併存運用中]" || echo "[未導入]"`
+```
+
+`~/.claude/` は session sandbox の cwd (`260417_*`) 配下にないため permission block。`2>/dev/null` も `||` も permission check は ! 構文展開前に走るため吸収不能。
+
+### 調査で得られた知見
+
+全 63 skill の ! 構文を grep した結果、sandbox 外参照の ! 構文を持つのは llm-debate line 43 ただ 1 件。他の 62 skill は全員「! 構文 = cwd 内のみ参照」を暗黙的原則として守っていた = **line 43 が孤立した異常値**だった。
+
+### 修正
+
+llm-debate SKILL.md の line 42-43 (debating-roles 既存スキル状態確認セクション) を削除。description (line 8) と本文 (line 26) で同等情報が既に明記されているため情報的損失なし。
+
+## note 記事全文読了 (47ページ)
+
+CLAUDE.md で参照指示があった `.docs/references/pdf/Claude-Codeもう一つの設計層_まさお_2026-03-21.pdf` を全文読了。
+
+### 得られた重要な設計理解
+
+1. **Anthropic の Unix哲学**: 「小さな部品 (skill / agent / !構文 / fork) を提供、組み合わせ方はユーザーに委ねる」「想定外ではなく想定の範囲を意図的に広くした」
+2. **サブエージェント活用ロードマップ⑥段階**: ① !構文 → ② プリロード → ③ context:fork → ④ 孫エージェント (Skill経由) → ⑤ TDD応用 → ⑥ LLM Debate応用
+3. **Agent ツールはサブエージェント環境にハードコード制約で渡されない**: `tools:` に `Agent` と書いても無効。**Skill 経由の context:fork + subagent: が孫起動の唯一のバイパス経路**
+4. **LLM Debate の正規呼出パターン**:
+   - パターンA: メイン → Skill → llm-debate
+   - **パターンB: メイン → Agent(coder等) → Skill → llm-debate (サブエージェント経由)**
+5. **わたしの設計は note 原典と既に整合**: Skill 経由の多段構成、context:fork + subagent:、!構文での議題決定論的注入、すべて一致 (唯一の違いは Codex/Cursor 統合 → Claude Only への翻訳)
+
+### 当初の修正方針が誤りだった発覚
+
+Phase 1 ドライラン途中で、わたしが提案していた以下の修正案は **note 原典の設計に反する** ことが判明し撤回:
+
+| 修正案 | 撤回理由 |
+|---|---|
+| master SKILL.md を Agent ツール経由に変更 | note 原典は Skill 経由が正規、修正で破壊する |
+| coder.md の tools に Agent を追加 | ハードコード制約で書いても無効 (note記事 line 「サブエージェント環境には Agent ツールそのものが存在しない」) |
+
+## 発覚した issue 2: 5 sub-skill SKILL.md の ! 構文 permission block
+
+修正後の master SKILL.md は起動成立したが、Step 2 指示通り 5 sub-skill を Skill ツール経由で呼び出すと **5/5 全滅** (permission policy で block):
+
+| sub-skill | block 原因 |
+|---|---|
+| llm-debate-implementer | `find src ... -exec echo / -exec cat` (find -exec が複合操作扱いで block) |
+| llm-debate-tester | `find .docs/specs ... -exec echo / -exec cat` (同上) |
+| llm-debate-reviewer | `git --no-pager log --oneline -10` (multi-op block) |
+| llm-debate-documenter | `git --no-pager log --oneline -20` (同上) |
+| llm-debate-ui-designer | `find .docs/designs ... -exec echo / -exec cat` |
+
+Apr 27-28 の検証時には通っていたが、その後の permission policy 厳格化で block されるようになった可能性。
+
+## まさお氏ハーネスサンプル調査 (`.docs/references/sample/`)
+
+修正方針確定のため、note記事著者まさお氏の自作ハーネスサンプルを徹底調査:
+
+- agents: 3体 (coder / implementer / tester)
+- skills: 4個 (red-test / implement / verify-test / llm-debate)
+- ! 構文 13 個すべてが cwd 内に閉じる (sandbox 違反 0/13)
+- 主流パターン: `REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)` で repo root を**動的決定**
+- README "This shared version does not include sandbox-bypass flags" と明示
+- 「skill が他 skill の存在を !構文で確認する」シナリオ自体を**デザインで排除**
+
+→ わたしの llm-debate line 43 の問題は「note 原典と異なるシナリオを実装してしまった」ことに起因 (削除で解消済)。
+
+## 修正: 5 sub-skill ! 構文の書き換え
+
+`find -exec` → ファイルリストのみ取得 / `git --no-pager` → `git` (--no-pager 削除):
+
+| # | sub-skill | 修正前 | 修正後 |
+|---|---|---|---|
+| 1 | implementer | `find src ... -exec echo / -exec cat \|\| head -300` | `find src ... 2>/dev/null \|\| echo "(no source)"` (リストのみ) |
+| 2 | tester | `find .docs/specs ... -exec echo / -exec cat \|\| head -200` | `find .docs/specs ... 2>/dev/null \|\| echo "(no specs)"` (リストのみ) |
+| 3 | reviewer | `git --no-pager diff --stat HEAD~5..HEAD` | `git diff --stat HEAD~5..HEAD` |
+| 4 | reviewer | `git --no-pager log --oneline -10` | `git log --oneline -10` |
+| 5 | documenter | `git --no-pager log --oneline -20` | `git log --oneline -20` |
+| 6 | ui-designer | `find .docs/designs -name "aesthetic.md" -exec echo / -exec cat` | `find .docs/designs -name "aesthetic.md" 2>/dev/null` (リストのみ) |
+
+設計思想: skill が事前注入する情報量を減らし、**agent が必要に応じて Read tool で個別取得**する形に変更。各 agent が Read tool を持っているため機能的影響なし。
+
+## Skill 正規経路で 5/5 動作実証
+
+修正後、メインClaude → `Skill("llm-debate")` → master skill 内で Skill("llm-debate-*") 5回呼出 が**全成立**:
+
+| sub-skill | 動作 | duration |
+|---|---|---|
+| llm-debate-implementer | ✅ | 38秒 |
+| llm-debate-tester | ✅ | 23秒 |
+| llm-debate-reviewer | ✅ | 40秒 |
+| llm-debate-documenter | ✅ | 21秒 |
+| llm-debate-ui-designer | ✅ | 14秒 |
+
+→ **Phase 1 の核心要件「note 原典 Skill 経由パス (パターンA) で 5並列議論が成立」を完全達成**。
+
+## 5 視点議論で議題自体の欠陥が判明
+
+2回目の議論で前回見落としていた Critical 指摘が複数出た:
+
+### Reviewer 視点 (反インフレ原則発動): 🔴 却下
+
+| severity | 指摘 |
+|---|---|
+| Critical | 戻り値が Markdown テキストなのに擬似コードで `debate_guidance.lead_summary` 属性アクセス記法 = 構造的矛盾 |
+| Critical | 🔴 (却下) / ⚪ (議題差し戻し) 結論時の coder 挙動が未定義 |
+| High | `last_adjust_diff_significant()` の閾値定義なし |
+| High | コンテキスト累積上限の数値未定義 |
+| High | 抽出失敗時のフォールバック未定義 |
+
+### 4視点が共通指摘した懸念
+
+- 抽出契約 (戻り値スキーマ) が未確定
+- silent fail 検出の仕組み未定義
+- 5視点 severity の喪失リスク
+
+### Lead 統合判断: 🟡 条件付き
+
+議題 (Open Question #1: adjust への反映方法) は**議題自体に欠陥がある**ため、案 A〜D を選ぶ前に補強が必要。Reviewer 提案の **案E (構造化抽出 + 全文 BACKUP + 抽出失敗時フォールバック)** が最終解候補。
+
+## 修正: coder.md Step 5 擬似コード
+
+Reviewer Critical 指摘を踏まえ、`debate_guidance` を Markdown テキスト前提に修正:
+
+```python
+# 修正前 (擬似コード矛盾)
+"lead_summary": debate_guidance.lead_summary,
+
+# 修正後 (テキストスライス)
+"lead_text_excerpt": debate_guidance[:200],  # 先頭200文字、全文は BACKUP に保存推奨
+```
+
+加えて Gotchas に4項目追記:
+- `debate_guidance` は Markdown テキスト (属性アクセス不可)
+- 🔴 / ⚪ 結論時のフェイルセーフ (Phase 2 で実装)
+- 戻り値全文の BACKUP 保存推奨
+- (既存) Phase 1 最小実装スコープ
+
+## マルチエージェント協調 skill 群への影響評価
+
+修正対象が3 skill 群 (three-elements-harness / orchestrating-team-development / enforcing-strict-tdd-cycle) に影響しないことを実測で確認:
+
+| シンボル | coder.md 内部参照 | 外部 skill 参照 |
+|---|---|---|
+| `lead_summary` (修正前) / `lead_text_excerpt` (修正後) | あり | **0件** |
+| `debate_impact` | あり | **0件** |
+| `debate_count` | あり | **0件** |
+
+3 skill が依存しているのは coder の **外部インターフェース** (Agent 起動方法 + `[Coder Cycle Complete]` レポート形式) のみ。今回の修正は擬似コード**内部詳細**に閉じる修正なので、**完全に非破壊的**。
+
+## Session 7 で追加された Phase 1 完了条件
+
+| 項目 | 結果 |
+|---|---|
+| llm-debate 起動成立 (sandbox 違反解消) | ✅ line 43 削除 |
+| Skill 正規経路の動作実証 (パターンA) | ✅ 5/5 完走 |
+| coder からの呼出経路 (パターンB) の構造的成立 | ✅ Skill ツールが subagent に渡る仕様 + 動作実績で担保 |
+| 戻り値構造の実測 | ✅ `[Role Analysis]` 形式で構造化テキスト返却 |
+| coder.md 擬似コード矛盾の解消 | ✅ Markdown テキスト前提に修正 |
+| マルチエージェント協調 skill への非破壊性 | ✅ 3 skill 全て影響ゼロ |
+
+## Phase 2 への引き継ぎ事項 (追加)
+
+Session 7 で発覚した未確定事項を Phase 2 で確定:
+
+1. **`extract_lead_section()` パーサ実装**: Markdown テキストから「## Lead 統合判断 → ### 結論」セクションを正規表現で抽出
+2. **🔴 / ⚪ 結論時のフェイルセーフ**: Lead が 🔴 / ⚪ を返した時の coder 挙動を擬似コード化
+3. **`last_adjust_diff_significant()` の数値定義**: 編集ファイル集合の Jaccard 距離 > 0.5 等の客観基準
+4. **コンテキスト累積上限**: 1回あたり 2000 token / 累積 4000 token 等の閾値
+5. **抽出失敗時フォールバック**: 戻り値全文を `.docs/debate/BACKUP/response-{feature}-loop{N}.md` に保存 + warn 出力
+
+## Session 7 で得られた最大の学び
+
+1. **note 記事の前提を読まずに走った**ことが Phase 1 ドライラン中盤までのミスの根本原因。CLAUDE.md で参照指示があった文献を最初に読むべきだった
+2. **「動いた」と「設計通りに動いた」は別物**。Agent ツール経由のハック的経路で動作確認できたが、それは note 原典の設計と異なる経路だった (subagent 環境では Agent ツール使用不可のためそもそも本番では使えない)
+3. **反インフレ原則が機能した**: 5視点議論で前回見落とした Critical 指摘 (擬似コード矛盾) を能動的に検出。同じ skill を 2 回回しても異なる深さの分析が出る = ツールとしての汎用性
+
+## Session 7 commit 対象
+
+- `~/.claude/skills/llm-debate/SKILL.md` (line 42-43 削除) — git 管理外
+- `~/.claude/skills/llm-debate-{implementer,tester,reviewer,documenter,ui-designer}/SKILL.md` (各 ! 構文修正) — git 管理外
+- `~/.claude/agents/coder.md` (Step 5 擬似コード修正 + Gotchas 4項目追記) — git 管理外
+- `.docs/templates/2026-04-29_coder-llm-debate-integration.md` (本ログ追記分) — **git 管理対象、本コミットの対象**
