@@ -1,207 +1,87 @@
 # Handoff State
 
-2026-04-28T14:38:00+0900
+2026-05-03T11:05:06Z
 
 ## スコープ/状態
 
-- llm-debate skill 群 (master 1 + sub 5 + agent 5 = 11 ファイル) の **構築完了 + 全 14 検証完走**
-- 記事ロードマップ⑥「LLM Debate 応用」が **構築完了 100% + 検証完了 100%** に到達
-- 本セッション (2026-04-28) で前セッション (2026-04-27) からの handoff を pickup → V14 完走 → アーキテクチャ整理 Q&A まで 1 セッションで完走
-
-### 完了 (本セッション 2026-04-28)
-
-#### Phase 0: pickup
-- `/pickup` skill で前セッション state 復元
-
-#### Phase 1: V1 再実施 + V3 + Plan archive 1件目
-- V1 ドライラン (議題未配置時のフォールバック) 再実施 ✅
-- 議題ファイル `.docs/debate/CURRENT/topic.md` に「test-tdd-cycle-validation/ の扱い」配置
-- V3 (5 sub-skill 並列起動 + Lead 統合判断) ✅ 🟡 条件付き実行
-- Plan ファイル `~/.claude/plans/team-pm-agile-rainbow.md` archive ✅
-
-#### Phase 2: logging-implementation (V1/V3 検証ログ作成)
-- `.docs/templates/2026-04-27_llm-debate-skill-verify.md` 作成
-
-#### Phase 3: 全 14 検証 Plan 設計
-- Plan モード (Explore + Plan agent + AskUserQuestion) で 14 検証 (P0/P1/P2) を設計
-- Plan ファイル `~/.claude/plans/mighty-wiggling-noodle.md` 書出 → ExitPlanMode 承認
-
-#### Phase 4: 全 14 検証実行 (V2-V14、本セッションの主役)
-- **P0**: V2 (単体起動) ✅ / V4 (公式 grayzone 4 層チェーン動作実証) ✅
-- **P1**: V5 (空議題) ✅ / V6 (不正 Markdown) ✅ / V7 (巨大議題、harness persisted-output 自動保護発見) ✅ / V8 (特殊文字シェル injection 耐性) ✅ / V9 (出力契約遵守 100%) ✅ / V10 (debating-roles 比較対照、メタ構造比較で代替) ✅
-- **P2**: V11 (反インフレ原則、sub-skill 階層先回り発火発見) ✅ / V12 (抽象語検出、🔴 初出現) ✅ / V13 (推測禁止、メタ認識到達) ✅ / V14 (Opus 固定 4 軸間接証拠) ✅
-
-#### Phase 5: 結果集約 + Plan archive 2件目
-- `.docs/templates/2026-04-28_llm-debate-skill-verify-full.md` (490+ 行) 作成
-- Plan ファイル `~/.claude/plans/mighty-wiggling-noodle.md` を frontmatter に key_findings 追記後 archive
-
-#### Phase 6: アーキテクチャ整理 Q&A
-- llm-debate vs debating-roles の整理 (subagent + context:fork vs Agent Teams)
-- llm-debate は **Agent Teams を使用しない skill** であることを明確化
-- 検証対象は llm-debate のみ、debating-roles は V10 比較対照のみであることを整理
-
-#### Phase 7: セッション総括ログ作成
-- `.docs/templates/2026-04-28_llm-debate-session-summary.md` 作成 (Phase 0-6 整理 + 5 つの想定外発見)
-
-### 5 つの想定外発見 (本セッションの本質的価値)
-
-1. **公式 grayzone (subagent → skill 呼出) の 4 層チェーン動作実証** (V4) — 記事原典の主用途 (パターン B) 機能確証
-2. **harness の `<persisted-output>` 自動保護機構を発見** (V7) — skill 設計外の防御層
-3. **反インフレ防御が sub-skill 階層で先回り発火** (V11) — 設計予測を超えた良い挙動
-4. **documenter agent のメタ認識力** (V13) — ARGUMENTS から検証意図を逆算
-5. **🔴 Critical 判定の閾値が LLM デフォルト美学への抵触** (V12) — 反インフレの実用閾値判明
-
-### 検証で発見した skill 改善余地 (次回セッションで実装候補)
-
-1. master skill `!`構文を `[ -s topic.md ]` 判定に変更 (V1/V5 統一)
-2. Gotchas に「議題は 2KB 以内推奨」追記 (V7 発見の harness preview 上限)
-3. master skill に議題契約自動チェック導入 (V5/V6 を skill 内完結化)
-4. skill description に「反インフレ防御は sub-skill 階層で先回り発火」を反映 (V11 発見)
-
-### 未完了 (本セッション完了直前時点)
-
-- 本プロジェクト未コミット 9 ファイル超のコミット (今これからやる)
-- 議題ファイル `.docs/debate/CURRENT/topic.md` の最終整理 (V13「foo を bar」議題のまま残存)
-- グローバル領域コミット判断 (`~/.claude/skills/llm-debate*/`, `~/.claude/agents/llm-debater-*.md`, memory) — git 管理状態未確認
-- V3 Lead 統合判断結果の実行 (test-tdd-cycle-validation/ サルベージ + trash 7 ステップ、別セッション推奨)
-
-### ブロッカー
-
-- なし
+- 完了: coordination-harness-integrity-fork skill 新設 + bootstrap実装 (前 plan archived 済)
+- 完了: 本セッション内 3 commit (本プロジェクト cwd 内、push済)
+- 完了: B+C 改修 plan 立て + plan ファイル書き出し (~/.claude/plans/bash-1-context-fork-skills-agent-skill-enchanted-seahorse.md、status: planning、plan_id: bash-1-context-fork-skills-agent-skill-enchanted-seahorse-bcfix)
+- 未完了: B+C 改修 Step 1〜5 (Plan 承認済、Auto mode、handoff 後にかもね手動 /clear → /pickup → 後続セッションで実装着手予定)
+- ブロッカー: なし
 
 ## 作業ツリー
 
-- 現ブランチ: `main`
-- 上流: `origin/main` と同期 (未push コミットなし)
-- 本プロジェクト内の tracked 変更:
-  - `M .claude/CLAUDE.md` (PDF ファイル名リネーム追従、本セッション関連なし)
-  - `M .claude/handoff-state.md` (本ファイル、本セッションで更新)
-- 本プロジェクト内の untracked (本セッション関連、これからコミット対象):
-  - `.docs/specs/CURRENT/spec.md` (V4 用最小 spec)
-  - `.docs/debate/CURRENT/topic.md` (議題ローテーション最終状態 = V13 議題のまま)
-  - `.docs/debate/BACKUP/topic-V3-test-tdd-cycle-validation.md` (V3 議題バックアップ)
-  - `.docs/templates/2026-04-27_llm-debate-skill-decision.md` (前セッション)
-  - `.docs/templates/2026-04-27_llm-debate-skill-build.md` (前セッション)
-  - `.docs/templates/2026-04-27_llm-debate-skill-verify.md` (本セッション Phase 2)
-  - `.docs/templates/2026-04-28_llm-debate-skill-verify-full.md` (本セッション Phase 5、490+ 行)
-  - `.docs/templates/2026-04-28_llm-debate-session-summary.md` (本セッション Phase 7)
-- 本プロジェクト内の untracked (本セッション無関係、Session 4 持ち越し):
-  - `.claude/team-messages/`
-  - `.claude/teammate-messages/`
-- ~/.claude/plans/ の archive 状況:
-  - `archived/team-pm-agile-rainbow.md` (前セッション Plan archive、本セッション Phase 1 で実施)
-  - `archived/mighty-wiggling-noodle.md` (本セッション検証 Plan archive、Phase 5 で実施)
+- ブランチ: main → origin/main (in sync)
+- 未pushコミット: なし (push 済)
+- 本セッションで本プロジェクト cwd 内に追加した commit 3件:
+  - dcba81c docs(260417): coordination-harness-integrity-fork bootstrap実装ログを追加 (Stage 1-8完走、Self-Eating Dogfood成立)
+  - 7f2bb58 docs(260417): coordination-harness-integrity-fork Stage 2検証出力を追加 (Verdict NO-GO、12 skill + 12 agent対象)
+  - ff396fc docs(260417): coordination-harness-integrity-fork postmortem (Q&A・スコープ階層整理) を追加
+- 本プロジェクト cwd 外 (グローバル資産、git 管理対象外):
+  - ~/.claude/skills/coordination-harness-integrity-fork/SKILL.md 新規作成 (233行、Verdict GO 自己整合)
+  - ~/.claude/plans/bash-1-context-fork-skills-agent-skill-enchanted-seahorse.md 新規作成 (本plan、status: planning)
+  - ~/.claude/plans/archived/bash-1-context-fork-skills-agent-skill-enchanted-seahorse.md 既存 (前 plan、status: completed)
 
 ## ブランチ/PR
 
-- ブランチ: `main`
-- PR: なし
-- CI ステータス: 該当なし
+- 現ブランチ: main
+- PR: なし (gh pr view: "no pull requests found for branch \"main\"")
+- CIステータス: 取得不能 (PR なし)
 
 ## テスト/チェック
 
-### 実行したコマンド (本セッション)
+- セッション中実行コマンド:
+  - Skill(coordination-harness-integrity-fork) 1回 (Stage 2 = Production Run、Verdict NO-GO、critical 31 + major 12 = total 43 違反検出、duration 298秒)
+  - committer 3回 (3 commit 個別 staging、bootstrap log / Stage 2 出力 / postmortem log)
+  - Skill(logging-implementation) 1回 (postmortem ログ作成)
+  - Skill(handoff) 1回 (本書き出し)
+  - git push: かもね手動実行 (origin/main: f75c447..ff396fc)
+- 未実行: B+C 改修後の本skill 再起動 (Verification plan の Step 3)
 
-#### Phase 0: pickup
-- `/pickup` skill 実行
-- `.claude/handoff-state.md` Read
+## 次のステップ (順序付き)
 
-#### Phase 1
-- `Skill(llm-debate)` 起動 (V1 ドライラン)
-- 議題ファイル Write
-- `Skill(llm-debate)` 再起動 (V3)
-- 5 sub-skill 並列起動 (Skill ツール 5 回呼出を 1 メッセージ)
-- Plan ファイル frontmatter 編集 + `mv` archive
-
-#### Phase 2
-- `/logging-implementation` skill 実行
-- `2026-04-27_llm-debate-skill-verify.md` Write
-
-#### Phase 3 (Plan モード)
-- `Agent(Explore)` 1 体起動
-- `Agent(Plan)` 1 体起動
-- `AskUserQuestion` 3 軸確認
-- Plan ファイル `~/.claude/plans/mighty-wiggling-noodle.md` Write
-- `ExitPlanMode`
-
-#### Phase 4 (全 14 検証)
-- `TaskCreate` × 5 (事前準備 / P0 / P1 / P2 / 結果集約)
-- 議題ファイル Write × 9 (議題ローテーション全 9 種類)
-- `Skill(llm-debate)` 起動 × 5 (V1 + V3 + V5 + V6 + V7 + V8、合計 6 回)
-- `Skill(llm-debate-{role})` 起動 × 12 (V2 + V3×5 + V11×5 + V12 + V13)
-- `Agent(coder)` 1 体起動 (V4)
-- `Skill(debating-roles)` 起動 (V10、ただし TeamCreate 以降は未実施)
-
-#### Phase 5
-- `2026-04-28_llm-debate-skill-verify-full.md` Write
-- Plan ファイル frontmatter 編集 + `mv` archive
-
-#### Phase 6
-- AskUserQuestion (アーキテクチャ整理の意図確認)
-- 質問への回答出力 (Q&A 整理)
-
-#### Phase 7
-- `2026-04-28_llm-debate-session-summary.md` Write
-
-### 未実行
-
-- 本プロジェクト未コミットのコミット (今これから)
-- グローバル領域コミット判断
-- V3 Lead 統合判断結果の実行 (別セッション)
-
-## 次のステップ
-
-1. **本ファイル更新後にコミット**: handoff-state.md 更新 (本タスク) → 本プロジェクト 9 ファイル超のコミット (`docs(260417): ...` 系列で 3 コミット程度に分割推奨)
-2. **議題ファイル最終整理**: `.docs/debate/CURRENT/topic.md` を V13 議題のままにするか、V3 議題に戻すか、空にするか判断
-3. **グローバル領域コミット判断**: `~/.claude/skills/llm-debate*/`, `~/.claude/agents/llm-debater-*.md`, memory `feedback_multi-agent-debate-design.md` の git 管理状態を確認後、コミット要否判断
-4. **skill 改善余地 4 件の実装**: 上記「検証で発見した skill 改善余地」を次回セッションで実装
-5. **V3 Lead 統合判断結果の実行**: test-tdd-cycle-validation/ サルベージ + trash 7 ステップ (別セッション推奨)
+1. ~/.claude/plans/bash-1-context-fork-skills-agent-skill-enchanted-seahorse.md を Read で読み込み (frontmatter plan_id: ...-bcfix で前 plan と区別)
+2. Step 1 着手: ~/.claude/skills/coordination-harness-integrity-fork/SKILL.md の改修
+   - L109 周辺: ruleset C-3 を C-3a (critical) / C-3b (major) / C-3c (対象外) に分割
+   - L146 Verdict logic step 7: `C-3` → `C-3a` に変更
+   - L151 周辺: zsh_glob_violation 注釈を C-3a 専用に修正
+   - L165-166: ruleset_results の C_bang_syntax fail 条件を C-1/C-2/C-3a に限定
+   - L226 以降: 過去bug実証ログ (.docs/templates/2026-05-01_zsh-nullglob-result.md) を関連ファイルに追記
+3. Step 2 着手: llm-debate 系 6 skill の Observability schema 3キー固定統一
+   - llm-debate-implementer/SKILL.md L113-115 (sub5: 2キー → 4キー、tool_uses_count + file_writes_count + duration_sec + files_read)
+   - llm-debate-tester/SKILL.md L112 付近 (同上)
+   - llm-debate-reviewer/SKILL.md L135 付近 (同上)
+   - llm-debate-documenter/SKILL.md L127 付近 (同上)
+   - llm-debate-ui-designer/SKILL.md L122 付近 (同上)
+   - llm-debate/SKILL.md L138-142 (master: 構造指示 → 5キー固定、tool_uses_count + file_writes_count + duration_sec + sub_skill_invocations + sub_skill_durations)
+4. Step 3 着手: Skill(coordination-harness-integrity-fork) 再起動 → Verdict 取得 → 判定樹 (plan 内 Verification plan セクション参照) に従う
+5. Step 4 着手: 実装ログ .docs/templates/2026-05-03_coordination-harness-integrity-bcfix.md 作成 + committer 経由 4分割 commit
+   - commit 1 (B改修): 本skill SKILL.md (本プロジェクト cwd 外、commit 対象外、グローバル資産はローカル状態のみ)
+   - commit 2 (C改修): llm-debate 系 6 skill (同上、commit 対象外)
+   - commit 3 (再検証出力): .docs/coordination-integrity/2026-05-03.md
+   - commit 4 (実装ログ): .docs/templates/2026-05-03_coordination-harness-integrity-bcfix.md
+6. Step 5 着手: plan ファイル frontmatter status: completed + completed timestamp 設定後、~/.claude/plans/archived/bash-1-context-fork-skills-agent-skill-enchanted-seahorse-bcfix.md に rename + mv (命名衝突回避)
 
 ## リスク/注意点
 
-- **議題ファイル `.docs/debate/CURRENT/topic.md` の最終状態が V13 議題のまま残存**: コミットすると V13「foo を bar」が永続化される。意図的に V13 議題で残す or V3 議題に戻す or 空にする の判断を要する
-- **本プロジェクト未コミット 9 ファイル超**: 1 コミット にまとめると粒度大きすぎ、3 コミット程度に分割推奨 (decision/build/verify 3 ログ + verify-full + session-summary + 議題関連 + spec)
-- **handoff-state.md は本ファイル自身の更新含む**: コミット時に handoff-state.md の更新を含めるか別 commit にするかは粒度判断
-- **`.claude/CLAUDE.md` の M (PDF リネーム追従) は本セッション無関係**: 別 commit で扱うべき
-- **`~/.claude/skills/`, `~/.claude/agents/` の git 管理状態未確認**: グローバル領域は dotfiles repo 別管理の可能性、要確認
+- グローバル資産 (~/.claude/skills/) は本プロジェクト cwd 外、git 管理対象外: 改修前バックアップ推奨 (cp -r ~/.claude/skills/llm-debate* /tmp/backup-bcfix/)
+- 本plan ファイル path 命名衝突: ~/.claude/plans/archived/bash-1-context-fork-skills-agent-skill-enchanted-seahorse.md 既存 (前 plan)、Step 5 archive 時に rename to `*-bcfix.md`
+- subagent → Skill 呼出は公式 grayzone (本skill 自体含む、Claude Code バージョン更新時は動作再検証推奨)
+- かもねの指示順序: Plan立て → md書き出し → /handoff → /clear → /pickup
+- Auto mode 有効、ただし /handoff 完了後はかもね手動で /clear → /pickup 実行予定
+- 過去bug 2026-05-01 zsh nomatch (`ls openapi.*`) 再発防止: 本plan 改修中に `ls *.ts` 等の glob 直書きを skill 本文に混入させない (改修後の C-3a が即時自己違反になる)
+- 本skill 再起動時の duration: 前回 298秒 (約5分) 想定、maxTurns 配慮
+- D-1 改修対象 6 skill のうち llm-debate (master) は構造指示のみ → 5キー固定への変更が他 sub5 (2キー → 4キー) と diff 形態が異なる
+- C-3b 31件残存 (find -maxdepth 欠落) は major (CONDITIONAL域) で受容、別 plan 化推奨 (本 plan 範囲外)
 
-## 関連ファイル
+## 前提として読むべき重要ファイル (読み順)
 
-### 本セッションで新規作成 (本プロジェクト)
-
-- `.docs/specs/CURRENT/spec.md` (V4 用最小 spec)
-- `.docs/debate/CURRENT/topic.md` (議題ローテーション、最終 V13 状態)
-- `.docs/debate/BACKUP/topic-V3-test-tdd-cycle-validation.md` (V3 議題バックアップ)
-- `.docs/templates/2026-04-27_llm-debate-skill-verify.md` (V1/V3/Plan archive 検証ログ)
-- `.docs/templates/2026-04-28_llm-debate-skill-verify-full.md` (V2-V14 全 13 検証ログ、490+ 行)
-- `.docs/templates/2026-04-28_llm-debate-session-summary.md` (本セッション全体総括、Phase 0-7)
-
-### 本セッションで更新
-
-- `.claude/handoff-state.md` (本ファイル、本セッションで更新)
-- `~/.claude/plans/archived/team-pm-agile-rainbow.md` (前セッション Plan archive、本セッション Phase 1 完了)
-- `~/.claude/plans/archived/mighty-wiggling-noodle.md` (本セッション検証 Plan archive、Phase 5 完了)
-
-### 既存 (変更なしで参照)
-
-- `~/.claude/skills/llm-debate/SKILL.md` + `llm-debate-{role}/SKILL.md` × 5 (検証対象)
-- `~/.claude/agents/llm-debater-{role}.md` × 5 (検証対象)
-- `~/.claude/agents/coder.md` (V4 で起点)
-- `~/.claude/skills/debating-roles/SKILL.md` (V10 比較対象)
-- `~/.claude/agents/team-{role}.md` × 5 + `team-pm.md` (本セッションでは非使用、debating-roles 専用ではない既存 agent)
-- `~/.claude/agents/debater-{role}.md` × 5 + `debater-pm.md` (debating-roles 専用、本セッションでは非起動)
-
-### 関連 memory (検証時参照、変更なし)
-
-- `feedback_skill-fork-asymmetry.md`
-- `feedback_disable-model-invocation-blocks-skill-tool.md` (V2 仮説却下の根拠)
-- `feedback_multi-agent-debate-design.md`
-- `feedback_claude-opus-only-for-multi-agent.md`
-
-### 関連実装ログ (シリーズ)
-
-- `2026-04-27_llm-debate-skill-decision.md` (朝、設計判断)
-- `2026-04-27_llm-debate-skill-build.md` (午後、構築)
-- `2026-04-27_llm-debate-skill-verify.md` (前セッション、V1/V3 検証)
-- `2026-04-28_llm-debate-skill-verify-full.md` (本セッション、V2-V14 全 13 検証)
-- `2026-04-28_llm-debate-session-summary.md` (本ファイル系列、本セッション全体総括)
+1. ~/.claude/plans/bash-1-context-fork-skills-agent-skill-enchanted-seahorse.md (本 plan、独立読解可能、Step 1〜5 詳細)
+2. .docs/coordination-integrity/2026-05-03.md (前 audit 結果、Verdict NO-GO 報告、43違反の出典)
+3. .docs/templates/2026-05-03_coordination-harness-integrity-bootstrap.md (前セッション bootstrap実装ログ)
+4. .docs/templates/2026-05-03_coordination-harness-integrity-postmortem.md (Q&A・スコープ階層整理ログ)
+5. .docs/templates/2026-05-01_zsh-nullglob-result.md (B 改修の根拠、find -name literal は safe 実証)
+6. ~/.claude/plans/archived/bash-1-context-fork-skills-agent-skill-enchanted-seahorse.md (前 plan、bootstrap、status: completed、参考)
+7. ~/.claude/skills/coordination-harness-integrity-fork/SKILL.md (改修対象本体、233行)
+8. ~/.claude/skills/red-test-fork/SKILL.md L97-101 (Observability schema 正典、3キー + file_writes_list)
