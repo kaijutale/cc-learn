@@ -1,6 +1,7 @@
 ---
-title: coordination-harness-integrity-fork C-3b 31件解消 実装ログ
-date: 2026-05-04
+feature: coordination-harness-integrity-c3bfix
+session: 未設定
+date: 2026-05-04 02:14:48
 type: implementation
 project: 260417-coordination-harness-integrity-fork
 plan: swift-orbiting-allen
@@ -19,13 +20,13 @@ related_audits:
 
 # coordination-harness-integrity-fork C-3b 31件解消 実装ログ
 
-## 背景
+## 概要
 
 前 plan (B+C 改修 + next.config fix) で Verdict CONDITIONAL に到達したが、C-3b major 31件 (find -maxdepth 欠落) が残存。critical 0 だが完全 pass せず、ハーネス品質磨き込みの観点で残課題化していた。
 
 `-maxdepth N` 一律追加は雑な解 (検出漏れリスクあり) なので、**用途別に N を判定**して個別最適化することで「hang 防止」と「検出精度」を両立する設計を Plan agent で検証。修正版 (P1=8 / P2=4 / P3=6 / P4=10+.git prune) を採用、本 plan で実装。
 
-## 変更内容
+## 実装内容
 
 ### 用途別 N 値マッピング (4パターン、合計31件)
 
@@ -82,6 +83,41 @@ related_audits:
 
 ### Self-Eating Dogfood
 本 audit skill 自身は本plan で触っていない (前 plan で対応済、-maxdepth 指定済)。run3 でも 5 ruleset 全 pass、改修自己整合 GO 維持。
+
+## 設計意図
+
+### なぜ「用途別 N 値」を採用したか (一律 N=5 案 A の却下)
+hang 防止 (find -maxdepth で再帰深さ制限) と検出精度 (深い monorepo でも見落とさない) はトレードオフ。一律 N=5 は monorepo `packages/X/src/feature/components/atoms/<file>` (深さ 8) で**検出漏れ**を起こす。用途別に N を選定することで「現実的なツリー深さ + 1マージン」で両立。
+
+### Plan agent 検証で N 値が下方修正された理由
+私の元案 (P1=10, P2=3-4, P3=5) を Plan agent が独立検証し、修正版 (P1=8, P2=4, P3=6) に変更:
+- **P1 を 10→8 に下方修正**: N=10 は実質無制限に近く、ruleset C-3b の予防意図 (走査時間爆発リスク予防) と矛盾。N=8 は monorepo 深さ 8 の境界 + 1 マージンで現実的
+- **P2 を 3-4→4 統一**: 起点に依存させず統一値で機械検証 (`grep "maxdepth 4"`) 容易、保守性向上
+- **P3 を 5→6 微増**: ディレクトリ検出はエントリ数少、走査時間爆発リスク低、安全マージン取れる
+
+### prune 拡張を `.git` のみに絞った理由 (YAGNI 原則)
+`dist/.next/coverage/.turbo` 全部追加は過剰防御。head -20 で頭打ち + 既存 `node_modules` prune で実用 hang リスクは既に最小化されている。`.git` のみ追加で false positive 排除、保守負荷増を回避。
+
+### ruleset C-3b 降格 (案 C) を却下した理由
+C-3b を minor に降格すれば Verdict GO 即達成だが、**直前の B改修で C-3 を 3分割した直後**に降格すると ruleset 設計の一貫性が崩壊。「実害なし → 降格」を許すと他 ruleset でも降格圧力発生、エンジン信頼性が損なわれる。
+
+### find → rg 置換 (案 D) を本 plan 範囲外とした理由
+`rg --files` は `.gitignore` 自動尊重で `-maxdepth` 不要、高速。だが ruleset C-1 (!構文 allowlist: find/cat/ls/grep/git/date/pwd/echo/head/tail) に rg は含まれず、**ruleset 本体改修が必要** = 本 plan のスコープ膨張。後続別 plan の改善案として保留。
+
+## 副作用
+
+### 既知の副作用 (許容範囲)
+- **検出漏れリスク (false negative)**: 深さ N+1 以上のファイルは検出されない。例えば `src/packages/X/src/feature/components/atoms/buttons/<file>` (深さ 9) は P1=8 で漏れる。用途別 N で最小化したが、極端な monorepo 構造では P1 を 9 に微調整する余地あり (R2 緩和済)
+- **N 値選定のプロジェクト構造前提依存**: 「monorepo 深さ 8 想定」「`.docs/specs/CURRENT/<file>` (深さ 4) 想定」等、現実的構造を前提にしている。異なる構造プロジェクト (例: 深い nested workspace) では N 微調整必要
+
+### ロールバック前提のリスク (グローバル資産改修)
+- 本 plan の改修対象 7 fork skill は `~/.claude/skills/` 配下 = グローバル資産、git 管理外
+- 改修失敗時の復元は `/tmp/skills-backup-c3bfix/` からの手動 `cp -r` に依存
+- バックアップは一時ディレクトリなので OS 再起動で消失する可能性、長期保存にはリポジトリ管理推奨 (後続検討課題)
+
+### 副次効果 (positive side effect)
+- duration_sec 改善: 298秒 → 113秒 (-62%)。ruleset 精密化により「真の違反」のみ評価対象になり、判定処理が高速化
+- 全 ruleset 100% pass による self-eating dogfood の完成: 本 audit skill 自身が GO Verdict を出せる構造的整合性達成
 
 ### 反インフレチェック (issues=0 を疑った 5件、team-reviewer から)
 
