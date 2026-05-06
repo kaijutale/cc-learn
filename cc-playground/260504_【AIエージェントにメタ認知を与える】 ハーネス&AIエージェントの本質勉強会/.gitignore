@@ -1,0 +1,10 @@
+# 参照資料
+.docs/references/
+
+# プラン出力先
+.docs/plans/
+
+# ローカルログ
+.docs/logs/local/
+
+.env
