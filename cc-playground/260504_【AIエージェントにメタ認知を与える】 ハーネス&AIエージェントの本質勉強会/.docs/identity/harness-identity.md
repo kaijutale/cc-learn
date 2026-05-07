@@ -1,11 +1,11 @@
-# agent-identity.md
+# harness-identity.md
 
-> `~/.claude/.docs/essence/agent-essentials.md` (8原則) に対する、本プロジェクトでの自己選択。
+> `~/.claude/.docs/essence/harness-essentials.md` (8原則) に対する、本プロジェクトでの自己選択。
 > essence の各原則に対して「このプロジェクトでは何を選んだか / どう実装するか」を1:1対応で記述する。
 
 ## 対応 essence
 
-`/Users/camone/.claude/.docs/essence/agent-essentials.md` (v1.0)
+`/Users/camone/.claude/.docs/essence/harness-essentials.md` (v1.0)
 
 ## essence/agent との対応表
 
@@ -77,10 +77,10 @@ multi-agent skill (`debating-roles`, `orchestrating-team-development`, `enforcin
 
 - レビューアには essence の **全量** を渡す (圧縮しない)
 - 実装者 (メイン Claude) には essence の **圧縮版** または「該当原則のみ」を渡す
-- 根拠: agent-essentials 原則7 (実装者に評価基準の全量を渡すと制約が強すぎて自由発想を阻害)
+- 根拠: harness-essentials 原則7 (実装者に評価基準の全量を渡すと制約が強すぎて自由発想を阻害)
 
 ## 改訂履歴
 
 | 日付 | 版 | 変更 |
 |---|---|---|
-| 2026-05-06 | v1.0 | 初版。essence/agent-essentials.md (v1.0) の8原則と1:1対応で本プロジェクトの選択を記述。 |
+| 2026-05-06 | v1.0 | 初版。essence/harness-essentials.md (v1.0) の8原則と1:1対応で本プロジェクトの選択を記述。 |

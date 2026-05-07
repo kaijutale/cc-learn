@@ -18,7 +18,7 @@
 | 5 | Don't Railroad | low freedom (脆弱・再現性必須) なタスクのみ step-by-step 化、high freedom (発想/レビュー等) はテキスト指示に留める |
 | 6 | I/O 契約の明確化 | 4タイプ (Dictionary / Workflow / Generative Workflow / Identity) を冒頭で明示 |
 | 7 | 決定論的処理は scripts/hooks に逃がす | validate / check / lint は Python or Bash スクリプト化、`!コマンド` shell-inline syntax 活用 |
-| 8 | 上位 essence との整合 | 新規 skill 作成時に `agent-essentials.md` との対応関係を明記する (どの原則を具体実装したか) |
+| 8 | 上位 essence との整合 | 新規 skill 作成時に `harness-essentials.md` との対応関係を明記する (どの原則を具体実装したか) |
 
 ## このプロジェクトで使う主要 skill
 
@@ -53,7 +53,7 @@
 fork skill を使う/作る場合の本プロジェクト方針:
 
 - **in-process / out-of-process で挙動が揺れる公式 grayzone** (memory: `feedback_skill-fork-asymmetry.md`)
-- **cwd 継承対策必須**: subagent に渡すパスは絶対パス (例: `/Users/camone/.claude/.docs/essence/agent-essentials.md`)
+- **cwd 継承対策必須**: subagent に渡すパスは絶対パス (例: `/Users/camone/.claude/.docs/essence/harness-essentials.md`)
 - **相対パスを subagent プロンプトに含めない**
 
 ## TDD skill 使用時
@@ -74,11 +74,11 @@ fork skill を使う/作る場合の本プロジェクト方針:
 
 ## レビュー基準としての essence 利用
 
-`review-agent-essence` 等で essence をレビューア基準として渡す場合 (agent-identity.md と重複するが skill 観点で再掲):
+`review-agent-essence` 等で essence をレビューア基準として渡す場合 (harness-identity.md と重複するが skill 観点で再掲):
 
 - essence の **全量** をレビューア skill に渡す (圧縮しない)
 - 実装者 skill には essence の **圧縮版** または「該当原則のみ」を渡す
-- 根拠: skill-essentials 原則7 (レビューアと実装者の分離) → agent-essentials 原則7 と同義
+- 根拠: skill-essentials 原則7 (レビューアと実装者の分離) → harness-essentials 原則7 と同義
 
 ## skill 配置の判断フロー
 

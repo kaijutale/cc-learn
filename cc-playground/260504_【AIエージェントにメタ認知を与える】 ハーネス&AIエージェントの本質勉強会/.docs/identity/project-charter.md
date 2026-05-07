@@ -1,7 +1,7 @@
 # project-charter.md
 
 > このプロジェクトの自己定義。「何のためのプロジェクトか」「何を作り何を作らないか」を明文化する。
-> 設計判断の最上位の出発点として、agent-identity / skill-identity から参照される。
+> 設計判断の最上位の出発点として、harness-identity / skill-identity から参照される。
 
 ## 概要
 
