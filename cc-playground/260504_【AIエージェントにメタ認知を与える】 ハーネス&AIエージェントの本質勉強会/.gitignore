@@ -7,4 +7,10 @@
 # ローカルログ
 .docs/logs/local/
 
+# PDF抽出の中間成果物 (再生成可能、サイズ大)
+.docs/output/
+
+# handoff skillが書き出すセッション一時状態
+.claude/handoff-state.md
+
 .env
