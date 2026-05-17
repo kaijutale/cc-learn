@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>essence-reviewing-orchestrator vs review-agent-essence — 4 つの問いで解剖</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a0e1a;
+  --bg-surface: #131826;
+  --bg-card: #1a1f2e;
+  --border-soft: #2a3148;
+  --copper: #DC2A1E;
+  --copper-bright: #FF3D2E;
+  --rust: #8B1A1A;
+  --moss: #1C4291;
+  --moss-dark: #163374;
+  --ivory: #F4F4F4;
+  --pearl: #B8B8C2;
+  --shadow: #050810;
+  --accent-line: #2a3148;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(220, 42, 30, 0.10), transparent 70%),
+    linear-gradient(180deg, var(--bg-deep) 0%, #0c1018 100%);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--copper-bright);
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #1a1f2e 0%, #401a1a 100%); }
+.stat .num {
+  font-family: 'Vollkorn', serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Vollkorn', serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: italic;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual ul { margin: 8px 0 0 16px; padding: 0; }
+.dual li { font-size: 13px; color: var(--ivory); line-height: 1.6; margin-bottom: 4px; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(28, 66, 145, 0.14);
+  border-left: 2px solid var(--moss);
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--moss);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+.gap-block code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(28, 66, 145, 0.20); color: #6EA0FF; border: 1px solid var(--moss); }
+.verdict-row .severity.low { background: rgba(220, 42, 30, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); }
+.verdict-row .severity.medium { background: rgba(139, 26, 26, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); }
+.verdict-row .severity.high { background: rgba(220, 42, 30, 0.35); color: var(--ivory); border: 1px solid var(--copper); }
+
+.pull-quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">Comparison · 2 Essence Reviewers</div>
+
+  <h1 class="title">
+    <em>essence-reviewing-orchestrator</em><br>
+    vs<br>
+    <em>review-agent-essence</em>
+    <span class="pct">[ 4 つの問い ]</span>
+  </h1>
+
+  <p class="lede">
+    名前が似ている 2 つの「essence reviewer」を、<strong>機能 / 機能 / 違い / 優劣</strong>の 4 つの問いで解剖する。結論を先取りすると、<strong>両者は派生関係でなく並存する独立系統</strong>。orchestrator が多くの軸で優越するが、review-agent-essence は改修禁止リストに登録されて「触らず残す」運用。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat featured">
+      <span class="num">24</span>
+      <span class="label">Orchestrator 原則</span>
+      <span class="desc">8 原則 × 3 領域 (harness/skill/ui)</span>
+    </div>
+    <div class="stat zero">
+      <span class="num">11</span>
+      <span class="label">Legacy 原則</span>
+      <span class="desc">agent-essence.md (C/T/K/V/S/E)</span>
+    </div>
+    <div class="stat">
+      <span class="num">3</span>
+      <span class="label">Parallel Forks</span>
+      <span class="desc">Orchestrator のみ (context:fork)</span>
+    </div>
+    <div class="stat">
+      <span class="num">9 vs 4</span>
+      <span class="label">Workflow Steps</span>
+      <span class="desc">Orchestrator vs Legacy</span>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// PART · 01-04 — FOUR-POINT ANATOMY</div>
+    <h2>4 つの問いで解剖</h2>
+  </div>
+
+  <section class="cards">
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">01</div>
+        <div class="card-title">
+          <span class="tag">Q1 · Master Orchestrator</span>
+          <h3>essence-reviewing-orchestrator の機能</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>構造 (master + 3 sub + 3 agent)</h4>
+          <ul>
+            <li><strong>9 step フロー</strong> (Step 1 / 1.5 / 2 / 3 / 3.5 / 4 / 5 / 6-1 / 6-2)</li>
+            <li><code>context:fork</code> で 3 sub-skill を <strong>並列起動</strong> (harness / skill / ui)</li>
+            <li>Step 3.5 で <strong>Lead 統合判断</strong> (原則横断 root cause 補完)</li>
+            <li>永続化先: <code>~/.claude/.docs/essence-review-runs/</code> (Write tool + 進捗 JSON 検証)</li>
+            <li><code>validate-all-steps.sh</code> で step skip を機械検証</li>
+          </ul>
+        </div>
+        <div class="b">
+          <h4>評価基準 (essentials.md × 3)</h4>
+          <ul>
+            <li><code>harness-essentials.md</code> (8 原則)</li>
+            <li><code>skill-essentials.md</code> (8 原則)</li>
+            <li><code>ui-essentials.md</code> (8 原則)</li>
+            <li>= <strong>24 原則</strong>を 3 領域並列で照合</li>
+            <li>Verdict: GO / CONDITIONAL / FAIL (Critical/High/Medium/Low カウント)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">出自 / Era</span>
+        <p>note 記事 page 12-15「<strong>レビューア = カスタムスキル + マゴエージェント</strong>」を直接出典として 2026-05-08〜10 に新規構築。Phase D 以降の現役主力。反インフレ原則 (「3 領域全 🟢 は赤信号」) + Critical HITL チェックポイント + エラー時挙動 4 ケース明示で、構造的盲点を埋める設計。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">タイプ: <strong>Workflow Orchestrator</strong></span>
+        <span class="severity harmless">Era: Current</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">02</div>
+        <div class="card-title">
+          <span class="tag">Q2 · Single Reviewer</span>
+          <h3>review-agent-essence の機能</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>構造 (単体 skill + subagent)</h4>
+          <ul>
+            <li><strong>4 step フロー</strong> (読込 → 関連原則選定 → 評価 → ハンドオフ)</li>
+            <li><code>context: fork</code> で subagent (<code>general-purpose</code>, model: <code>opus</code>) を起動</li>
+            <li>出力: <strong>標準出力</strong>に Essence Review template</li>
+            <li>修正 Plan 作成は <strong>呼出元に委譲</strong> (「次のアクション」ディレクティブ)</li>
+            <li>並列度: <strong>なし</strong> (単体起動)</li>
+          </ul>
+        </div>
+        <div class="b">
+          <h4>評価基準 (agent-essence.md 単一)</h4>
+          <ul>
+            <li><code>C-1〜C-7</code>: LLM の構造的制約 (帯域有限 / 入力バイアス / 迎合性 / 自己申告無効 / 報酬ハッキング / 訓練データ断崖 / 校正盲)</li>
+            <li><code>T/K/V/S/E</code>: ハーネス設計 5 軸 (タスク構造 / 記憶と知識 / 検証と矯正 / 信頼境界 / 環境設計)</li>
+            <li>= <strong>11 原則</strong> (サブ番号含むと 20+)</li>
+            <li>「関連度判定」で原則選別 (機械的全件適用しない)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">出自 / Era</span>
+        <p>Boris Cherny / Anthropic 系の Claude Code 設計文化由来 (2026-04 頃から存在、<code>.DS_Store</code> 日付が 2026-04-05)。改修禁止リストに登録され、<strong>現在は無変更で並存</strong>。「対象を直接修正しない」review-only 設計で、修正 Plan の作成は呼出元のメインコンテキストに委譲する役割分離が特徴。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">タイプ: <strong>Single Subagent</strong></span>
+        <span class="severity harmless">Era: Legacy (並存)</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">03</div>
+        <div class="card-title">
+          <span class="tag">Q3 · Differential</span>
+          <h3>2 つの skill の違い — 別系統の独立設計</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>構造的な違い</h4>
+          <ul>
+            <li>単層 (subagent 1 体) <strong>vs</strong> 多層 (master + 3 sub + 3 agent = 7 ファイル)</li>
+            <li>並列度なし <strong>vs</strong> 3 fork 並列</li>
+            <li>4 step <strong>vs</strong> 9 step + 進捗 JSON 検証</li>
+            <li>stdout 出力 <strong>vs</strong> 永続化ファイル + Write tool</li>
+            <li>Lead 補完なし <strong>vs</strong> Step 3.5 で原則横断 root cause 統合</li>
+            <li>Plan 連携内蔵 <strong>vs</strong> 別 skill (<code>accumulating-reviewer-feedback</code>)</li>
+          </ul>
+        </div>
+        <div class="b">
+          <h4>基準・出典の違い</h4>
+          <ul>
+            <li><code>agent-essence.md</code> (11 原則、C/T/K/V/S/E カテゴリ) <strong>vs</strong> <code>essentials.md × 3</code> (24 原則、harness/skill/ui 領域別)</li>
+            <li>出典: Boris-Anthropic 系の Claude Code 設計文化 <strong>vs</strong> note 記事 page 12-15「<strong>レビューア = カスタムスキル</strong>」直接出典</li>
+            <li>原則 ID 体系: <code>C-1.1</code> <strong>vs</strong> <code>harness-原則#1</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">関係性の核心</span>
+        <p>「<strong>essence</strong>」という共通語に騙されない。両者は <strong>派生関係ではなく独立並走</strong>。design-rationale.md 核心 5 で「<code>review-agent-essence</code> は完全無変更、本 skill は新規追加で構造化、既存資産は触らない」と明示。Linux カーネルが BSD を取り込まずに独自実装し続けたのと同じ並走戦略。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">関係性: <strong>Parallel (並存)</strong></span>
+        <span class="severity harmless">継承なし</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">04</div>
+        <div class="card-title">
+          <span class="tag">Q4 · Verdict</span>
+          <h3>優劣判定 — Orchestrator が多軸で優越</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>Orchestrator の優位 (7 軸)</h4>
+          <ul>
+            <li><strong>カバレッジ</strong>: 24 原則 × 3 領域 (vs 11 原則)</li>
+            <li><strong>時間効率</strong>: 3 fork 並列で 1 領域あたり 30-40 秒 (vs 単体逐次)</li>
+            <li><strong>構造的盲点解消</strong>: Step 3.5 Lead 補完 (原則横断 root cause 統合)</li>
+            <li><strong>機械検証</strong>: 9 step <code>validate-all-steps.sh</code> で step skip 検出</li>
+            <li><strong>永続化フロー</strong>: 全 self-eval が ts 付きで蓄積 → 差分追跡可能</li>
+            <li><strong>反インフレ原則</strong>: 「全 🟢」を能動的に疑う構造</li>
+            <li><strong>HITL 統合</strong>: Critical 検出時の人間チェックポイント</li>
+          </ul>
+        </div>
+        <div class="b">
+          <h4>review-agent-essence の残存価値</h4>
+          <ul>
+            <li><strong>軽量・即時</strong>: 単体起動でコスト低 (3 fork は重い)</li>
+            <li><strong>Plan 作成連携内蔵</strong>: 「次のアクション」ディレクティブで呼出元に YES/NO を投げる</li>
+            <li><strong>11 原則の質</strong>: Anthropic/Boris 系の概念 (C-1 ゼロサム / C-7 校正盲 等) が camone のメタ認知に直接寄与</li>
+            <li><strong>「触らず残す」運用</strong>: 改修禁止で並存、軽量レビューの receptacle</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">用途別の使い分け (camone 現運用)</span>
+        <p><strong>包括的 self-eval + 品質階段運用</strong> → <code>essence-reviewing-orchestrator</code> (現役主力、すべての Skill Creator 改善で使用)。<strong>軽量・即時レビュー + Plan 作成連携</strong> → <code>review-agent-essence</code> (Legacy、現在は使用機会が限定的)。総合判定としては Orchestrator が優越するが、camone は両者を <strong>並存させたまま運用</strong>している。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">総合判定: <strong>Orchestrator 優越 (Strong)</strong></span>
+        <span class="severity high">Verdict: Strong</span>
+      </div>
+    </article>
+
+  </section>
+
+  <blockquote class="pull-quote">
+    同じ「essence」の名を冠していても、<br>
+    片や 11 原則の単体レビュー、片や 24 原則 × 3 領域並列 + Lead 補完。<br>
+    継承ではなく独立並走、優位は明白。
+    <cite>— 2026-05-15 設計系統解剖</cite>
+  </blockquote>
+
+  <div class="closing">
+    <p class="quote">並走する 2 つの reviewer。<br>役割を区別すれば、<br>両方の価値が見える。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.16 06:30 JST</p>
+  </div>
+
+</main>
+</body>
+</html>

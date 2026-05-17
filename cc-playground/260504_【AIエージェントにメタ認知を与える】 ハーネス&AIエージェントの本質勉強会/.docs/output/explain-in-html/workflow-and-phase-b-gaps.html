@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR 駆動自動化 — ワークフロー全体図と Phase B の抜け 3 つ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a0e1a;
+  --bg-surface: #131826;
+  --bg-card: #1a1f2e;
+  --border-soft: #2a3148;
+  --copper: #DC2A1E;
+  --copper-bright: #FF3D2E;
+  --rust: #8B1A1A;
+  --moss: #1C4291;
+  --moss-dark: #163374;
+  --ivory: #F4F4F4;
+  --pearl: #B8B8C2;
+  --shadow: #050810;
+  --accent-line: #2a3148;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(220, 42, 30, 0.10), transparent 70%),
+    linear-gradient(180deg, var(--bg-deep) 0%, #0c1018 100%);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; }
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--copper-bright);
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #1a1f2e 0%, #401a1a 100%); }
+.stat .num {
+  font-family: 'Vollkorn', serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Vollkorn', serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: italic;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(139, 26, 26, 0.14);
+  border-left: 2px solid var(--rust);
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(28, 66, 145, 0.20); color: #6EA0FF; border: 1px solid var(--moss); }
+.verdict-row .severity.low { background: rgba(220, 42, 30, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); }
+.verdict-row .severity.medium { background: rgba(139, 26, 26, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); }
+.verdict-row .severity.high { background: rgba(220, 42, 30, 0.35); color: var(--ivory); border: 1px solid var(--copper); }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Vollkorn', serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Plain prose === */
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+/* === Code block === */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0 96px;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table tr:hover td { background: rgba(220, 42, 30, 0.06); }
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">Workflow · 2026.05.17 · #8 PR-Driven Automation</div>
+  <h1 class="title">
+    AI 自動レビューは<br>
+    <em>どこの自動化</em>か<br>
+    Phase B の<span class="pct">[ 3 GAPS ]</span>
+  </h1>
+  <p class="lede">
+    PR 駆動自動化 (skill 改修を <strong>pull request 経由</strong>で扱う仕組み) の全体像を整理する。
+    <strong>AI 自動レビュー</strong>は Phase C に位置する「<strong>承認の手前のフィルタ層</strong>」、
+    Phase B (Discord 通知) には設計の<strong>抜けが 3 つ</strong>残ったままになっている。
+  </p>
+
+  <!-- ============================================ -->
+  <!-- STAT-BAR: 4 Phase の課金境界                  -->
+  <!-- ============================================ -->
+  <div class="stat-bar">
+    <div class="stat zero">
+      <span class="num">A</span>
+      <span class="label">Phase A</span>
+      <span class="desc">PR 自動作成<br>subscription 内</span>
+    </div>
+    <div class="stat zero">
+      <span class="num">B</span>
+      <span class="label">Phase B</span>
+      <span class="desc">Discord 通知<br>subscription 内</span>
+    </div>
+    <div class="stat featured">
+      <span class="num">C</span>
+      <span class="label">Phase C ★違反</span>
+      <span class="desc">AI 自動レビュー<br>月 $5-20 課金</span>
+    </div>
+    <div class="stat">
+      <span class="num">D</span>
+      <span class="label">Phase D</span>
+      <span class="desc">統合 + 運用<br>Phase C 依存</span>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 01: ワークフロー全体図                -->
+  <!-- ============================================ -->
+  <div class="section-head">
+    <div class="num">// FLOW · 01</div>
+    <h2>ワークフロー全体像と AI 自動レビューの位置</h2>
+  </div>
+
+  <section class="roadmap">
+    <h2>essence-review finding から merge までの 7 段</h2>
+    <p class="sub">Phase A → B → C → D の自動化レイヤー</p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="session">既存 · 既に動いてる</div>
+        <h4>essence-review finding 永続化</h4>
+        <p>レビュー結果 (finding) を <code>accumulating-reviewer-feedback</code> skill で集約、Apply 候補を確定する段階。これは既に Session N+4/N+5 で実機実行済み。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">既存 · 既に動いてる</div>
+        <h4>skill ファイル改修 + commit</h4>
+        <p>finding を Apply して skill ファイルを書き換え、<code>committer</code> 経由でローカル commit する段階。これも既に動いている。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Phase A · 新規 · 最小実装</div>
+        <h4>--pr フラグで PR 自動作成</h4>
+        <p><code>accumulating-reviewer-feedback</code> に <code>--pr</code> フラグを足し、commit ではなく <code>gh pr create --draft</code> で pull request (差分レビュー単位) を作る段階。subscription Max Plan 内で完結。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Phase B · 新規 · 通知</div>
+        <h4>Discord webhook で通知</h4>
+        <p>GitHub Actions が <code>pull_request.opened</code> イベントを受けて Discord の channel に webhook (受信フック) で通知する段階。<strong>設計の抜けが 3 つ残ったまま</strong>のセクション。</p>
+      </div>
+      <div class="tl-item current">
+        <div class="session">Phase C · ★ AI 自動レビューはここ</div>
+        <h4>AI が PR の差分を自動レビュー</h4>
+        <p><strong>PR 作成された後、camone が承認する手前</strong>に挟まる「機械的なフィルタ層」。GitHub Actions 上で Claude API を起動し、24 原則 (ハーネス 8 + skill 8 + UI 8) と照合、違反兆候を severity (Critical / High / Medium / Low) 付きで PR コメントに投稿する設計。<strong>月 $5-20 の API 課金が発生 = subscription Max Plan 違反</strong>のため削除候補。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Phase D · 統合</div>
+        <h4>HITL (人間判断) → 承認 or 修正依頼</h4>
+        <p>camone が PR の AI レビュー結果を見て、approve (承認) して merge するか、request changes (修正依頼) で再 commit を促すか判断する段階。HITL = Human-In-The-Loop = 人間が判断する点を残す仕組み。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">最終 · 完了</div>
+        <h4>merge 完了 → skill 反映</h4>
+        <p>main ブランチに merge され、skill 改修が確定する段階。次の essence-review サイクルへ。</p>
+      </div>
+    </div>
+  </section>
+
+  <blockquote class="pull-quote">
+    AI 自動レビューは「PR が作られた後、人間 (camone) が承認する手前」に挟まる、機械的フィルタ層である。
+    <cite>— Phase C の位置づけ</cite>
+  </blockquote>
+
+  <!-- ============================================ -->
+  <!-- SECTION 02: Phase B の抜け 3 つ                -->
+  <!-- ============================================ -->
+  <div class="section-head">
+    <div class="num">// GAPS · 02</div>
+    <h2>Phase B (Discord 通知) の "抜け" 3 つ</h2>
+  </div>
+
+  <section class="cards">
+
+    <!-- GAP 01: Validate step がない -->
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">01</div>
+        <div class="card-title">
+          <span class="tag">Gap · Validate step</span>
+          <h3>webhook URL 未登録時のチェックが design doc にない</h3>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">現状の問題 (Silent Failure)</span>
+        <p>GitHub Secrets (秘匿変数の保管場所) に <code>DISCORD_WEBHOOK_URL</code> を登録し忘れたまま PR を作ると、curl コマンド (HTTP リクエストを送るツール) が空 URL で実行され、ワークフローが赤エラーで停止する。しかしエラーメッセージは <code>curl: (3) URL using bad/illegal format</code> だけで、「Secret 未登録だよ」という親切なメッセージは出ない。原因を camone が能動的に Actions タブで調べる必要がある。</p>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>Before (現状の design doc)</h4>
+          <p>YAML 実装例には <code>curl -X POST "$DISCORD_WEBHOOK_URL" ...</code> しか書かれていない。URL が空でもそのまま実行される。</p>
+        </div>
+        <div class="b">
+          <h4>After (改善案)</h4>
+          <p>curl の手前に Validate step を 1 つ足す。<code>if [ -z "$DISCORD_WEBHOOK_URL" ]; then echo "::error::..." ; exit 1; fi</code> で fail-fast (失敗を即座に伝える)。</p>
+        </div>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">改善コスト: <strong>YAML に 7 行追加</strong></span>
+        <span class="severity low">Low · 局所修正</span>
+      </div>
+    </article>
+
+    <!-- GAP 02: payload の要件と実装の乖離 -->
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">02</div>
+        <div class="card-title">
+          <span class="tag">Gap · Payload 乖離</span>
+          <h3>「通知する情報」の要件と実装例が一致してない</h3>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">現状の問題 (Design Inconsistency)</span>
+        <p>design doc §3-2 の本文では「通知に 5 情報を載せる」と書かれているのに、同じ §3-2 内の YAML 実装例には PR URL の 1 情報しか載っていない。<strong>要件 5 情報のうち 4 情報 (PR title / 対象 skill / finding 件数 / accept-defer-dismiss 集計) が実装例から抜けている</strong>。設計と実装が同じファイル内で食い違っている状態。</p>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>要件 (§3-2 本文)</h4>
+          <p>5 情報を通知: PR title / 対象 skill / finding 件数 / accept・defer・dismiss 集計 / PR URL</p>
+        </div>
+        <div class="b">
+          <h4>実装例 (§3-2 YAML)</h4>
+          <p>1 情報のみ:<br><code>"📝 skill 改修 PR 作成: &lt;URL&gt;"</code></p>
+        </div>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">改善方向: <strong>要件を縮小 or 実装を embed 化で拡張</strong></span>
+        <span class="severity medium">Medium · 方針判断</span>
+      </div>
+    </article>
+
+    <!-- GAP 03: データの取り方が未設計 -->
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">03</div>
+        <div class="card-title">
+          <span class="tag">Gap · データ取得</span>
+          <h3>「finding 件数」「集計」「対象 skill」の抽出ロジック未記載</h3>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">現状の問題 (Data Source Undefined)</span>
+        <p>要件 5 情報のうち、PR title と PR URL は GitHub Actions の <code>github.event.pull_request.*</code> 変数から即時取得できる。しかし<strong>残り 3 情報 (finding 件数 / accept・defer・dismiss 集計 / 対象 skill) の取得方法が design doc に一切書かれてない</strong>。実装着手時にゼロから設計する必要がある。</p>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>取得済み (即時可能)</h4>
+          <p><code>pull_request.title</code> = PR title<br><code>pull_request.html_url</code> = PR URL</p>
+        </div>
+        <div class="b">
+          <h4>未設計 (要追加実装)</h4>
+          <p>finding 件数 = PR description を正規表現で grep 必要<br>集計 = 同上、書式依存で脆弱<br>対象 skill = changed files から path 抽出 + unique 化必要</p>
+        </div>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">改善コスト: <strong>抽出パーサー (解析プログラム) を別途設計</strong></span>
+        <span class="severity medium">Medium · 設計追加</span>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- ============================================ -->
+  <!-- SECTION 03: camone が決める 2 つの質問          -->
+  <!-- ============================================ -->
+  <div class="section-head">
+    <div class="num">// DECISION · 03</div>
+    <h2>camone が決めること: 2 つの質問</h2>
+  </div>
+
+  <section class="cards">
+
+    <!-- 質問 1: Phase C 代替案 -->
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">Q1</div>
+        <div class="card-title">
+          <span class="tag">Phase C 代替案</span>
+          <h3>AI 自動レビューを subscription 内でどう実現するか</h3>
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr><th>案</th><th>仕組み</th><th>自動化度</th><th>注意</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>A. self-hosted runner</strong></td>
+            <td>自分のマシンに GitHub Actions runner を立てて claude CLI を起動</td>
+            <td>高</td>
+            <td>常時起動マシン要</td>
+          </tr>
+          <tr>
+            <td><strong>B. local 手動 claude 起動</strong></td>
+            <td>Discord 通知を見て camone が手元で claude を起動</td>
+            <td>中</td>
+            <td>手間 +、価値 3/3 保持</td>
+          </tr>
+          <tr>
+            <td><strong>C. pre-PR レビュー</strong></td>
+            <td>PR 作る前の段階でレビュー完了させる</td>
+            <td>中</td>
+            <td>PR 段階の独立性消失</td>
+          </tr>
+          <tr>
+            <td><strong>D. CodeRabbit</strong></td>
+            <td>外部 SaaS で AI レビュー</td>
+            <td>高</td>
+            <td>別課金、subscription 外</td>
+          </tr>
+          <tr>
+            <td><strong>E. AI レビュー廃止</strong></td>
+            <td>機能諦め、camone 手動レビューに戻す</td>
+            <td>低</td>
+            <td>機能放棄、シンプル</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="verdict-row">
+        <span class="target">わたしのおすすめ: <strong>B または E</strong></span>
+        <span class="severity high">High · 機能選択</span>
+      </div>
+    </article>
+
+    <!-- 質問 2: Phase B 抜けの処理 -->
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">Q2</div>
+        <div class="card-title">
+          <span class="tag">Phase B 抜けの扱い</span>
+          <h3>抜け 3 つを design doc 上でどう処理するか</h3>
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr><th>案</th><th>処理内容</th><th>コスト</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>A. 放置</strong></td>
+            <td>design doc に何も足さない。Phase B 実装着手時に考える</td>
+            <td>ゼロ</td>
+          </tr>
+          <tr>
+            <td><strong>B. メモだけ追加</strong></td>
+            <td>design doc に「未解決事項」セクションを足し、3 抜けを箇条書きで残す。本体は触らない</td>
+            <td>小</td>
+          </tr>
+          <tr>
+            <td><strong>C. 今すぐ直す</strong></td>
+            <td>Phase C 削除と同時に design doc 本体を改修 (Validate step / payload / 抽出ロジック)</td>
+            <td>中</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="verdict-row">
+        <span class="target">わたしのおすすめ: <strong>B (メモだけ追加)</strong></span>
+        <span class="severity medium">Medium · 運用判断</span>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- ============================================ -->
+  <!-- CLOSING                                       -->
+  <!-- ============================================ -->
+  <div class="closing">
+    <p class="quote">消すか、残すか、代えるか。<br>
+    AI 自動レビューの「<br>居場所」が、<br>次の設計を決める。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.17 03:26 JST</p>
+  </div>
+
+</main>
+</body>
+</html>

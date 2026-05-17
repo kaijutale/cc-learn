@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>explain-in-html skill の構造と美学 — v1.0 自己解説</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a1628;
+  --bg-surface: #122039;
+  --bg-card: #16273f;
+  --border-soft: #1f3556;
+  --copper: #c47d51;
+  --copper-bright: #e89968;
+  --rust: #b04e2f;
+  --moss: #8a9a5b;
+  --moss-dark: #6b7a47;
+  --ivory: #ede8de;
+  --pearl: #a8a6a0;
+  --shadow: #050b15;
+  --accent-line: #2a4a7a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(196, 125, 81, 0.08), transparent 70%),
+    linear-gradient(180deg, var(--bg-deep) 0%, #0c1a30 100%);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; }
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--copper-bright);
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #1a2e4a 0%, #1f3556 100%); }
+.stat .num {
+  font-family: 'Vollkorn', serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Vollkorn', serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: italic;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(176, 78, 47, 0.08);
+  border-left: 2px solid var(--rust);
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(138, 154, 91, 0.15); color: var(--moss); border: 1px solid var(--moss-dark); }
+.verdict-row .severity.low { background: rgba(196, 125, 81, 0.12); color: var(--copper); border: 1px solid var(--copper); }
+.verdict-row .severity.medium { background: rgba(176, 78, 47, 0.15); color: var(--copper-bright); border: 1px solid var(--rust); }
+.verdict-row .severity.high { background: rgba(176, 78, 47, 0.25); color: var(--ivory); border: 1px solid var(--rust); }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Vollkorn', serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Plain prose (本文段落用) === */
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+/* === Code block === */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table tr:hover td { background: rgba(196, 125, 81, 0.04); }
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <!--
+    BODY CONTENT GOES HERE
+    references/component-library.md を参照し、トピックに合わせて以下のコンポーネントを組み立てる:
+      - .eyebrow / h1.title / .lede        (Header trio, 通常必須)
+      - .stat-bar                          (数値ハイライトがあるとき)
+      - .section-head + .cards > .card     (本論の主要構造)
+      - .prose                             (段落本文)
+      - .pull-quote                        (キーフレーズ強調)
+      - .data-table                        (比較・一覧)
+      - .code-block                        (コード例)
+      - .roadmap > .timeline               (時系列展望)
+      - .closing > .quote                  (締めの引用、通常必須)
+
+    制約:
+      - 最低 3 コンポーネント、最大 9 コンポーネント
+      - 全コンポーネント詰め込まない (情報密度過多 = AI slop の別形態)
+      - JST タイムスタンプを .closing .footer-meta に必ず入れる
+  -->
+
+  <div class="eyebrow">Skill · Self-Documentation · v1.0</div>
+
+  <h1 class="title">
+    <em>explain-in-html</em> の<br>
+    構造と美学を<br>
+    解剖する <span class="pct">[ v1.0 ]</span>
+  </h1>
+
+  <p class="lede">
+    <strong>Editorial Dark Academia</strong> 美学を <strong>固定 identity</strong> として注入し、
+    11 種類のコンポーネントから <strong>3-9 個</strong> を組み立てる
+    <strong>Identity 型 × 生成手順型</strong> ハイブリッド skill。<br>
+    LLM の白地紫グラデ収束を <strong>構造的</strong>に剥がし、
+    解説の「読書体験」を一貫させる。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat featured"><span class="num">11</span><span class="label">Components</span><span class="desc">固定コンポーネント数</span></div>
+    <div class="stat"><span class="num">5</span><span class="label">Axes Committed</span><span class="desc">dense / formal / timeless / warm / muted</span></div>
+    <div class="stat"><span class="num">3</span><span class="label">Font Stack</span><span class="desc">Vollkorn / IBM Plex Sans JP / JetBrains Mono</span></div>
+    <div class="stat zero"><span class="num">1</span><span class="label">Single HTML</span><span class="desc">外部依存なし、self-contained</span></div>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// PART · 01</div>
+    <h2>三層のファイル構造</h2>
+  </div>
+
+  <section class="cards">
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">01</div>
+        <div class="card-title">
+          <span class="tag">Hub · Judgment Layer</span>
+          <h3>SKILL.md (222 行) — workflow と判断ロジック</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>役割</h4>
+          <p>5 step ワークフロー (トピック解析 → コンポーネント決定 → HTML 生成 → 出力先確定 → 自己診断)、Topic Naming、Reference Navigation、Gotchas を集約。</p>
+        </div>
+        <div class="b">
+          <h4>哲学</h4>
+          <p>Progressive Disclosure の <code>Hub</code>。CSS 全文や component カタログは references/ に逃がし、Hub は判断専任。</p>
+        </div>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">行数: <strong>222 / 上限 500</strong></span>
+        <span class="severity harmless">Within Budget</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">02</div>
+        <div class="card-title">
+          <span class="tag">Asset · Identity Layer</span>
+          <h3>templates/base.html (570 行) — CSS 固定 + 7 placeholder</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>埋め込み内容</h4>
+          <p>CSS variables (12 色) + 11 コンポーネントの全 CSS。Google Fonts (Vollkorn / IBM Plex Sans JP / JetBrains Mono / Noto Serif JP) 読込済。</p>
+        </div>
+        <div class="b">
+          <h4>placeholder</h4>
+          <p><code>&#123;&#123;TITLE&#125;&#125;</code> <code>&#123;&#123;EYEBROW&#125;&#125;</code> <code>&#123;&#123;TITLE_HTML&#125;&#125;</code> <code>&#123;&#123;LEDE_HTML&#125;&#125;</code> <code>&#123;&#123;BODY_HTML&#125;&#125;</code> <code>&#123;&#123;CLOSING_QUOTE&#125;&#125;</code> <code>&#123;&#123;TIMESTAMP_JST&#125;&#125;</code> の 7 つ。</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Why fixed CSS</span>
+        <p>CSS を毎回変えると distinctiveness を失う。Wired や The New Yorker が記事ごとに DNA を変えないのと同じ。<strong>固定する美学そのものが distinctive なら</strong>、繰り返しはコンバージェンスではない。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">CSS 行数: <strong>~460 行 / 12 色 / 11 コンポーネント</strong></span>
+        <span class="severity low">Identity Core</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">03</div>
+        <div class="card-title">
+          <span class="tag">Reference · Knowledge Layer</span>
+          <h3>references/ (450 行) — 美学仕様 + コンポーネント辞書</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>aesthetic-identity.md (161 行)</h4>
+          <p>5 軸 commitment、color palette matrix、typography 三軸スタック、Identity test 10 項目、rationale の集約。</p>
+        </div>
+        <div class="b">
+          <h4>component-library.md (289 行)</h4>
+          <p>Selection matrix (トピック性質 → 推奨セット)、各コンポーネントの HTML スニペット、Composition checklist、anti-pattern 4 件。</p>
+        </div>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">Progressive Disclosure に従い <strong>必要時のみ Load</strong></span>
+        <span class="severity harmless">Lazy</span>
+      </div>
+    </article>
+
+  </section>
+
+  <div class="section-head">
+    <div class="num">// PART · 02</div>
+    <h2>5 軸 commitment と美学の固定</h2>
+  </div>
+
+  <div class="prose">
+    <p><code>designing-beautiful-frontends</code> skill は <strong>毎回違う美学</strong>を要求する (anti-convergence)。しかし本 skill は <strong>解説 skill</strong> であり、価値の核心は「一貫した読書体験」。両者の差異はタスク性質の差 — 新規プロダクト UI=多様性が価値、解説=ブランド一貫性が価値。</p>
+    <p>収束 (convergence) を防ぐのは <strong>中間値の禁止</strong>。「ちょっと modern で…」「やや warm かな」と曖昧化した瞬間に Bootstrap になる。5 軸全部を一方の極に <strong>commit</strong> させることで、判断ブレを構造的に潰す。</p>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Axis</th><th>Committed</th><th>Rationale</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>density</code></td><td>dense</td><td>技術解説は情報密度が価値</td></tr>
+      <tr><td><code>formality</code></td><td>formal</td><td>editorial magazine の品格</td></tr>
+      <tr><td><code>era</code></td><td>timeless</td><td>retro でも bleeding-edge でもない、書籍のような不時間性</td></tr>
+      <tr><td><code>warmth</code></td><td>warm</td><td>銅 + 苔 + ivory の warm palette</td></tr>
+      <tr><td><code>color_intensity</code></td><td>muted</td><td>vivid ではない、深みのある muted tone</td></tr>
+    </tbody>
+  </table>
+
+  <blockquote class="pull-quote">
+    Identity 固定こそが distinctiveness を保つ。
+    繰り返し使われる美学は、それ自体が十分に distinctive なら<br>
+    AI slop ではなく <em>ブランド</em>になる。
+    <cite>— aesthetic-identity.md より</cite>
+  </blockquote>
+
+  <div class="section-head">
+    <div class="num">// PART · 03</div>
+    <h2>使い方 (3 step)</h2>
+  </div>
+
+  <div class="prose">
+    <ol>
+      <li>camone が <code>/explain-in-html [トピック]</code> または「〇〇について HTML で解説して」と言う</li>
+      <li>本 skill が template を <code>$(pwd)/.docs/output/explain-in-html/{topic}.html</code> にコピーし、7 placeholder を埋める</li>
+      <li>既存ファイルあれば <code>YYYY-MM-DD-HHMM_{topic}.html</code> 形式で新規作成 (上書きなし)</li>
+    </ol>
+  </div>
+
+  <div class="closing">
+    <p class="quote">解説 skill の核心は<br>一貫した読書体験。<br>固定する美学そのものが distinctive なら、<br>それはコンバージェンスではなく <em>identity</em> である。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.14 09:30 JST</p>
+  </div>
+
+</main>
+</body>
+</html>

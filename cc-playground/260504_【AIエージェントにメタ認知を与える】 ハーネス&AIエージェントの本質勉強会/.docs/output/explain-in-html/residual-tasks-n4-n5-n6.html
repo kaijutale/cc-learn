@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>残タスク 23 件を 3 Session で GO 到達へ — Session N+4 / N+5 / N+6+ Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a0e1a;
+  --bg-surface: #131826;
+  --bg-card: #1a1f2e;
+  --border-soft: #2a3148;
+  --copper: #DC2A1E;
+  --copper-bright: #FF3D2E;
+  --rust: #8B1A1A;
+  --moss: #1C4291;
+  --moss-dark: #163374;
+  --ivory: #F4F4F4;
+  --pearl: #B8B8C2;
+  --shadow: #050810;
+  --accent-line: #2a3148;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(220, 42, 30, 0.10), transparent 70%),
+    linear-gradient(180deg, var(--bg-deep) 0%, #0c1018 100%);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--copper-bright);
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #1a1f2e 0%, #401a1a 100%); }
+.stat .num {
+  font-family: 'Vollkorn', serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Vollkorn', serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: italic;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(139, 26, 26, 0.14);
+  border-left: 2px solid var(--rust);
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(28, 66, 145, 0.20); color: #6EA0FF; border: 1px solid var(--moss); }
+.verdict-row .severity.low { background: rgba(220, 42, 30, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); }
+.verdict-row .severity.medium { background: rgba(139, 26, 26, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); }
+.verdict-row .severity.high { background: rgba(220, 42, 30, 0.35); color: var(--ivory); border: 1px solid var(--copper); }
+
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Vollkorn', serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+.pull-quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table tr:hover td { background: rgba(220, 42, 30, 0.06); }
+
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">Session N+4 / N+5 / N+6+ · Roadmap · 2026.05.16</div>
+
+  <h1 class="title">
+    残 <em>23 件</em> を<br>
+    3 サイクルで<br>
+    GO へ収束させる
+    <span class="pct">[ 3 × 8 ]</span>
+  </h1>
+
+  <p class="lede">
+    本質レビュー (essence-review) で検出された<strong>残課題 23 件</strong>を、
+    <strong>3 つの Session (N+4 / N+5 / N+6+)</strong> に分割して
+    Verdict GO (Critical 0 / High 0 / Medium 0 / Low 0、つまり全件解消の最終判定) へ到達させる作戦表よ。
+    <strong>HITL 上限 8 件/Session</strong> (Human-In-The-Loop = かもね自身の accept/defer 判断回数) と
+    <strong>品質階段現象</strong> (1 周ごとに新たな Medium が浮上する観測現象) を前提に組んでるね。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat featured">
+      <span class="num">23</span>
+      <span class="label">Residual Findings</span>
+      <span class="desc">3 skill 横断、Critical=0 維持中</span>
+    </div>
+    <div class="stat">
+      <span class="num">3</span>
+      <span class="label">Sessions</span>
+      <span class="desc">N+4 / N+5 / N+6+ で分割</span>
+    </div>
+    <div class="stat zero">
+      <span class="num">7</span>
+      <span class="label">Critical=0 Streak</span>
+      <span class="desc">High=0 は初到達 (1 連続)</span>
+    </div>
+    <div class="stat">
+      <span class="num">70-130</span>
+      <span class="label">Min Total</span>
+      <span class="desc">累計工数の見込み</span>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// PART · 01</div>
+    <h2>3 つの Session、その中身</h2>
+  </div>
+
+  <section class="cards">
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">N+4</div>
+        <div class="card-title">
+          <span class="tag">直近着手 · 60-85 分</span>
+          <h3>authoring-skills v1 + authoring-agent-definitions v1</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta">
+          <span>HITL 上限消化 (8 件/Session)</span>
+          <span class="val">7 / 8 件 (skills 単独で限界近い)</span>
+        </div>
+        <div class="bar"><div class="fill" style="width: 87.5%"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>authoring-skills v1 · 7 件</h4>
+          <p>
+            <code>H-1 自己再帰契約欠如</code> + Medium 6 件
+            (Hub 圧縮 / failure-log / 上位 HITL ゲート / 圧縮版分離 / I/O 明示 / 上位本質 mapping)。
+            <strong>35-50 分</strong>見込み。
+          </p>
+        </div>
+        <div class="b">
+          <h4>authoring-agent-definitions v1 · 6 件</h4>
+          <p>
+            Medium 6 件 (State Persistence / validate script / 設計 doc 更新フロー /
+            Provenance / I/O 契約 / LLM 依存解消)。<strong>25-35 分</strong>見込み。
+          </p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Constraint · HITL 上限</span>
+        <p>
+          合計 13 件 &gt; 8 件上限 → <strong>2 部分 (例: 7+6) または 2 セッション分割</strong>必須。
+          現実的には N+4 = authoring-skills 7 件 → N+4.5 = authoring-agent-definitions 6 件 の 2 ステップに分けるのが安全よ。
+        </p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対応予定: <strong>v2 self-eval で Verdict 判定 (品質階段予測で CONDITIONAL = 条件付き合格 想定)</strong></span>
+        <span class="severity high">High · 1</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">N+5</div>
+        <div class="card-title">
+          <span class="tag">N+4 完了後 · 35-45 分</span>
+          <h3>authoring-claude-md v2 — 新 Medium 5 + Low 3</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta">
+          <span>HITL 上限消化 (8 件 / Session)</span>
+          <span class="val">8 / 8 件 (ちょうど上限ぴったり)</span>
+        </div>
+        <div class="bar"><div class="fill" style="width: 100%"></div></div>
+      </div>
+
+      <div class="prose">
+        <ul>
+          <li><code>M-H#1</code> Hub 圧縮 (SKILL.md 351 行 → 300 行未満)</li>
+          <li><code>M-H#2</code> fork 化 (フォークによる並列実行の仕組み導入) timeline 明記</li>
+          <li><code>M-S#1</code> Review mode の short-circuit (途中で打ち切る早期判定) 条件定義</li>
+          <li><code>M-H#3 = M-S#2</code> fork 化 timeline 統合</li>
+          <li><code>M-Lead</code> 責務集中型 Hub の構造分離 (判断 / 実行 / 検証 / マッピングを 4 references に分ける)</li>
+          <li><code>L 3 件</code> record-only (記録のみ、修正不要): scripts test / grep ad-hoc / description 英語偏り</li>
+        </ul>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Rule · defer 連続 2 回禁止</span>
+        <p>
+          v2 で見送りした項目を、v3 でも再び見送る (defer = 後回し) のは <strong>2 回連続まで</strong>。
+          つまり N+4 を必ず先に完走させてから着手するよ。
+        </p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対応予定: <strong>v3 self-eval で Verdict GO 到達判定 (Critical 0 連続 8 周目を狙う)</strong></span>
+        <span class="severity medium">Medium · 5</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">N+6+</div>
+        <div class="card-title">
+          <span class="tag">継続改善 · 中〜大規模</span>
+          <h3>Continuous Improvement — note 記事 #8 / #19</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta">
+          <span>self-eval 由来でない、優先度 低</span>
+          <span class="val">2 件 (設計から)</span>
+        </div>
+        <div class="bar"><div class="fill" style="width: 25%"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>#8 PR 駆動更新フロー自動化</h4>
+          <p>
+            Discord webhook + AI 自動収集による pull request (PR) 起点での skill 更新自動化。
+            <strong>大規模、設計フェーズから</strong>。Session 数未定。
+          </p>
+        </div>
+        <div class="b">
+          <h4>#19 圧縮版 skill 化</h4>
+          <p>
+            実装者向け本質ドキュメントの圧縮版を skill 化、team-implementer agent
+            (実装担当のサブエージェント) へ自動注入する機構。<strong>中規模</strong>。
+          </p>
+        </div>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対応予定: <strong>N+5 完走後、設計検討から開始</strong></span>
+        <span class="severity harmless">Defer · 優先度 低</span>
+      </div>
+    </article>
+
+  </section>
+
+  <section class="roadmap">
+    <h2>Session 依存関係 — N+3 完了から GO 到達まで</h2>
+    <p class="sub">// Critical=0 維持 × 品質階段現象 × HITL 上限</p>
+
+    <div class="timeline">
+
+      <div class="tl-item current">
+        <div class="session">Session N+3 · Done</div>
+        <h4>authoring-claude-md v1 → v2 完走 (2026-05-14 完了)</h4>
+        <p>
+          Medium 6 件 Apply (適用) + v2 self-eval が <code>CONDITIONAL (C0/H0/M5/L3)</code> 判定。
+          <strong>Critical=0 が 7 連続維持</strong>、High=0 は初到達。
+          note 記事 24 原則のうち 96% カバー達成。
+        </p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">Session N+4 · Next</div>
+        <h4>authoring-skills v1 + authoring-agent-definitions v1 — 計 13 件</h4>
+        <p>
+          accumulating-reviewer-feedback skill (フィードバック蓄積運用 skill) を Skill ツール経由で起動。
+          HITL 上限 8 件/Session 制約により、<strong>2 部分または 2 セッションに分割</strong>。
+          各 skill ごとに v2 self-eval を実機実行し品質階段現象を観測する。
+        </p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">Session N+5 · After N+4</div>
+        <h4>authoring-claude-md v2 — 新 Medium 5 + Low 3 record-only</h4>
+        <p>
+          v2 で浮上した新 Medium 5 件を Apply、Low 3 件は記録のみ。
+          defer (見送り) 連続 2 回禁止のため <strong>N+4 完了直後に着手</strong>。
+          v3 self-eval で Verdict GO 到達判定を狙う。
+        </p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">Session N+6+ · Continuous</div>
+        <h4>note 記事の継続改善項目 #8 / #19</h4>
+        <p>
+          self-eval finding (機械的レビュー検出項目) 由来ではないため独立。
+          設計フェーズから開始するため、Session 数は確定していない。
+          優先度は低、N+5 完走で本筋ロードマップは閉じる。
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div class="num">// PART · 02</div>
+    <h2>残課題の内訳 — self-eval ログ実体ベース</h2>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Session</th>
+        <th>対象 skill</th>
+        <th>Verdict (現在)</th>
+        <th>件数 (C/H/M/L)</th>
+        <th>工数 (分)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>N+4</td>
+        <td>authoring-skills v1</td>
+        <td>CONDITIONAL</td>
+        <td>0 / 1 / 6 / 0 = 7 件</td>
+        <td>35-50</td>
+      </tr>
+      <tr>
+        <td>N+4</td>
+        <td>authoring-agent-definitions v1</td>
+        <td>CONDITIONAL</td>
+        <td>0 / 0 / 6 / 0 = 6 件</td>
+        <td>25-35</td>
+      </tr>
+      <tr>
+        <td>N+5</td>
+        <td>authoring-claude-md v2</td>
+        <td>CONDITIONAL</td>
+        <td>0 / 0 / 5 / 3 = 8 件</td>
+        <td>35-45</td>
+      </tr>
+      <tr>
+        <td>N+6+</td>
+        <td>continuous improvement (#8 / #19)</td>
+        <td>—</td>
+        <td>2 件 (設計から)</td>
+        <td>未定</td>
+      </tr>
+      <tr>
+        <td><strong>合計</strong></td>
+        <td>—</td>
+        <td>—</td>
+        <td><strong>23 件</strong></td>
+        <td><strong>70-130+</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-head">
+    <div class="num">// PART · 03</div>
+    <h2>2 つの構造的制約 — 触れてはならない線</h2>
+  </div>
+
+  <blockquote class="pull-quote">
+    「部分実装は欠陥ではなく、<br>
+    次サイクルへの<em>手紙</em>である」<br>
+    — そして同じ手紙が、改修してはならない場所も指し示す。
+    <cite>— Session N+3 完了時の Lead 独自観察より</cite>
+  </blockquote>
+
+  <div class="prose">
+    <p>
+      Session N+4 以降でも、<strong>絶対に触ってはいけない skill / agent / ドキュメント</strong>がある。
+      これらは「協調ハーネス系の既存資産」で、改修すると影響が芋づる式に広がるためマルチエージェント協調が崩壊する。
+      改修禁止リストは <code>handoff-state.md</code> の <code>### 改修禁止</code> セクションと完全同期しているよ。
+    </p>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>カテゴリ</th>
+        <th>パス</th>
+        <th>役割</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>協調 skill</td>
+        <td><code>~/.claude/skills/three-elements-harness/</code></td>
+        <td>ハーネス 3 要素 (input / output / observation) 定義</td>
+      </tr>
+      <tr>
+        <td>協調 skill</td>
+        <td><code>~/.claude/skills/orchestrating-team-development/</code></td>
+        <td>L6 指揮者ワークフロー (オーケストレーション中枢)</td>
+      </tr>
+      <tr>
+        <td>協調 skill</td>
+        <td><code>~/.claude/skills/enforcing-strict-tdd-cycle/</code></td>
+        <td>厳密な TDD サイクル (Red-Green-Refactor) 強制</td>
+      </tr>
+      <tr>
+        <td>レビュー skill</td>
+        <td><code>~/.claude/skills/review-agent-essence/SKILL.md</code></td>
+        <td>本質原則レビューの上位指揮</td>
+      </tr>
+      <tr>
+        <td>評価基準</td>
+        <td><code>~/.claude/.docs/essence/{harness,skill,ui}-essentials.md</code></td>
+        <td>3 領域 × 8 原則 = 24 原則の評価基準 (変えると全 finding が無効化)</td>
+      </tr>
+      <tr>
+        <td>評価 agent</td>
+        <td><code>~/.claude/agents/{harness,skill,ui}-essentials-reviewer.md</code></td>
+        <td>評価基準に基づくレビュー専任エージェント</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="gap-block">
+    <span class="label">Why · 改修禁止の理由</span>
+    <p>
+      memory <code>feedback_no-existing-harness-modification.md</code> より —
+      「マルチエージェント協調ハーネス系の既存 skill / subagent は絶対改修禁止。
+      新基準には新規ハーネス作成。改修=負の連鎖」。
+      評価基準を変えると、過去の self-eval ログ (10 件以上) との比較ができなくなり、
+      品質階段現象の観測精度が崩れるよ。
+    </p>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// PART · 04</div>
+    <h2>運用ルール — Session N+4 着手前の必修 6 項目</h2>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>項目</th>
+        <th>ルール</th>
+        <th>根拠 memory</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>HITL 上限</td>
+        <td>8 件/Session 厳守、13 件は分割必須</td>
+        <td>handoff-state.md</td>
+      </tr>
+      <tr>
+        <td>Bash 統一</td>
+        <td>Hooks 生態系整合のため Python uv は使わない</td>
+        <td>user_confirmed_decisions (2026-05-12)</td>
+      </tr>
+      <tr>
+        <td>Gotchas inline</td>
+        <td>Hub 圧縮時も Gotchas セクションは外部化しない</td>
+        <td>v5 M-S2 再発防止規約</td>
+      </tr>
+      <tr>
+        <td>defer 連続禁止</td>
+        <td>同じ finding を 2 回連続で見送らない</td>
+        <td>plan §2 / authoring-claude-md L-S #1 等</td>
+      </tr>
+      <tr>
+        <td>日時 JST</td>
+        <td>+09:00 厳守、UTC 機械選択禁止</td>
+        <td>feedback_datetime-jst-not-utc.md</td>
+      </tr>
+      <tr>
+        <td>実機検証</td>
+        <td>実装ログ書きっぱなし禁止、必ず実機起動 (running) 検証</td>
+        <td>feedback_empirical-validation-required.md</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="closing">
+    <p class="quote">残 23 件は、<br>欠陥の山ではなく、<br>3 サイクルの収束軌道である。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.16 12:47 JST</p>
+  </div>
+
+</main>
+</body>
+</html>

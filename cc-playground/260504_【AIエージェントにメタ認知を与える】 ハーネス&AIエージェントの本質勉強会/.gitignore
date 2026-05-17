@@ -11,7 +11,10 @@
 .docs/logs/local/
 
 # PDF抽出の中間成果物 (再生成可能、サイズ大)
-.docs/output/
+# 末尾 /* で「中身を 1 つずつ ignore」にしないと、配下の ! 例外が効かない
+.docs/output/*
+# ただし explain-in-html/ は手作業生成物なので追跡対象
+!.docs/output/explain-in-html/
 
 # claude
 .claude/

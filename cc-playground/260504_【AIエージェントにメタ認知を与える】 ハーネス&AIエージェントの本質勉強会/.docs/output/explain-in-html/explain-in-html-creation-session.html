@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>explain-in-html 誕生 — 創造セッションの軌跡 2026.05.14</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a1628;
+  --bg-surface: #122039;
+  --bg-card: #16273f;
+  --border-soft: #1f3556;
+  --copper: #c47d51;
+  --copper-bright: #e89968;
+  --rust: #b04e2f;
+  --moss: #8a9a5b;
+  --moss-dark: #6b7a47;
+  --ivory: #ede8de;
+  --pearl: #a8a6a0;
+  --shadow: #050b15;
+  --accent-line: #2a4a7a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(196, 125, 81, 0.08), transparent 70%),
+    linear-gradient(180deg, var(--bg-deep) 0%, #0c1a30 100%);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; }
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--copper-bright);
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #1a2e4a 0%, #1f3556 100%); }
+.stat .num {
+  font-family: 'Vollkorn', serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Vollkorn', serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: italic;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(176, 78, 47, 0.08);
+  border-left: 2px solid var(--rust);
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(138, 154, 91, 0.15); color: var(--moss); border: 1px solid var(--moss-dark); }
+.verdict-row .severity.low { background: rgba(196, 125, 81, 0.12); color: var(--copper); border: 1px solid var(--copper); }
+.verdict-row .severity.medium { background: rgba(176, 78, 47, 0.15); color: var(--copper-bright); border: 1px solid var(--rust); }
+.verdict-row .severity.high { background: rgba(176, 78, 47, 0.25); color: var(--ivory); border: 1px solid var(--rust); }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Vollkorn', serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Plain prose (本文段落用) === */
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+/* === Code block === */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table tr:hover td { background: rgba(196, 125, 81, 0.04); }
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <!--
+    BODY CONTENT GOES HERE
+    references/component-library.md を参照し、トピックに合わせて以下のコンポーネントを組み立てる:
+      - .eyebrow / h1.title / .lede        (Header trio, 通常必須)
+      - .stat-bar                          (数値ハイライトがあるとき)
+      - .section-head + .cards > .card     (本論の主要構造)
+      - .prose                             (段落本文)
+      - .pull-quote                        (キーフレーズ強調)
+      - .data-table                        (比較・一覧)
+      - .code-block                        (コード例)
+      - .roadmap > .timeline               (時系列展望)
+      - .closing > .quote                  (締めの引用、通常必須)
+
+    制約:
+      - 最低 3 コンポーネント、最大 9 コンポーネント
+      - 全コンポーネント詰め込まない (情報密度過多 = AI slop の別形態)
+      - JST タイムスタンプを .closing .footer-meta に必ず入れる
+  -->
+
+  <div class="eyebrow">Session · 2026.05.14 · Skill Creation</div>
+
+  <h1 class="title">
+    <em>explain-in-html</em><br>
+    誕生の<br>
+    軌跡 <span class="pct">[ v1.0 ]</span>
+  </h1>
+
+  <p class="lede">
+    camone の一言「<strong>skill を作って</strong>」から始まり、
+    <strong>partial-implementation.html</strong> という reference 発見、
+    <strong>Identity 固定</strong>の判断、
+    <strong>2 つの障害</strong>の解消を経て、
+    Global skill として登録 + dogfooding 検証完了に至るまでの一連の判断記録。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat featured"><span class="num">4</span><span class="label">Files Created</span><span class="desc">SKILL.md / base.html / 2× references</span></div>
+    <div class="stat"><span class="num">1249</span><span class="label">Total Lines</span><span class="desc">229 + 570 + 161 + 289</span></div>
+    <div class="stat"><span class="num">2</span><span class="label">Mid-Flight Fixes</span><span class="desc">description bracket / monorepo cwd</span></div>
+    <div class="stat zero"><span class="num">10</span><span class="label">Identity Test Pass</span><span class="desc">/ 10 項目すべて通過</span></div>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// PART · 01</div>
+    <h2>3 段階の歩み</h2>
+  </div>
+
+  <section class="cards">
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">01</div>
+        <div class="card-title">
+          <span class="tag">Discovery · 発見</span>
+          <h3>partial-implementation.html を reference に位置付ける判断</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>偶然の遭遇</h4>
+          <p>プロジェクト構造確認中に <code>.docs/output/explain-in-html/partial-implementation.html</code> (21 KB) を発見。camone が以前書いた Editorial Dark Academia 美学の HTML。</p>
+        </div>
+        <div class="b">
+          <h4>判断: 捨てない、原典にする</h4>
+          <p>これを <strong>reference implementation</strong> として位置付け、skill が継承する美学の <strong>原典</strong>とした。CSS パレット (12 色)・タイポ三軸・11 コンポーネントをすべて抽出。</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Why this matters</span>
+        <p>もし「ゼロから美学を考える」と判断していたら、LLM デフォルト (白地+紫+Inter) に確実に堕ちていた。<strong>camone が既に commit した美学</strong>を継承することで、構造的に AI slop を回避できた。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">原典: <strong>partial-implementation.html</strong></span>
+        <span class="severity harmless">Pivotal Discovery</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">02</div>
+        <div class="card-title">
+          <span class="tag">Design · 設計</span>
+          <h3>Identity 型 × 生成手順型のハイブリッド構造</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>美学は固定</h4>
+          <p>CSS / 色 / フォント / コンポーネント定義は <strong>絶対不変</strong>。5 軸 (dense/formal/timeless/warm/muted) を中間値なしで commit。<code>designing-beautiful-frontends</code> の哲学を継承するが <strong>反転適用</strong>。</p>
+        </div>
+        <div class="b">
+          <h4>構造は可変</h4>
+          <p>11 コンポーネントから <strong>3-9 個</strong> をトピックに応じて組み立てる。eyebrow/title/lede と closing は通常必須、本論コンポーネントは Selection matrix で選ぶ。</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Insight</span>
+        <p>「新規プロダクト UI = 多様性が価値」「解説 skill = ブランド一貫性が価値」。Wired 誌が記事ごとに DNA を変えないのと同じで、<strong>固定する美学そのものが distinctive なら</strong>、繰り返しはコンバージェンスではなく <em>identity</em>。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">Type: <strong>Identity × Generative Workflow Hybrid</strong></span>
+        <span class="severity low">Core Decision</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">03</div>
+        <div class="card-title">
+          <span class="tag">Implement · 実装 + 検証</span>
+          <h3>Progressive Disclosure に従う 4 ファイル分割</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta"><span>Workflow 進捗</span><span class="val">6 / 6 step 完走</span></div>
+        <div class="bar"><div class="fill" style="width: 100%"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>Hub と Spoke の分離</h4>
+          <p><code>SKILL.md</code> (229 行) は判断ロジック専任。CSS 全文 (460 行) は <code>templates/base.html</code> に、コンポーネント仕様は <code>references/</code> に逃がした。skill 起動時にロードするのは Hub だけ。</p>
+        </div>
+        <div class="b">
+          <h4>Dogfooding 成功</h4>
+          <p>生成した skill 自身に「自分の構造解説」を書かせ、<code>explain-in-html-skill-structure.html</code> (22 KB) を出力。placeholder 残存 0、Identity test 10/10 PASS。</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Mid-Flight Fixes (途中で解消した 2 つの罠)</span>
+        <p><strong>Fix 1</strong>: <code>quick_validate.py</code> が description 内の <code>&lt;project_root&gt;</code> を block。Description は trigger condition であって仕様書ではないと気づき、placeholder 文法を削除。<br>
+        <strong>Fix 2</strong>: <code>git rev-parse --show-toplevel</code> が monorepo の頂点を返してしまい、実プロジェクト (cc-playground/...) と乖離。<code>$(pwd)</code> ベースに切替えて nested project でも動くようにした。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target"><strong>Skill is valid!</strong> + 実機 22 KB HTML 出力成功</span>
+        <span class="severity harmless">All Green</span>
+      </div>
+    </article>
+
+  </section>
+
+  <div class="section-head">
+    <div class="num">// PART · 02</div>
+    <h2>核心 insight — Identity 固定の哲学</h2>
+  </div>
+
+  <blockquote class="pull-quote">
+    Identity 固定こそが distinctiveness を保つ。<br>
+    繰り返し使われる美学は、それ自体が十分に distinctive なら<br>
+    AI slop ではなく <em>ブランド</em>になる。
+    <cite>— aesthetic-identity.md より</cite>
+  </blockquote>
+
+  <div class="prose">
+    <p>本セッションの最大の判断は <strong>「毎回違うデザイン」ではなく「毎回同じ美学」を選んだ</strong>こと。多くの skill (例: <code>designing-beautiful-frontends</code>) は anti-convergence を要求するが、解説 skill は逆だ。<strong>一貫した読書体験</strong>こそが価値の核心であり、書物が記事ごとに DNA を変えないのと同じ。</p>
+    <p>ただし「固定すればコンバージェンスを免れる」のではない。<strong>固定する美学そのものが十分に distinctive である</strong>必要がある。深ネイビー + 銅 + 苔 + ivory のパレットも、Vollkorn italic も、LLM デフォルト出力からは絶対に出てこない。そこに <strong>camone が以前 commit した美学</strong> (partial-implementation.html) が原典として機能した。</p>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// PART · 03</div>
+    <h2>開発タイムライン</h2>
+  </div>
+
+  <section class="roadmap">
+    <h2>6 step の足跡</h2>
+    <p class="sub">~30 分 · Discovery → Design → Implement → Verify → Polish → Dogfood</p>
+
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="session">Step 1 · Discovery</div>
+        <h4>partial-implementation.html を読み込み reference 化</h4>
+        <p>CSS 460 行 + 11 コンポーネント (eyebrow / stat-bar / cards / dual / gap-block / verdict-row / roadmap / timeline / closing 等) を完全把握。</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">Step 2 · Design</div>
+        <h4>Identity 型 × 生成手順型ハイブリッドに設計</h4>
+        <p>5 軸 commitment (<code>dense / formal / timeless / warm / muted</code>)、配置先 Global、衝突時タイムスタンプ付与を決定。AskUserQuestion は 1 回のみで決着。</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">Step 3 · Implement (1/2)</div>
+        <h4>templates/base.html (570 行) 作成</h4>
+        <p>partial-implementation.html の CSS を継承しつつ、<code>.prose</code> <code>.code-block</code> <code>.pull-quote</code> <code>.data-table</code> <code>.severity.high</code> を追加。<code>.dual .note/.camone</code> は <code>.a/.b</code> に汎用 class 化。</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">Step 4 · Implement (2/2)</div>
+        <h4>references/ 2 本 + SKILL.md (229 行) 作成</h4>
+        <p><code>aesthetic-identity.md</code> (色・タイポ・5 軸・Identity test) と <code>component-library.md</code> (Selection matrix・11 コンポーネント辞書・anti-pattern) を spoke に分離。Progressive Disclosure 完成。</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">Step 5 · Verify + Fix</div>
+        <h4>quick_validate PASS + 2 fix 解消</h4>
+        <p>Fix 1: description 内 <code>&lt;&gt;</code> を validator が block → プレーンテキスト化。Fix 2: <code>git rev-parse</code> が monorepo 頂点を返す → <code>$(pwd)</code> ベースに変更。再 validate で <strong>Skill is valid!</strong></p>
+      </div>
+
+      <div class="tl-item current">
+        <div class="session">Step 6 · Dogfood (Now)</div>
+        <h4>本ページの生成 = メタ自己解説</h4>
+        <p>skill 自身が「今回の開発セッションの軌跡」を解説する HTML を生成中 (この文書)。最大の dogfooding。</p>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="closing">
+    <p class="quote">最初に発見した <em>原典</em>が、<br>美学の DNA を決定づけた。<br>探さずに作っていたら、<br>白地に紫の AI slop に堕ちていた。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.14 09:29 JST</p>
+  </div>
+
+</main>
+</body>
+</html>

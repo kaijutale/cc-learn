@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>部分実装 4 件の解剖 — note 記事 vs camone ハーネス</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a1628;
+  --bg-surface: #122039;
+  --bg-card: #16273f;
+  --border-soft: #1f3556;
+  --copper: #c47d51;
+  --copper-bright: #e89968;
+  --rust: #b04e2f;
+  --moss: #8a9a5b;
+  --moss-dark: #6b7a47;
+  --ivory: #ede8de;
+  --pearl: #a8a6a0;
+  --shadow: #050b15;
+  --accent-line: #2a4a7a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(196, 125, 81, 0.08), transparent 70%),
+    linear-gradient(180deg, var(--bg-deep) 0%, #0c1a30 100%);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+}
+
+.wrap {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--copper-bright);
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 96px;
+}
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured {
+  background: linear-gradient(135deg, #1a2e4a 0%, #1f3556 100%);
+}
+.stat .num {
+  font-family: 'Vollkorn', serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Vollkorn', serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: italic;
+}
+.card-title {
+  flex: 1;
+  min-width: 240px;
+}
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter {
+  margin-bottom: 24px;
+}
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar {
+  height: 6px;
+  background: var(--bg-deep);
+  position: relative;
+  overflow: hidden;
+}
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .note h4 { color: var(--copper); }
+.dual .camone h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .note h4::before { background: var(--copper); }
+.dual .camone h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(176, 78, 47, 0.08);
+  border-left: 2px solid var(--rust);
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(138, 154, 91, 0.15); color: var(--moss); border: 1px solid var(--moss-dark); }
+.verdict-row .severity.low { background: rgba(196, 125, 81, 0.12); color: var(--copper); border: 1px solid var(--copper); }
+.verdict-row .severity.medium { background: rgba(176, 78, 47, 0.15); color: var(--copper-bright); border: 1px solid var(--rust); }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  padding: 48px;
+  position: relative;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+
+.roadmap h2 {
+  font-family: 'Vollkorn', serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">Session N+3 · Final Checkpoint</div>
+
+  <h1 class="title">96% カバーの残り<br><em>4 件 = 部分実装</em>を<br>解剖する <span class="pct">[ 17% ]</span></h1>
+
+  <p class="lede">
+    note 記事「<strong>AIエージェントにメタ認知を与える</strong>」の 24 原則のうち、19 件は完全実装、1 件は意図的非実装 (Claude Only 規約)。<br>
+    残った <strong>4 件 = 部分実装</strong>は、ハーネスの「<strong>次のサイクル</strong>」を示すロードマップそのものである。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat zero"><span class="num">19</span><span class="label">Fully Implemented</span><span class="desc">本質ドキュメント・レビューア etc.</span></div>
+    <div class="stat featured"><span class="num">4</span><span class="label">Partial</span><span class="desc">本ページの主題</span></div>
+    <div class="stat"><span class="num">1</span><span class="label">Intentional Skip</span><span class="desc">外部AI連携 (Claude Only 規約)</span></div>
+    <div class="stat zero"><span class="num">0</span><span class="label">Unimplemented</span><span class="desc">構造的欠落なし</span></div>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// PART · 01</div>
+    <h2>4 件の部分実装、その正体</h2>
+  </div>
+
+  <section class="cards">
+
+    <!-- Card 1 -->
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">01</div>
+        <div class="card-title">
+          <span class="tag">領域カバレッジ</span>
+          <h3>video-essentials.md 未整備</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta"><span>領域実装率</span><span class="val">3 / 4 領域</span></div>
+        <div class="bar"><div class="fill" style="width: 75%"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="note">
+          <h4>note 記事の主張</h4>
+          <p>領域別の本質ドキュメントは <code>harness / skill / ui / video</code> の 4 領域に展開する設計が望ましい。各領域に専用レビューアを設置する。</p>
+        </div>
+        <div class="camone">
+          <h4>camone の現状</h4>
+          <p><code>harness-essentials</code> / <code>skill-essentials</code> / <code>ui-essentials</code> の 3 領域は完全実装。<code>video-essentials</code> のみ未整備。</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Gap Analysis</span>
+        <p>camone のハーネスは Claude Code 学習が主目的であり、動画制作の需要は現時点で存在しない。<strong>該当領域外</strong>で実害なし、拡張性は確保されており、必要時に新規領域として追加可能。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対応予定: <strong>動画制作タスク発生時</strong></span>
+        <span class="severity harmless">Harmless</span>
+      </div>
+    </article>
+
+    <!-- Card 2 -->
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">02</div>
+        <div class="card-title">
+          <span class="tag">自動化フロー</span>
+          <h3>PR 駆動の本質ドキュメント更新フロー (5 段自動化)</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta"><span>自動化ステップ</span><span class="val">3 / 5 段</span></div>
+        <div class="bar"><div class="fill" style="width: 60%"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="note">
+          <h4>note 記事の主張</h4>
+          <p>① 収集 (AI 自動) → ② 提案 (PR 形式) → ③ 通知 (Discord) → ④ レビュー (人間) → ⑤ 取り込み (マージ) の 5 段で本質ドキュメントを 3 日 1 回更新する。</p>
+        </div>
+        <div class="camone">
+          <h4>camone の現状</h4>
+          <p><code>accumulating-reviewer-feedback</code> skill が「Read → Categorize → HITL → Apply → Record」5 段の <strong>手動運用</strong> を担う。HITL + 二重記録の核心は確保済。</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Gap Analysis</span>
+        <p>未実装は <strong>① 自動収集</strong> (論文/リサーチからの AI 提案) と <strong>③ Discord 通知</strong> の 2 段。残り 3 段 (提案・レビュー・取り込み) は手動で完全機能。半自動運用で品質担保の本質は損なわれていない。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対応予定: <strong>Session N+6 以降 / Layer 5</strong></span>
+        <span class="severity low">Low</span>
+      </div>
+    </article>
+
+    <!-- Card 3 -->
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">03</div>
+        <div class="card-title">
+          <span class="tag">エージェント設計</span>
+          <h3>実装者向け圧縮版本質ドキュメント</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta"><span>実装段階</span><span class="val">概念 ✓ / 構造 ✗</span></div>
+        <div class="bar"><div class="fill" style="width: 50%"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="note">
+          <h4>note 記事の主張</h4>
+          <p>レビューア = 本質ドキュメント全量 / 実装者 = 圧縮版 (要約) を渡す。理由: 全量を渡すと制約が強すぎて自由な発想を阻害する。</p>
+        </div>
+        <div class="camone">
+          <h4>camone の現状</h4>
+          <p><code>references/essence-summary.md</code> (24 行最小要約) は存在し概念は実装。ただし <code>team-implementer</code> agent への <strong>自動注入機構</strong> が未整備。</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Gap Analysis</span>
+        <p>圧縮版ドキュメント自体は完成、agent 構造に組み込めば自動的に「レビューア=全量・実装者=圧縮」の二層注入が成立する。<strong>不足は配線のみ</strong>、設計の本質は到達済。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対応予定: <strong>Session N+6 / team-implementer 改修</strong></span>
+        <span class="severity low">Low</span>
+      </div>
+    </article>
+
+    <!-- Card 4 -->
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">04</div>
+        <div class="card-title">
+          <span class="tag">Hub 圧縮 · M-Lead</span>
+          <h3>責務集中型 Hub の構造的肥大化</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta"><span>SKILL.md 行数 (authoring-claude-md)</span><span class="val">351 / 目標 ≤ 300</span></div>
+        <div class="bar"><div class="fill" style="width: 117%; max-width: 100%; background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%);"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="note">
+          <h4>note 記事の主張</h4>
+          <p>本質ドキュメントとプロジェクトアイデンティティは分離、Hub は判断ロジック専任に絞る。Progressive Disclosure 原則。</p>
+        </div>
+        <div class="camone">
+          <h4>camone の現状 (v2 self-eval)</h4>
+          <p>authoring-claude-md SKILL.md は v1 (324 行) → v2 (351 行) と +27 行肥大。Apply は前進だが Hub 圧縮原則と相反。Lead 独自観察 <code>M-Lead-Hub-Concentration</code> として浮上。</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Gap Analysis — Lead 独自検出</span>
+        <p>M-H #1 (Hub 圧縮) と M-S #1 (Don't Railroad short-circuit 未定義) の <strong>root cause が同一構造シンボル</strong> = 「判断ロジック + 実行手順 + 検証 + マッピング表を全て抱える Hub」。3 reviewer 構造的盲点 (原則独立評価) を Lead 統合判断が補完。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対応予定: <strong>Session N+5 / v3 self-eval 前</strong></span>
+        <span class="severity medium">Medium · Apply 候補</span>
+      </div>
+    </article>
+
+  </section>
+
+  <div class="section-head">
+    <div class="num">// PART · 02</div>
+    <h2>解決ロードマップ</h2>
+  </div>
+
+  <section class="roadmap">
+    <h2>4 件 → 0 件への動線</h2>
+    <p class="sub">Layer 3 完走 → Layer 4 → Layer 5 → continuous improvement</p>
+
+    <div class="timeline">
+      <div class="tl-item current">
+        <div class="session">Session N+3 · Today</div>
+        <h4>authoring-claude-md v1 → v2 完走</h4>
+        <p>6 件 Apply + v2 self-eval (CONDITIONAL C0/H0/M5/L3) + note 記事 24 原則照合 96% カバー確認。<strong>Lead 独自観察 M-Lead 浮上</strong>。</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">Session N+4 · Next</div>
+        <h4>Layer 3 残 2 skill 完走</h4>
+        <p><code>authoring-skills</code> (M5+H1) + <code>authoring-agent-definitions</code> (M6) = 計 12 件処理。High=0 streak +2 連続目標。</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">Session N+5</div>
+        <h4>Card ④ 解消 + Layer 4 着手</h4>
+        <p>authoring-claude-md v2 新 Medium 5 件 (M-Lead 含む) を Apply。Hub を 300 行未満に圧縮、責務集中型 Hub の構造解体。</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">Session N+6 以降</div>
+        <h4>Card ②③ 解消 (continuous improvement)</h4>
+        <p>PR 駆動更新フローの自動化 (Discord 通知 + AI 提案収集) と、<code>team-implementer</code> agent への圧縮版注入機構整備。</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="session">未来</div>
+        <h4>Card ① video-essentials</h4>
+        <p>動画制作タスクが発生したタイミングで新規領域として追加。3 領域パターンの構造的横展開で実装可能。</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="closing">
+    <p class="quote">部分実装は欠陥ではなく、<br>「次のサイクルで何を磨くか」の<br>明示的な手紙である。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.14 JST</p>
+  </div>
+
+</main>
+</body>
+</html>

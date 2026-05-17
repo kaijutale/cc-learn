@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>残り 3 task を解剖する — 部分実装の輪郭</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a0e1a;
+  --bg-surface: #131826;
+  --bg-card: #1a1f2e;
+  --border-soft: #2a3148;
+  --copper: #DC2A1E;
+  --copper-bright: #FF3D2E;
+  --rust: #8B1A1A;
+  --moss: #1C4291;
+  --moss-dark: #163374;
+  --ivory: #F4F4F4;
+  --pearl: #B8B8C2;
+  --shadow: #050810;
+  --accent-line: #2a3148;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(220, 42, 30, 0.10), transparent 70%),
+    linear-gradient(180deg, var(--bg-deep) 0%, #0c1018 100%);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--copper-bright);
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #1a1f2e 0%, #401a1a 100%); }
+.stat .num {
+  font-family: 'Vollkorn', serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Vollkorn', serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: italic;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(139, 26, 26, 0.14);
+  border-left: 2px solid var(--rust);
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+.gap-block code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(28, 66, 145, 0.20); color: #6EA0FF; border: 1px solid var(--moss); }
+.verdict-row .severity.low { background: rgba(220, 42, 30, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); }
+.verdict-row .severity.medium { background: rgba(139, 26, 26, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); }
+.verdict-row .severity.high { background: rgba(220, 42, 30, 0.35); color: var(--ivory); border: 1px solid var(--copper); }
+
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Vollkorn', serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+.pull-quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">Partial Implementation · 3-Task Deep Dive</div>
+
+  <h1 class="title">
+    残り <em>3 task</em> を<br>
+    解剖する
+    <span class="pct">[ N+5 → N+6+ ]</span>
+  </h1>
+
+  <p class="lede">
+    note 記事 24 原則照合の「部分実装 4 件」から <strong>video-essentials</strong> (領域外、対応不要) を除外し、残った <strong>3 件</strong>を <strong>由来</strong>・<strong>対応 session</strong>・<strong>優先度</strong>の 3 観点で整理する。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat featured">
+      <span class="num">3</span>
+      <span class="label">Remaining Tasks</span>
+      <span class="desc">video-essentials 除外後の対象</span>
+    </div>
+    <div class="stat">
+      <span class="num">1</span>
+      <span class="label">Internal Origin</span>
+      <span class="desc">Hub 圧縮 (note 記事関係なし)</span>
+    </div>
+    <div class="stat">
+      <span class="num">2</span>
+      <span class="label">Article Origin</span>
+      <span class="desc">#8 PR 駆動 / #19 圧縮版</span>
+    </div>
+    <div class="stat zero">
+      <span class="num">N+5</span>
+      <span class="label">Nearest Slot</span>
+      <span class="desc">Hub 圧縮の直近対応</span>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// PART · 01 — THREE PARTIAL ARTIFACTS</div>
+    <h2>3 件の部分実装、その正体と乖離</h2>
+  </div>
+
+  <div class="prose">
+    <p>部分実装 4 件のうち <code>#7 video-essentials.md</code> は <strong>camone が動画制作ハーネスを対象としていない</strong>ため、領域外で実害なし。残り 3 件を「現状」「乖離」「対応 session」「優先度」の 4 観点で整理する。</p>
+    <p>うち 2 件 (<code>#8</code> / <code>#19</code>) は <strong>note 記事 24 原則照合</strong>から浮上、1 件 (Hub 圧縮) は <strong>camone 内部の essence-reviewing-orchestrator + Lead 独自観察</strong>から浮上した、由来の異なる task である。</p>
+  </div>
+
+  <section class="cards">
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">01</div>
+        <div class="card-title">
+          <span class="tag">Article Principle · #8</span>
+          <h3>PR 駆動の本質ドキュメント更新フロー (5 段自動化)</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>note 記事の推奨 5 段</h4>
+          <p>① 収集 (<code>AI 自動</code>) → ② 提案 (<code>PR 形式</code>) → ③ 通知 (<code>Discord</code>) → ④ レビュー (<code>人間</code>) → ⑤ 取り込み (<code>マージ</code>)</p>
+        </div>
+        <div class="b">
+          <h4>camone の実装状況 (各段への対応)</h4>
+          <p>①②③ = <strong>未実装</strong> (自動収集 / PR 提案 / Discord 連携なし) ／ ④ = <strong>実装済み</strong> (<code>accumulating-reviewer-feedback</code> の HITL) ／ ⑤ = <strong>部分実装</strong> (Record の二重記録)</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Gap · 乖離点</span>
+        <p>note 記事の推奨 5 段のうち camone が満たすのは <strong>④ レビュー (完全)</strong> と <strong>⑤ 取り込み (部分)</strong> の<strong>下流 2 段のみ</strong>。<strong>① 収集 / ② 提案 / ③ 通知</strong> の上流 3 段が未実装のため「半自動運用」状態。<code>accumulating-reviewer-feedback</code> skill は note 記事フローの下流をカバーする位置づけと整理するのが正確。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対応予定: <strong>Session N+6 以降 (continuous improvement)</strong></span>
+        <span class="severity low">Low Priority</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">02</div>
+        <div class="card-title">
+          <span class="tag">Article Principle · #19</span>
+          <h3>実装者向け圧縮版本質ドキュメント</h3>
+        </div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>note 記事の主張</h4>
+          <p>レビューア = <strong>全量本質ドキュメント</strong>を参照。実装者 = <strong>圧縮版</strong>を参照 (制約強すぎ回避のため)</p>
+        </div>
+        <div class="b">
+          <h4>camone 実装の現状</h4>
+          <p><code>references/essence-summary.md</code> (<strong>24 行最小要約</strong>) は存在。ただし <code>team-implementer</code> agent への<strong>注入機構が未整備</strong></p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Gap · 乖離点</span>
+        <p>概念とアセットは存在するが、<strong>agent 構造へのワイヤリング</strong>が課題。<code>team-implementer.md</code> frontmatter に <code>essence-summary.md</code> を参照させる skill 設計が必要。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対応予定: <strong>Session N+6 以降 (continuous improvement)</strong></span>
+        <span class="severity low">Low Priority</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">03</div>
+        <div class="card-title">
+          <span class="tag">Internal · Lead Observation</span>
+          <h3>責務集中型 Hub の構造的肥大化</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta"><span>SKILL.md 行数</span><span class="val">351 行 · target &lt; 300 (over 17%)</span></div>
+        <div class="bar"><div class="fill over" style="width: 100%"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>検出ソース</h4>
+          <p><code>skill-essentials.md</code> 8 原則照合 + Lead 独自観察。<strong>note 記事関係なし</strong>。essence-reviewing-orchestrator v2 self-eval で浮上した M-Lead-Hub-Concentration。</p>
+        </div>
+        <div class="b">
+          <h4>構造的症状</h4>
+          <p><code>authoring-claude-md/SKILL.md</code> が<strong>判断ロジック + 実行手順 + 検証 + マッピング表</strong>を全て抱え込む単一 Hub になっている。</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Gap · 乖離点</span>
+        <p>3 reviewer (harness / skill / ui) の「<strong>原則独立評価</strong>」では検出できない<strong>原則横断 root cause</strong>を Lead が補完した、本セッション固有の発見。v3 self-eval までに Hub 圧縮で完全実装到達見込み。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対応予定: <strong>Session N+5 (直近) — v3 self-eval 前に Apply</strong></span>
+        <span class="severity medium">Medium Priority</span>
+      </div>
+    </article>
+
+  </section>
+
+  <blockquote class="pull-quote">
+    部分実装は欠陥ではない。<br>
+    ハーネスが次のサイクルへ<br>
+    進むための、明示的な手紙である。
+    <cite>— Session N+3 Final Checkpoint</cite>
+  </blockquote>
+
+  <section class="roadmap">
+    <h2>3 件 → 0 件への動線</h2>
+    <p class="sub">Session N+5 — N+7+ · Layer 3 残処理 → Continuous Improvement</p>
+
+    <div class="timeline">
+      <div class="tl-item current">
+        <div class="session">Session N+5 · 直近</div>
+        <h4>Hub 圧縮 (#15-related) を含む authoring-claude-md v2 新 Medium 5 件</h4>
+        <p>defer 連続 2 回禁止規約で Layer 3 全完了後に処理。<code>authoring-claude-md/SKILL.md</code> 351 行 → 300 行未満へ圧縮、<strong>判断ロジック</strong>と<strong>実行手順</strong>を <code>references/</code> 配下へ分離。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Session N+6 · 続編</div>
+        <h4>PR 駆動更新フロー (#8) の自動化レイヤ着手</h4>
+        <p>自動収集 (AI 提案) と Discord 通知の skill 化。<code>accumulating-reviewer-feedback</code> の Stage 1 (Read) に自動収集器を後付け、Stage 5 (Record) に Discord webhook を統合する設計を検討。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Session N+7+ · 並走</div>
+        <h4>実装者向け圧縮版 (#19) の agent 構造統合</h4>
+        <p><code>team-implementer</code> agent 定義に <code>essence-summary.md</code> 参照を組み込み、<code>essence-reviewing-orchestrator</code> 全量参照と非対称な「読み手別圧縮版」運用を実機実証する。</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="closing">
+    <p class="quote">3 件の部分実装は、<br>それぞれ異なる由来から<br>「次のサイクル」を要求する。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.14 12:30 JST</p>
+  </div>
+
+</main>
+</body>
+</html>

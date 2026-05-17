@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session N+6+ 残 task のロードマップ — PR 駆動 skill 更新フロー自動化</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a0e1a;
+  --bg-surface: #131826;
+  --bg-card: #1a1f2e;
+  --border-soft: #2a3148;
+  --copper: #DC2A1E;
+  --copper-bright: #FF3D2E;
+  --rust: #8B1A1A;
+  --moss: #1C4291;
+  --moss-dark: #163374;
+  --ivory: #F4F4F4;
+  --pearl: #B8B8C2;
+  --shadow: #050810;
+  --accent-line: #2a3148;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(220, 42, 30, 0.10), transparent 70%),
+    linear-gradient(180deg, var(--bg-deep) 0%, #0c1018 100%);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; }
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--copper-bright);
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #1a1f2e 0%, #401a1a 100%); }
+.stat .num {
+  font-family: 'Vollkorn', serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Vollkorn', serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: italic;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(139, 26, 26, 0.14);
+  border-left: 2px solid var(--rust);
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(28, 66, 145, 0.20); color: #6EA0FF; border: 1px solid var(--moss); }
+.verdict-row .severity.low { background: rgba(220, 42, 30, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); }
+.verdict-row .severity.medium { background: rgba(139, 26, 26, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); }
+.verdict-row .severity.high { background: rgba(220, 42, 30, 0.35); color: var(--ivory); border: 1px solid var(--copper); }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Vollkorn', serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item.discarded::before { border-color: var(--pearl); background: var(--bg-deep); opacity: 0.5; }
+.tl-item.discarded h4 { text-decoration: line-through; color: var(--pearl); }
+.tl-item.discarded p { opacity: 0.7; }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item.discarded .session { color: var(--pearl); }
+.tl-item h4 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Plain prose === */
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+/* === Code block === */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: top;
+}
+.data-table tr:hover td { background: rgba(220, 42, 30, 0.06); }
+.data-table td.discarded { color: var(--pearl); text-decoration: line-through; }
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">Session N+6+ · Roadmap · 2026.05.17</div>
+  <h1 class="title">
+    残 <em>task</em> を<br>
+    俯瞰する
+    <span class="pct">[ 3 PHASES ]</span>
+  </h1>
+  <p class="lede">
+    <strong>continuous improvement #8</strong> — pull request (コード変更提案) を駆動軸にした skill 更新フロー自動化の構想。<br>
+    Phase A → B → D の 3 段階構成で進める (Phase C は <strong>2026-05-17 廃止確定</strong>)、人間 100% レビュー思想に統一した結論。
+  </p>
+
+  <!-- === STAT BAR === -->
+  <div class="stat-bar">
+    <div class="stat zero"><span class="num">9</span><span class="label">Critical 0 streak</span><span class="desc">連続で重大指摘ゼロを維持中</span></div>
+    <div class="stat zero"><span class="num">3</span><span class="label">High 0 streak</span><span class="desc">高優先度指摘ゼロも連続継続</span></div>
+    <div class="stat featured"><span class="num">18</span><span class="label">Findings accepted</span><span class="desc">21 件中 18 件を採択</span></div>
+    <div class="stat"><span class="num">14</span><span class="label">Fully applied</span><span class="desc">完全反映 14 件 + 部分 4 件</span></div>
+  </div>
+
+  <!-- === SECTION 1: PHASE TIMELINE === -->
+  <div class="section-head">
+    <div class="num">// PHASE · 01</div>
+    <h2>Phase 構成 (2026-05-17 確定版)</h2>
+  </div>
+
+  <section class="roadmap">
+    <h2>Phase A → B → D — 3 段階の動線</h2>
+    <p class="sub">Phase C is discarded · Human-in-the-loop only</p>
+
+    <div class="timeline">
+      <div class="tl-item current reveal">
+        <div class="session">Phase A · Next Up</div>
+        <h4>フィードバック蓄積 skill に <code>--pr</code> フラグの最小実装を追加する</h4>
+        <p>
+          accumulating-reviewer-feedback (= レビュー結果を蓄積して skill に反映する skill) の段階 5 (Record) で、commit (= 変更を git 履歴に記録) ではなく pull request (= レビュー提案) を作るモード切替を追加する。次セッションで着手予定。
+        </p>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="session">Phase B · Notification</div>
+        <h4>Discord webhook (= イベント通知の URL 連携) で PR 作成を通知する</h4>
+        <p>
+          Session N+7 で「抜けていた 3 つ」をメモ化済 (Phase B 着手前の論点整理)。チーム共有性の構造的解消が目的。
+        </p>
+      </div>
+
+      <div class="tl-item discarded reveal">
+        <div class="session">Phase C · Discarded</div>
+        <h4>AI 自動レビュー (2026-05-17 廃止確定)</h4>
+        <p>
+          当初 Phase C で AI による PR 自動レビューを想定していたが、note 記事の HITL (Human-in-the-Loop = 人間が判断ループに介在する方式) 強化精神と整合しないと判断。<strong>退化ではなく原点回帰</strong>として廃止確定。
+        </p>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="session">Phase D · Integration</div>
+        <h4>統合 + 運用ドキュメント (人間 100% レビュー)</h4>
+        <p>
+          Phase A + B を統合し、運用ドキュメント化する。Phase C 廃止により「人間が必ず PR 内容を読んで承認する」フローに統一。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SECTION 2: BACKGROUND === -->
+  <div class="section-head">
+    <div class="num">// PART · 02</div>
+    <h2>なぜ #8 が必要か</h2>
+  </div>
+
+  <div class="prose">
+    <p>
+      accumulating-reviewer-feedback skill は Session N+4 と N+5 で 3 回起動済で、HITL ループの実機実証は完了している。しかし、現状の skill には <strong>3 つの構造的限界</strong>がある。
+    </p>
+    <ul>
+      <li><strong>PR 単位の差分レビューができない</strong> — skill ファイル単位の反映 (Apply) は完了するが、複数 skill 横断改修の整合性チェック (= 変更が他の skill に矛盾を生んでいないかの確認) は未対応。</li>
+      <li><strong>チーム共有ができない</strong> — commit (変更記録) はローカルに留まり、Discord や Slack などの協業ツール連携がない。</li>
+      <li><strong>自動収集ができない</strong> — Lead (主導役の Claude) が手動で skill を呼ぶ必要があり、CI (= 継続的インテグレーション、変更が自動でテストされる仕組み) 連携がない。</li>
+    </ul>
+    <p>
+      #8 はこれら 3 つを「pull request + webhook + 人間レビュー」で構造的に解消する設計。
+    </p>
+  </div>
+
+  <blockquote class="pull-quote">
+    skill ファイル単位の HITL から、pull request 単位の HITL へ。これは 1 段階上の構造への昇格である。
+    <cite>— 設計 doc 2026-05-16 より</cite>
+  </blockquote>
+
+  <!-- === SECTION 3: PENDING CLEANUP === -->
+  <div class="section-head">
+    <div class="num">// PART · 03</div>
+    <h2>handoff スコープ外の pending 修正 3 件</h2>
+  </div>
+
+  <section class="cards">
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">01</div>
+        <div class="card-title">
+          <span class="tag">documentation</span>
+          <h3><code style="font-family: 'JetBrains Mono', monospace; font-size: 0.85em; color: var(--copper-bright); background: var(--bg-deep); padding: 2px 6px; border: 1px solid var(--border-soft);">.claude/CLAUDE.md</code> ログルール明確化</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>Before</h4><p>セクション名「Git ルール」で、ログ保存先 (shared) だけ言及。</p></div>
+        <div class="b"><h4>After</h4><p>「ログルール」に改名し、<code>/logging</code> skill のデフォルト保存先 (local) との対比を明示。</p></div>
+      </div>
+      <div class="verdict-row">
+        <span class="target">cleanup 推奨: <strong>1 commit で独立</strong></span>
+        <span class="severity harmless">Harmless</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">02</div>
+        <div class="card-title">
+          <span class="tag">tasks doc</span>
+          <h3><code style="font-family: 'JetBrains Mono', monospace; font-size: 0.85em; color: var(--copper-bright); background: var(--bg-deep); padding: 2px 6px; border: 1px solid var(--border-soft);">.docs/tasks/step.md</code> 構造化</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>Before</h4><p>step1 から step6 までフラットな箇条書き、見出しなし。</p></div>
+        <div class="b"><h4>After</h4><p>H2 見出しに昇格し各 step にタイトルを付与。step4 に「コンテキストフォーク (= 新しい文脈に作業を分岐する仕組み) とサブエージェント設計」の詳細解説を追記。</p></div>
+      </div>
+      <div class="verdict-row">
+        <span class="target">cleanup 推奨: <strong>1 commit で独立</strong></span>
+        <span class="severity harmless">Harmless</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">03</div>
+        <div class="card-title">
+          <span class="tag">gitignore</span>
+          <h3><code style="font-family: 'JetBrains Mono', monospace; font-size: 0.85em; color: var(--copper-bright); background: var(--bg-deep); padding: 2px 6px; border: 1px solid var(--border-soft);">.gitignore</code> explain-in-html 追跡対象化</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>Before</h4><p><code>.docs/output/</code> 全体が gitignore (= git の追跡対象外) で、HTML 出力もすべて除外されていた。</p></div>
+        <div class="b"><h4>After</h4><p><code>.docs/output/*</code> + <code>!.docs/output/explain-in-html/</code> の二段構成で、explain-in-html 配下のみ追跡対象化。</p></div>
+      </div>
+      <div class="gap-block">
+        <span class="label">why this matters</span>
+        <p>本 HTML を含む explain-in-html の生成物をチーム共有するための前提条件。3 件中もっとも構造的影響が大きい。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">cleanup 推奨: <strong>1 commit で独立</strong></span>
+        <span class="severity low">Low</span>
+      </div>
+    </article>
+  </section>
+
+  <!-- === SECTION 4: PHASE COMPARISON === -->
+  <div class="section-head">
+    <div class="num">// PART · 04</div>
+    <h2>Phase 比較表 (A vs B vs D, C は廃止)</h2>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Phase</th>
+        <th>目的</th>
+        <th>主体</th>
+        <th>状態</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>A</strong></td>
+        <td>フィードバック蓄積 skill に <code style="font-family: 'JetBrains Mono', monospace; color: var(--copper-bright);">--pr</code> フラグを実装し、commit 経路と PR 経路を切り替え可能にする</td>
+        <td>skill 側 (内部)</td>
+        <td>次セッション着手</td>
+      </tr>
+      <tr>
+        <td><strong>B</strong></td>
+        <td>Discord webhook で PR 作成を通知し、チーム共有性を構造的に解消する</td>
+        <td>外部連携</td>
+        <td>抜け 3 つメモ化済</td>
+      </tr>
+      <tr>
+        <td class="discarded">C</td>
+        <td class="discarded">AI による PR 自動レビュー (HITL 思想と非整合)</td>
+        <td class="discarded">AI</td>
+        <td class="discarded">2026-05-17 廃止</td>
+      </tr>
+      <tr>
+        <td><strong>D</strong></td>
+        <td>A + B を統合し、運用ドキュメント化する。人間 100% レビューフロー</td>
+        <td>人間 (camone)</td>
+        <td>A/B 完了後</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="closing">
+    <p class="quote">Phase C 廃止は退化ではなく、<br>HITL 強化精神への<br>原点回帰である。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.17 09:16 JST</p>
+  </div>
+
+</main>
+</body>
+</html>
