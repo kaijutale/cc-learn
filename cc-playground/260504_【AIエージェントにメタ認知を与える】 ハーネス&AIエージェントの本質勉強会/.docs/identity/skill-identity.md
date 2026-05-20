@@ -86,14 +86,20 @@ fork skill を使う/作る場合の本プロジェクト方針:
 
 ```
 このskillは本プロジェクトでしか使わない?
-├── YES → 本プロジェクト固有名をskill名に含めることになる
+├── YES (汎用skillに固有名を付けるパターン)
 │         → CLAUDE.md `Harness` 節「グローバルskillsはプロジェクト固有名禁止」
 │         → そもそも本プロジェクトで使うskillは概念レベルで普遍的なはず
 │         → 判断ミス。再考する。
+├── YES (本プロジェクトの .docs/identity/ に構造的依存する reviewer)
+│         → 例外。プロジェクトローカル `.claude/skills/` 配置を許容
+│         → 理由: 評価軸が .docs/identity/ (本PJ固有資産) なのでグローバル昇格すると壊れる
+│         → 例: project-domain-reviewer-fork / project-essence-orchestrator (PDR系)
+│         → 永続化: .gitignore の負パターンで選択追跡 (5-4/5-5 検証済 working asset)
 └── NO  → グローバル `~/.claude/skills/<skill-name>/` に配置
 ```
 
-結論: **本プロジェクト固有 skill は作らない**。すべての新規 skill はグローバル昇格を前提に設計する。
+結論: **本プロジェクト固有 skill は原則作らない** (すべての新規 skill はグローバル昇格を前提に設計する)。
+ただし **`.docs/identity/` に構造的依存する reviewer (PDR系) は例外** — グローバル昇格すると評価軸を失って壊れるため、プロジェクトローカル `.claude/skills/` 配置を許容し、`.gitignore` 負パターンで選択追跡する。
 
 ## 改訂履歴
 
