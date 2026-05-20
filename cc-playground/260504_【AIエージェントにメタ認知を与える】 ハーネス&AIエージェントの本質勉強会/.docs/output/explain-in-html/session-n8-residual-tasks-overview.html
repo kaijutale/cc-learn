@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session N+8 残 task 全体像 — 7 active tasks × 3 phase × ETA 90-120m</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a0e1a;
+  --bg-surface: #131826;
+  --bg-card: #1a1f2e;
+  --border-soft: #2a3148;
+  --copper: #DC2A1E;
+  --copper-bright: #FF3D2E;
+  --rust: #8B1A1A;
+  --moss: #1C4291;
+  --moss-dark: #163374;
+  --ivory: #F4F4F4;
+  --pearl: #B8B8C2;
+  --shadow: #050810;
+  --accent-line: #2a3148;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(220, 42, 30, 0.10), transparent 70%),
+    linear-gradient(180deg, var(--bg-deep) 0%, #0c1018 100%);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--copper-bright);
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #1a1f2e 0%, #401a1a 100%); }
+.stat .num {
+  font-family: 'Vollkorn', serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Vollkorn', serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: italic;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(139, 26, 26, 0.14);
+  border-left: 2px solid var(--rust);
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(28, 66, 145, 0.20); color: #6EA0FF; border: 1px solid var(--moss); }
+.verdict-row .severity.low { background: rgba(220, 42, 30, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); }
+.verdict-row .severity.medium { background: rgba(139, 26, 26, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); }
+.verdict-row .severity.high { background: rgba(220, 42, 30, 0.35); color: var(--ivory); border: 1px solid var(--copper); }
+
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Vollkorn', serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+.pull-quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0 96px;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0 96px;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: top;
+}
+.data-table tr:hover td { background: rgba(220, 42, 30, 0.06); }
+.data-table .id-cell {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--copper-bright);
+  font-weight: 600;
+}
+.data-table .status-pending { color: var(--pearl); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.data-table .status-progress { color: var(--copper-bright); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Vollkorn', 'Noto Serif JP', serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">Session N+8 · Residual Tasks · 2026.05.18</div>
+  <h1 class="title">
+    残 task <em>7 件</em>を<br>
+    3 phase で<br>
+    仕留める<span class="pct"> [ ETA 90–120m ]</span>
+  </h1>
+  <p class="lede">
+    <strong>Session N+8</strong> の主戦場は 2 つ。
+    <strong>Task #2 Phase A</strong> (<code style="color:inherit; font-family:inherit; background:none; padding:0; border:none;">--pr フラグ</code>の最小実装) と、
+    <strong>Task #5 PDR</strong> (Project Domain Reviewer = プロジェクト固有ルール審査エージェント) の構築。<br>
+    配置先が <strong>~/.claude/ と &lt;project&gt;/.claude/</strong> で物理的に独立しているため、2 track 並行進行が可能。
+  </p>
+
+  <!-- ===== STAT BAR ===== -->
+  <div class="stat-bar">
+    <div class="stat featured">
+      <span class="num">7</span>
+      <span class="label">Active Tasks</span>
+      <span class="desc">handoff の active_tasks 集合</span>
+    </div>
+    <div class="stat">
+      <span class="num">3</span>
+      <span class="label">Phases</span>
+      <span class="desc">N+8 を 3 段で完走</span>
+    </div>
+    <div class="stat">
+      <span class="num">90–120</span>
+      <span class="label">Minutes Target</span>
+      <span class="desc">Phase 1 + 2 + 3 合計</span>
+    </div>
+    <div class="stat zero">
+      <span class="num">6</span>
+      <span class="label">PDR Sub-Tasks</span>
+      <span class="desc">5-1 ～ 5-6 (5-3 以降は N+9 へ)</span>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 01: 3 PHASES ===== -->
+  <div class="section-head">
+    <div class="num">// PART · 01 — 着手順</div>
+    <h2>Session N+8 を 3 段で構成する</h2>
+  </div>
+
+  <section class="cards">
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">01</div>
+        <div class="card-title">
+          <span class="tag">PHASE 1 · 30 min</span>
+          <h3>PDR (Project Domain Reviewer) 構築 plan ファイルを新規作成する</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta"><span>Phase 1 progress</span><span class="val">0 / 100</span></div>
+        <div class="bar"><div class="fill" style="width: 0%"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>目的</h4>
+          <p>本会話で固まった PDR 設計を、新鮮なうちに plan ファイル化する。後続セッションで再構築可能にする。Task #5 のサブタスク 5-1 にあたる。</p>
+        </div>
+        <div class="b">
+          <h4>成果物</h4>
+          <p>新規ファイル: <code>.docs/plans/2026-05-18-project-domain-reviewer-construction.md</code><br>
+          6 サブタスク (5-2a / 5-2b / 5-3 / 5-4 / 5-5 / 5-6) の詳細設計 + 改修禁止リスト遵守確認 + 推定工数。</p>
+        </div>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対象: <strong>&lt;project&gt;/.docs/plans/</strong></span>
+        <span class="severity harmless">Harmless · 純粋な計画文書化</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">02</div>
+        <div class="card-title">
+          <span class="tag">PHASE 2 · 30–60 min</span>
+          <h3>Task #2 Phase A: <code style="color:inherit; font-family:inherit; background:none; padding:0; border:none;">--pr フラグ</code>の最小実装</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta"><span>Phase 2 progress</span><span class="val">0 / 100</span></div>
+        <div class="bar"><div class="fill" style="width: 0%"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>commit 経路 (既存)</h4>
+          <p>レビュー結果を直接 commit する従来の経路。素早く確定したい時に使う。<br>HITL (Human In The Loop = 人間判断介在) は最後の確認だけ。</p>
+        </div>
+        <div class="b">
+          <h4>pull request 経路 (新規)</h4>
+          <p><code>--pr</code> フラグ指定時に、レビュー結果を新規ブランチ + PR (pull request) に書き出す経路。<br>PR 作成前に「commit にする? PR にする?」を人間に確認する HITL 介在点を追加。</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">Implementation Scope</span>
+        <p>対象は <code>~/.claude/skills/accumulating-reviewer-feedback/SKILL.md</code> のみ。段階 5 (Record) にフラグ分岐を追加 + description / Gotcha に使用法追記。既存 commit 経路は完全に維持し、フラグ未指定なら従来動作。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">対象: <strong>~/.claude/skills/accumulating-reviewer-feedback/</strong></span>
+        <span class="severity low">Low · 既存挙動を壊さない最小差分</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">03</div>
+        <div class="card-title">
+          <span class="tag">PHASE 3 · 60–135 min (時間範囲内)</span>
+          <h3>PDR 構築実装 — サブタスク 5-2a + 5-2b 着手</h3>
+        </div>
+      </div>
+
+      <div class="progress-meter">
+        <div class="meta"><span>Phase 3 progress (5-2a + 5-2b のみ)</span><span class="val">0 / 100</span></div>
+        <div class="bar"><div class="fill" style="width: 0%"></div></div>
+      </div>
+
+      <div class="dual">
+        <div class="a">
+          <h4>5-2a · 骨格作成</h4>
+          <p>グローバル配置で 2 つ新規作成:<br>
+          ・<code>~/.claude/templates/project-identity-template.md</code> (アイデンティティ文書の雛形)<br>
+          ・<code>~/.claude/skills/bootstrapping-project-identity/SKILL.md</code> (対話駆動の生成 skill、spec-based-development と同型構造)</p>
+        </div>
+        <div class="b">
+          <h4>5-2b · 本プロジェクト適用</h4>
+          <p>5-2a 完成後、bootstrapping skill を起動して本プロジェクト固有のアイデンティティ文書を生成する:<br>
+          ・<code>&lt;project&gt;/.docs/identity/project-identity.md</code> (ペルソナ / 応答規約 / 命名規約 / 評価基準)</p>
+        </div>
+      </div>
+
+      <div class="gap-block">
+        <span class="label">HITL Budget Caution</span>
+        <p>AskUserQuestion (= 人間への質問ツール) は 1 セッションあたり 8 件まで。bootstrapping skill のインタビュー質問数を 5-6 件に圧縮し、Phase 2 の commit/PR 確認 1 件分の余裕を残す設計が必要。</p>
+      </div>
+
+      <div class="verdict-row">
+        <span class="target">残: <strong>5-3 / 5-4 / 5-5 / 5-6 は Session N+9 へ持ち越し</strong></span>
+        <span class="severity medium">Medium · 設計複雑性あり、N+9 分割可能性</span>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- ===== PULL QUOTE ===== -->
+  <blockquote class="pull-quote">
+    「2 track 並行は <em>物理的独立性</em> が担保する。<br>
+    Task #2 (~/.claude/) と Task #5 (&lt;project&gt;/.claude/) は<br>
+    配置先が完全に別、依存なしで同時着手できる」
+    <cite>— Plan 2026-05-18 より</cite>
+  </blockquote>
+
+  <!-- ===== SECTION 02: 7 ACTIVE TASKS ===== -->
+  <div class="section-head">
+    <div class="num">// PART · 02 — 全 task 一覧</div>
+    <h2>handoff に記録された 7 件、その全体地図</h2>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 8%;">ID</th>
+        <th style="width: 38%;">Subject</th>
+        <th style="width: 14%;">Status</th>
+        <th style="width: 16%;">Blocked By</th>
+        <th style="width: 24%;">着手予定</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="id-cell">#2</td>
+        <td>Phase A: <code style="font-family:'JetBrains Mono',monospace; background:var(--bg-deep); color:var(--copper-bright); padding:1px 5px;">--pr</code> フラグの最小実装<br><span style="color:var(--pearl); font-size:12px;">accumulating-reviewer-feedback skill に PR 経路を追加</span></td>
+        <td><span class="status-pending">pending</span></td>
+        <td style="color:var(--pearl);">—</td>
+        <td><strong style="color:var(--copper-bright);">N+8 Phase 2 (本セッション)</strong></td>
+      </tr>
+      <tr>
+        <td class="id-cell">#3</td>
+        <td>Phase B: Discord webhook 通知 + 抜け 3 つの詰め<br><span style="color:var(--pearl); font-size:12px;">非同期通知経路 + 設計時に漏れた 3 項目を反映</span></td>
+        <td><span class="status-pending">pending</span></td>
+        <td>#2</td>
+        <td style="color:var(--pearl);">N+9 以降</td>
+      </tr>
+      <tr>
+        <td class="id-cell">#4</td>
+        <td>Phase D: 統合 + 運用ドキュメント整備<br><span style="color:var(--pearl); font-size:12px;">Phase A/B の総合確認 + 運用 doc</span></td>
+        <td><span class="status-pending">pending</span></td>
+        <td>#2, #3</td>
+        <td style="color:var(--pearl);">N+9 以降</td>
+      </tr>
+      <tr>
+        <td class="id-cell">#5</td>
+        <td>PDR (Project Domain Reviewer) 構築<br><span style="color:var(--pearl); font-size:12px;">6 サブタスク = アイデンティティ文書 + 専用 skill + 専用 agent + 関連 plan</span></td>
+        <td><span class="status-pending">pending</span></td>
+        <td style="color:var(--pearl);">—</td>
+        <td><strong style="color:var(--copper-bright);">N+8 Phase 1 + 3 (本セッション)</strong></td>
+      </tr>
+      <tr>
+        <td class="id-cell">#6</td>
+        <td>video-essentials.md 整備<br><span style="color:var(--pearl); font-size:12px;">本質ドキュメント 4 領域目 (現状 harness / skill / UI の 3 領域のみ)</span></td>
+        <td><span class="status-pending">pending</span></td>
+        <td style="color:var(--pearl);">—</td>
+        <td style="color:var(--pearl);">低優先 (N+10 以降)</td>
+      </tr>
+      <tr>
+        <td class="id-cell">#7</td>
+        <td>essence-for-implementer skill 運用観察<br><span style="color:var(--pearl); font-size:12px;">N+6+ 新設、運用結果を passive に観察</span></td>
+        <td><span class="status-pending">pending (passive)</span></td>
+        <td style="color:var(--pearl);">—</td>
+        <td style="color:var(--pearl);">継続観察</td>
+      </tr>
+      <tr>
+        <td class="id-cell">#8</td>
+        <td>handoff-state.md の最新化<br><span style="color:var(--pearl); font-size:12px;">Session N+7 commit と本会話分の反映</span></td>
+        <td><span class="status-progress">in_progress</span></td>
+        <td style="color:var(--pearl);">—</td>
+        <td><strong style="color:var(--copper-bright);">本セッション完了で済</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ===== ROADMAP ===== -->
+  <section class="roadmap">
+    <h2>Session の連続性</h2>
+    <p class="sub">N+7 (done) → N+8 (current) → N+9 → N+10 (future)</p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="session">Session N+7 · Done · 2026-05-17</div>
+        <h4>Phase C (AI 自動レビュー) の廃止確定 + Phase B 抜け 3 つのメモ化</h4>
+        <p>commit <code>e913f4c</code> で push 済。ahead 0 / behind 0 の完全整合。</p>
+      </div>
+      <div class="tl-item current">
+        <div class="session">Session N+8 · Current · 2026-05-18</div>
+        <h4>Phase 1 PDR plan 化 / Phase 2 <code>--pr</code> 実装 / Phase 3 PDR 5-2a + 5-2b</h4>
+        <p>合計 90–120 分目標。改修禁止リスト遵守 + HITL (人間への質問) 8 件/セッション上限の遵守必須。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Session N+9 · Next</div>
+        <h4>PDR 5-3 → 5-6 + Task #3 Phase B + Task #4 Phase D</h4>
+        <p>5-3 PDR agent 定義作成 / 5-4 fork skill 作成 / 5-5 orchestrator 新設 / 5-6 アイデンティティ vs CLAUDE.md の真実のソース整理。並行で Discord webhook + 抜け 3 つを Phase B として実装。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Session N+10 · Future</div>
+        <h4>video-essentials.md 整備 + 運用観察結果の反映</h4>
+        <p>本質ドキュメント 4 領域目 (Task #6) と、essence-for-implementer の運用観察結果 (Task #7) の skill 改修。低優先タスク群の消化フェーズ。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CLOSING ===== -->
+  <div class="closing">
+    <p class="quote">
+      plan は判断文脈の保存場所。<br>
+      handoff は引継ぎの設計図。<br>
+      残 task は <em>次サイクル</em>への手紙である。
+    </p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.18 06:41 JST</p>
+  </div>
+
+</main>
+</body>
+</html>
