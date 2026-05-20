@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>explain-in-html を Warm Paper 美学へ移行</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Warm Paper palette (v3)
+     旧 v2 Amazing Spider-Man から値書換、変数名は維持 (CSS class 互換性のため)
+     意味マッピング: --copper = terracotta / --moss = teal / --rust = deep terracotta */
+  --bg-deep: #1c1a17;        /* 温かいダークブラウン背景 */
+  --bg-surface: #252019;     /* 中間サーフェス */
+  --bg-card: #2a241c;        /* カード背景 */
+  --border-soft: #3a3228;    /* 温かいブラウン境界線 */
+  --copper: #e8623c;         /* terracotta, 主アクセント */
+  --copper-bright: #f47a52;  /* bright terracotta, highlight */
+  --rust: #c4421f;           /* deep terracotta, 警告/差分 */
+  --moss: #3f8f7b;           /* teal, 副アクセント */
+  --moss-dark: #2f6e5e;      /* deep teal */
+  --ivory: #f3ede1;          /* warm cream text */
+  --pearl: #b3a896;          /* warm gray, 副テキスト */
+  --shadow: #13110e;         /* code block 背景, 最暗ブラウン */
+  --accent-line: #3a3228;    /* line */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(232, 98, 60, 0.18), transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, rgba(63, 143, 123, 0.14), transparent 55%),
+    var(--bg-deep);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(243, 237, 225, 0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #2a241c 0%, #4a2418 100%); }
+.stat .num {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(196, 66, 31, 0.14);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 12px 12px 0;
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(63, 143, 123, 0.20); color: #6fcdb3; border: 1px solid var(--moss); border-radius: 999px; }
+.verdict-row .severity.low { background: rgba(232, 98, 60, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); border-radius: 999px; }
+.verdict-row .severity.medium { background: rgba(196, 66, 31, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); border-radius: 999px; }
+.verdict-row .severity.high { background: rgba(232, 98, 60, 0.35); color: var(--ivory); border: 1px solid var(--copper); border-radius: 999px; }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Plain prose (本文段落用) === */
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+/* === Code block === */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table tr:hover td { background: rgba(232, 98, 60, 0.06); }
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <!--
+    BODY CONTENT GOES HERE
+    references/component-library.md を参照し、トピックに合わせて以下のコンポーネントを組み立てる:
+      - .eyebrow / h1.title / .lede        (Header trio, 通常必須)
+      - .stat-bar                          (数値ハイライトがあるとき)
+      - .section-head + .cards > .card     (本論の主要構造)
+      - .prose                             (段落本文)
+      - .pull-quote                        (キーフレーズ強調)
+      - .data-table                        (比較・一覧)
+      - .code-block                        (コード例)
+      - .roadmap > .timeline               (時系列展望)
+      - .closing > .quote                  (締めの引用、通常必須)
+
+    制約:
+      - 最低 3 コンポーネント、最大 9 コンポーネント
+      - 全コンポーネント詰め込まない (情報密度過多 = AI slop の別形態)
+      - JST タイムスタンプを .closing .footer-meta に必ず入れる
+  -->
+
+  <div class="eyebrow">explain-in-html · v3 Migration · 2026.05.20</div>
+  <h1 class="title">Spidey から <em>Warm Paper</em> へ。<br>identity を<em>値の差し替え</em>で進化させる</h1>
+  <p class="lede">
+    解説 HTML スキル <strong>explain-in-html</strong> の固定美学を、コミック調の Amazing Spider-Man から
+    温かい手帳の <strong>Warm Paper</strong> へ全面移行した。CSS 変数名 (color の名前) を中立に保つ設計のおかげで、
+    <strong>値の差し替え</strong>だけで全コンポーネントが連動する。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat featured"><span class="num">9</span><span class="label">Color Vars</span><span class="desc">テラコッタ + ティール基調に差替</span></div>
+    <div class="stat"><span class="num">3</span><span class="label">Font Axes</span><span class="desc">丸ゴシック + 角ゴシック + mono</span></div>
+    <div class="stat"><span class="num">13</span><span class="label">Rounded</span><span class="desc">丸み (border-radius) 追加箇所</span></div>
+    <div class="stat zero"><span class="num">4</span><span class="label">Files</span><span class="desc">skill 4 ファイル全改修</span></div>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// MIGRATION · 01</div>
+    <h2>3 つの DNA を入れ替えた</h2>
+  </div>
+
+  <section class="cards">
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">01</div>
+        <div class="card-title">
+          <span class="tag">Color</span>
+          <h3>コミック色 → 土の温色</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>Before</h4><p>Spidey red <code>#DC2A1E</code> + Spidey blue <code>#1C4291</code> を navy-black の背景に</p></div>
+        <div class="b"><h4>After</h4><p>terracotta <code>#e8623c</code> + teal <code>#3f8f7b</code> を warm brown の背景に</p></div>
+      </div>
+    </article>
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">02</div>
+        <div class="card-title">
+          <span class="tag">Typography</span>
+          <h3>古典セリフ → 丸ゴシック</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>Before</h4><p>Vollkorn (italic serif) + IBM Plex Sans JP</p></div>
+        <div class="b"><h4>After</h4><p>Zen Maru Gothic (丸ゴシック) + Zen Kaku Gothic New</p></div>
+      </div>
+      <div class="gap-block">
+        <span class="label">注意点 (Gotcha)</span>
+        <p>丸ゴシックは italic (斜体) を持たない。強調を「色 + 太さ」に切り替えた。</p>
+      </div>
+    </article>
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">03</div>
+        <div class="card-title">
+          <span class="tag">Texture</span>
+          <h3>夜空 → 紙の方眼</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>Before</h4><p>navy 背景に赤いハロー (光の輪)</p></div>
+        <div class="b"><h4>After</h4><p>温かいブラウンに terracotta + teal の光 + ドット方眼 + 丸み</p></div>
+      </div>
+      <div class="verdict-row">
+        <span class="target">CSS 変数名は <strong>中立のまま維持</strong> (互換性のため)</span>
+        <span class="severity harmless">No Break</span>
+      </div>
+    </article>
+  </section>
+
+  <blockquote class="pull-quote">
+    変数名を中立に保てば、美学 (identity) は値の差し替えだけで進化する。
+    <cite>— v1 Editorial → v2 Spidey → v3 Warm Paper</cite>
+  </blockquote>
+
+  <div class="closing">
+    <p class="quote">美学は固定する。<br>ただし、その値は<br>育て替えられる。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.20 15:16 JST</p>
+  </div>
+
+</main>
+</body>
+</html>
