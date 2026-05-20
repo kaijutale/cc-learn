@@ -16,8 +16,18 @@
 # ただし explain-in-html/ は手作業生成物なので追跡対象
 !.docs/output/explain-in-html/
 
-# claude
-.claude/
+# claude (全体は追跡外 — handoff-state.md / settings.json 等の揮発状態を除外)
+# 末尾 /* で中身を 1 つずつ ignore し、PDR ソースのみ ! 例外で穴を開ける (explain-in-html と同型)
+.claude/*
+# PDR (project-essence reviewer 4層) のソースは 5-4/5-5 検証済の working asset として追跡対象
+# (.docs/identity/ 依存のためグローバル昇格不可、プロジェクトローカルで永続化)
+!.claude/agents/
+.claude/agents/*
+!.claude/agents/project-domain-reviewer.md
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/project-domain-reviewer-fork/
+!.claude/skills/project-essence-orchestrator/
 
 # .env
 .env
