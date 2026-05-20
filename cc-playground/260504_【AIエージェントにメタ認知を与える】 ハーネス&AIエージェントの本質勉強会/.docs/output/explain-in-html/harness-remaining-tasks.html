@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ハーネス構築 — 残りタスク俯瞰 (2026-05-20)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #1c1a17; --paper: #faf6ee; --paper-2: #f1ead9;
+    --ink: #26221c; --ink-soft: #7a7164; --ink-faint: #b6ab98;
+    --accent: #e8623c; --accent-2: #3f8f7b;
+    --line: rgba(38,34,28,0.10);
+    --chip-bg: rgba(232,98,60,0.12); --chip-ink: #c44a26;
+    --chip2-bg: rgba(63,143,123,0.14); --chip2-ink: #2f6e5e;
+    --chip-neutral-bg: rgba(122,113,100,0.16); --chip-neutral-ink: #8a8070;
+    --display: "Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;
+    --body: "Zen Kaku Gothic New","Hiragino Sans",sans-serif;
+    --mono: "JetBrains Mono",monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--body); color: #f3ede1; line-height: 1.6; min-height: 100vh;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, rgba(232,98,60,0.20), transparent 60%),
+      radial-gradient(900px 600px at 90% 110%, rgba(63,143,123,0.16), transparent 55%), var(--bg);
+    background-attachment: fixed;
+  }
+  body::before { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 26px 26px; }
+  .wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 56px 24px 80px; }
+
+  header { text-align: center; margin-bottom: 8px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  h1 { font-family: var(--display); font-weight: 700; line-height: 1.18; font-size: clamp(26px,4vw,42px); color: #fff; }
+  h1 .hl { color: var(--accent); }
+  .lede { max-width: 740px; margin: 18px auto 0; color: #cabfae; font-size: 15.5px; }
+  .note-banner { margin: 26px auto 0; max-width: 820px; font-size: 13.5px; color: #b9af9d;
+    border-left: 3px solid var(--accent-2); background: rgba(63,143,123,0.08); padding: 13px 16px; border-radius: 0 10px 10px 0; text-align: left; }
+  .note-banner b { color: #e7dcc8; }
+
+  /* progress summary */
+  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 820px; margin: 34px auto 0; }
+  @media (max-width: 720px) { .summary { grid-template-columns: 1fr; } }
+  .sumcard { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10); border-radius: 16px; padding: 16px 18px; }
+  .sumcard .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 8px; }
+  .sumcard.done .lbl { color: var(--accent-2); }
+  .sumcard.todo .lbl { color: var(--accent); }
+  .sumcard .big { font-family: var(--display); font-weight: 700; font-size: 30px; color: #fff; }
+  .sumcard .big .u { font-size: 14px; color: var(--ink-faint); font-weight: 500; }
+  .sumcard .desc { font-size: 12.5px; color: #b3a896; margin-top: 6px; }
+  .progressbar { height: 9px; border-radius: 999px; background: rgba(255,255,255,0.07); margin: 30px auto 0; max-width: 820px; overflow: hidden; display: flex; }
+  .progressbar .fill { background: linear-gradient(90deg, var(--accent-2), #5fc0a4); }
+  .progressbar .rest { background: rgba(232,98,60,0.35); }
+  .progresslbl { max-width: 820px; margin: 8px auto 0; display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); }
+
+  .section { margin-top: 52px; }
+  .sec-head { display: flex; align-items: baseline; gap: 13px; flex-wrap: wrap; margin-bottom: 4px; }
+  .sec-num { font-family: var(--mono); font-size: 12px; color: var(--bg); background: var(--accent); padding: 4px 12px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+  .sec-num.alt { background: var(--accent-2); }
+  .sec-num.neutral { background: var(--ink-faint); }
+  .sec-title { font-family: var(--display); font-size: 21px; color: #fff; }
+  .sec-sub { color: #b3a896; font-size: 13.5px; margin: 7px 0 22px; max-width: 760px; }
+  .sec-sub b { color: var(--accent); }
+
+  /* task cards grid */
+  .tasks { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+  .tcard { background: var(--paper); color: var(--ink); border-radius: 15px; padding: 15px 16px; box-shadow: 0 12px 28px -18px rgba(0,0,0,0.7); position: relative; border: 1px solid rgba(255,255,255,0.04); }
+  .tcard.lead { box-shadow: 0 0 0 2px var(--accent), 0 14px 30px -16px rgba(232,98,60,0.6); }
+  .tcard .thead { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+  .tcard .tid { font-family: var(--mono); font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 7px; background: var(--paper-2); color: var(--ink-soft); white-space: nowrap; }
+  .tcard .tid.pdr { background: var(--chip-bg); color: var(--chip-ink); }
+  .tcard .ttitle { font-family: var(--display); font-weight: 700; font-size: 14.5px; color: var(--ink); line-height: 1.35; }
+  .tcard .tdesc { font-size: 12.3px; color: var(--ink-soft); line-height: 1.6; }
+  .tcard .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+  .mchip { font-family: var(--mono); font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--chip-neutral-bg); color: var(--chip-neutral-ink); display: inline-flex; align-items: center; gap: 4px; }
+  .mchip.time { background: var(--chip-bg); color: var(--chip-ink); }
+  .mchip.dep { background: rgba(38,34,28,0.06); color: var(--ink-soft); }
+  .mchip.block { background: rgba(196,74,38,0.16); color: #b53d1c; }
+  .mchip.ready { background: var(--chip2-bg); color: var(--chip2-ink); }
+  .status-dot { position: absolute; top: 15px; right: 15px; font-size: 13px; }
+
+  /* recommendation flow */
+  .flow-rec { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+  .step { flex: 1; min-width: 150px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 14px; position: relative; }
+  .step .n { font-family: var(--mono); font-size: 11px; color: var(--accent); font-weight: 700; }
+  .step .h { font-family: var(--display); font-weight: 700; font-size: 14px; color: #fff; margin: 6px 0 5px; }
+  .step .d { font-size: 11.8px; color: #b3a896; }
+  .step .arr { position: absolute; right: -13px; top: 50%; transform: translateY(-50%); color: var(--accent); font-size: 18px; z-index: 2; }
+  @media (max-width: 760px) { .step .arr { display: none; } }
+
+  /* done reference */
+  .done-ref { margin-top: 16px; background: rgba(63,143,123,0.07); border: 1px solid rgba(63,143,123,0.18); border-radius: 16px; padding: 18px 20px; }
+  .done-ref h4 { font-family: var(--display); font-size: 15px; color: #fff; margin-bottom: 12px; }
+  .done-ref h4 .ic { color: var(--accent-2); }
+  .done-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+  .donechip { font-family: var(--mono); font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 7px; background: rgba(63,143,123,0.16); color: #7fd0b6; display: inline-flex; align-items: center; gap: 5px; }
+  .done-note { margin-top: 11px; font-size: 11.5px; color: #9c937f; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 9px; }
+  .done-note b { color: #d8cdb9; }
+
+  footer { margin-top: 56px; text-align: center; color: #8d8472; font-size: 13px; }
+  footer code { font-family: var(--mono); color: #c9bea9; background: rgba(255,255,255,0.05); padding: 2px 7px; border-radius: 6px; }
+  .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 16px; margin: 22px auto 0; font-size: 11.5px; color: #b3a896; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">harness construction · 残タスク俯瞰 · 2026-05-20</div>
+    <h1>ハーネス構築、残りは <span class="hl">17 タスク</span>。</h1>
+    <p class="lede">note 記事 §2-§6 の 22 タスクのうち 13 を消し込み、PDR の評価基準 (identity) を verify 済。残るは「レビューア層の完成 (PDR 本線)」「PR 駆動自動化」「内容走査」「運用実測」「保守」の 5 系統。</p>
+    <div class="note-banner">
+      <b>現在地 (2026-05-20):</b> PDR サブタスク 5-2b (identity verify) 完了。bootstrap 層 (template + skill) と source of truth (identity 4 ファイル) が確定。<b>handoff-state.md は 2026-05-18 のまま (古い)</b> で実態と乖離、ローカルコミット <b>ahead 1</b>。色/フォントは memopo モックの動線確認用に借用 (Zen Maru Gothic + テラコッタ/ティール)。
+    </div>
+  </header>
+
+  <!-- progress summary -->
+  <div class="summary">
+    <div class="sumcard done">
+      <div class="lbl">完了 / 確定</div>
+      <div class="big">16 <span class="u">タスク相当</span></div>
+      <div class="desc">22 タスク中 13 消し込み + PDR 5-2a/5-2b + Phase A (--pr フラグ)。Phase C は廃止確定。</div>
+    </div>
+    <div class="sumcard todo">
+      <div class="lbl">残り</div>
+      <div class="big">17 <span class="u">タスク</span></div>
+      <div class="desc">PDR 本線 4 + PR 駆動 3 + 内容走査 4 + 運用実測 4 + 保守 2。最優先は PDR 5-3 (前提条件あり)。</div>
+    </div>
+  </div>
+  <div class="progressbar">
+    <div class="fill" style="width:48%"></div>
+    <div class="rest" style="width:52%"></div>
+  </div>
+  <div class="progresslbl"><span>完了 16</span><span>残り 17</span></div>
+
+  <!-- 1. PDR 本線 -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-num">系統 1 · 最優先</span>
+      <span class="sec-title">PDR 構築の本線 — レビューア層を完成させる</span>
+    </div>
+    <p class="sec-sub">プロジェクト固有ドメイン (identity) を照らす 4 軸目のレビューア。bootstrap 層は完成済、残るは reviewer 本体 3 層 + 整理。<b>5-3 は前提条件 (`.claude/{agents,skills}/` のローカル運用検証) を先に潰す必要あり</b>。</p>
+    <div class="tasks">
+      <div class="tcard lead">
+        <span class="status-dot">🔄</span>
+        <div class="thead"><span class="tid pdr">5-3</span><span class="ttitle">project-domain-reviewer agent 定義</span></div>
+        <div class="tdesc">プロジェクトローカル `.claude/agents/`。harness-essentials-reviewer と同型、tools=Read/Grep/Glob/Bash、color=purple。Anti-Goals 違反 / commit 規約逸脱 / logs 配置誤りを Critical 検出。</div>
+        <div class="meta"><span class="mchip time">⏱ 30-45分</span><span class="mchip block">🔒 前提: ローカル運用検証</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid pdr">5-4</span><span class="ttitle">project-domain-reviewer-fork skill</span></div>
+        <div class="tdesc">harness-essentials-reviewer-fork と同型。context:fork + subagent で孫エージェントに委譲。!構文で開始時刻 / 評価対象パス / identity 存在検証を決定論注入。</div>
+        <div class="meta"><span class="mchip time">⏱ 30-45分</span><span class="mchip dep">← 5-3</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid pdr">5-5</span><span class="ttitle">project-essence-orchestrator skill</span></div>
+        <div class="tdesc">4 領域並列起動 (harness/skill/UI/project-domain)。既存 essence-reviewing-orchestrator (グローバル 3 領域) との関係再整理が必要。</div>
+        <div class="meta"><span class="mchip time">⏱ 60-90分</span><span class="mchip dep">← 5-3 + 5-4</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid pdr">5-6</span><span class="ttitle">identity vs CLAUDE.md source of truth 整理</span></div>
+        <div class="tdesc">モデル A (CLAUDE.md=必須ルール / identity=自己定義全体像) 維持の範囲内で整理。重複の解消、別 plan 分割の可能性あり。</div>
+        <div class="meta"><span class="mchip dep">← 5-5</span><span class="mchip">判断必要</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. PR 駆動自動化 -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-num alt">系統 2</span>
+      <span class="sec-title">PR 駆動自動化 — 本質ドキュメント更新の半自動化 (旧 G1/G3)</span>
+    </div>
+    <p class="sec-sub">「収集 → 提案 → 通知 → レビュー → 取り込み」の 5 ステップ。Phase A (--pr フラグ) は完了、Phase C (AI 自動レビュー) は廃止確定。<b>前提の DISCORD_WEBHOOK_URL Secret は登録済</b>。</p>
+    <div class="tasks">
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">Phase B</span><span class="ttitle">Discord webhook 通知 workflow</span></div>
+        <div class="tdesc">GitHub Actions workflow YAML 新設 + 抜け 3 点を詰める。accumulating-reviewer-feedback の --pr 出力を Discord #skill-updates に通知。</div>
+        <div class="meta"><span class="mchip ready">✓ unblock 済 (Phase A 完了)</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">🔒</span>
+        <div class="thead"><span class="tid">Phase D</span><span class="ttitle">統合 + 運用 doc</span></div>
+        <div class="tdesc">Phase A/B を統合し、PR 駆動自動化の運用ドキュメントを整備。全体の動作確認と運用ルール明文化。</div>
+        <div class="meta"><span class="mchip block">🔒 blockedBy Phase B</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">G3</span><span class="ttitle">HITL ポリシー明文化</span></div>
+        <div class="tdesc">PR テンプレに「論文信頼性チェック欄」を追加。外部情報源 (論文/記事) を取り込む際の人間レビューゲートを構造化。</div>
+        <div class="meta"><span class="mchip dep">PR テンプレ整備</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 内容走査ペンディング -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-num neutral">系統 3</span>
+      <span class="sec-title">内容走査ペンディング — 中身を読まないと判定不能</span>
+    </div>
+    <p class="sec-sub">構造は存在するが、ファイルの中身を逐次照合しないと「完了」と言えない 4 件。grep + 精読で消し込める。</p>
+    <div class="tasks">
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">A3</span><span class="ttitle">5 原理の網羅チェック</span></div>
+        <div class="tdesc">essentials.md の中身を逐次照合し、note 記事の核心 5 原理がすべて反映されているか確認。</div>
+        <div class="meta"><span class="mchip">essentials.md 精読</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">B2</span><span class="ttitle">レビューア終了条件の明文化</span></div>
+        <div class="tdesc">各 reviewer agent の frontmatter / 冒頭を走査し、「いつレビューを打ち切るか」の終了条件が明示されているか確認。</div>
+        <div class="meta"><span class="mchip">reviewer.md 走査</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">D2</span><span class="ttitle">10 ステップ以上の進捗 JSON 外部化</span></div>
+        <div class="tdesc">orchestrating-team-development / enforcing-strict-tdd-cycle の内部実装を走査し、進捗の JSON 外部化 + step skip 検証機構の有無を確認。</div>
+        <div class="meta"><span class="mchip">orchestrator 走査</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">E1</span><span class="ttitle">Gotcha 蓄積</span></div>
+        <div class="tdesc">直近 1 ヶ月の skill 利用頻度 Top3 を特定し、各 skill の `## Gotcha` セクションが実装されているか確認・補完。</div>
+        <div class="meta"><span class="mchip">Top3 特定 + Gotcha</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 運用フェーズ -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-num neutral">系統 4</span>
+      <span class="sec-title">運用フェーズ — 「実行」が必要で「構造」では完結しない</span>
+    </div>
+    <p class="sec-sub">仕組みは作れても、実際に回して効果を実測しないと消し込めない 4 件。日々の作業の中で意識的に運用して観察する。</p>
+    <div class="tasks">
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">D1</span><span class="ttitle">決定論化候補の洗い出し</span></div>
+        <div class="tdesc">自分のワークフローから「正解が客観的に検証可能な工程」を 3 つ以上ピックアップ。enumerating-verifiable-workflows skill が補助。</div>
+        <div class="meta"><span class="mchip">能動運用</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">D4</span><span class="ttitle">計画/実行で制約強度を分離</span></div>
+        <div class="tdesc">計画フェーズは制約を緩く (探索)、実行フェーズは制約を強く (収束)。意識的な切替を運用で実測。</div>
+        <div class="meta"><span class="mchip">運用実測</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">B4</span><span class="ttitle">「最後の 20 点」運用</span></div>
+        <div class="tdesc">レビューアが詰める品質の最後の 20 点 (機能的 OK ≠ 構造的 OK) を運用フェーズで実測効果確認。</div>
+        <div class="meta"><span class="mchip">運用実測</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">G2</span><span class="ttitle">四半期定例レビュー</span></div>
+        <div class="tdesc">ハーネス全体を四半期ごとに見直す定例の運用開始。アンチパターン診断 (review-harness) を定期実行。</div>
+        <div class="meta"><span class="mchip">運用未開始</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 保守 -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-num neutral">系統 5</span>
+      <span class="sec-title">ハーネス保守 — 継続観察と状態同期</span>
+    </div>
+    <p class="sec-sub">新規構築ではなく、既存資産の観察と整合維持。<b>#8 は乖離が大きいので近いうちに対応推奨</b>。</p>
+    <div class="tasks">
+      <div class="tcard">
+        <span class="status-dot">👁</span>
+        <div class="thead"><span class="tid">#7</span><span class="ttitle">essence-for-implementer 運用観察</span></div>
+        <div class="tdesc">N+6+ 新設の圧縮版 skill (24 原則 reference、team-implementer 注入)。実運用で過不足を観察する passive タスク。</div>
+        <div class="meta"><span class="mchip">passive 観察</span></div>
+      </div>
+      <div class="tcard">
+        <span class="status-dot">⏳</span>
+        <div class="thead"><span class="tid">#8</span><span class="ttitle">handoff-state.md 最新化</span></div>
+        <div class="tdesc">handoff (2026-05-18) と実態 (PDR 5-2a/5-2b 完了, Phase A 完了, ahead 1) の乖離を解消。次セッションの pickup 精度を回復。</div>
+        <div class="meta"><span class="mchip time">⏱ 軽量</span><span class="mchip block">乖離大</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- recommended order -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-num">推奨</span>
+      <span class="sec-title">着手順 — 能動判断 → 内容走査 → 運用</span>
+    </div>
+    <p class="sec-sub">N+9 棚卸しの結論「残課題は 3 系統に綺麗に分かれる」を踏襲。PDR 本線を軸に、軽量な保守 (#8) を早めに挟む。</p>
+    <div class="flow-rec">
+      <div class="step"><div class="n">STEP 1</div><div class="h">5-3 前提条件確認</div><div class="d">`.claude/{agents,skills}/` の auto-recognition + Skill 呼出可否を公式仕様で確認。5-3/5-4/5-5 全ての関門。</div><span class="arr">→</span></div>
+      <div class="step"><div class="n">STEP 2</div><div class="h">PDR 本線 5-3 → 5-4 → 5-5</div><div class="d">reviewer 本体 3 層を構築。4 軸目レビューアが完成し「複数レビューア活用」の固有軸が埋まる。</div><span class="arr">→</span></div>
+      <div class="step"><div class="n">STEP 3</div><div class="h">#8 handoff 同期 + 5-6</div><div class="d">乖離した handoff を最新化、source of truth を整理。PDR 構築の区切り。</div><span class="arr">→</span></div>
+      <div class="step"><div class="n">STEP 4</div><div class="h">Phase B/D + 走査/運用</div><div class="d">PR 駆動自動化を完成させ、内容走査 (A3/B2/D2/E1) と運用実測 (D1/D4/B4/G2) を順次消し込み。</div></div>
+    </div>
+  </div>
+
+  <!-- done reference -->
+  <div class="section">
+    <div class="done-ref">
+      <h4><span class="ic">✓</span> 完了済み (参考) — 22 タスク中 13 消し込み + PDR bootstrap + Phase A</h4>
+      <div class="done-grid">
+        <span class="donechip">A1 essentials 棚卸し</span>
+        <span class="donechip">A2 essentials/identity 分離</span>
+        <span class="donechip">B1 3 領域レビューア</span>
+        <span class="donechip">B3 fork 経由呼出</span>
+        <span class="donechip">C1 4 役割棚卸し</span>
+        <span class="donechip">C2 圧縮版 essentials</span>
+        <span class="donechip">C3 マゴエージェント</span>
+        <span class="donechip">C4 Claude Only 方針</span>
+        <span class="donechip">D3 Hooks 強制</span>
+        <span class="donechip">E2 FB 蓄積フロー</span>
+        <span class="donechip">E3 進捗外部化</span>
+        <span class="donechip">E4 Skill Creator</span>
+        <span class="donechip">F1 本番/開発分離</span>
+        <span class="donechip">PDR 5-2a bootstrap skill+template</span>
+        <span class="donechip">PDR 5-2b identity verify</span>
+        <span class="donechip">Phase A --pr フラグ</span>
+      </div>
+      <div class="done-note">注: N+9 棚卸しは「資産の存在」を根拠に消し込んだ最低ライン判定。<b>「構造あり」≠「中身が品質基準を満たす」</b>のため、内容走査ペンディング (系統 3) が残る。Phase C (AI 自動レビュー) は 2026-05-17 廃止確定。</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span>🔄 着手中</span>
+    <span>⏳ 未着手</span>
+    <span>🔒 ブロック中 (依存待ち)</span>
+    <span>👁 passive 観察</span>
+    <span>✓ unblock 済</span>
+  </div>
+
+  <footer>
+    ハーネス構築 = AIエージェントの足場の構築・アップグレード。残り 17 タスクで「複数レビューア活用」の固有軸が埋まる。<br />
+    <code>.docs/output/harness-remaining-tasks.html</code> · 出典: N+9 棚卸しログ + PDR 構築 plan + handoff-state.md
+  </footer>
+</div>
+</body>
+</html>
