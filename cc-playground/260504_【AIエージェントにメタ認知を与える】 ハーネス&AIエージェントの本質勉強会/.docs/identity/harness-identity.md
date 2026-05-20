@@ -5,7 +5,7 @@
 
 ## 対応 essence
 
-`/Users/camone/.claude/.docs/essence/harness-essentials.md` (v1.0)
+`~/.claude/.docs/essence/harness-essentials.md` (v1.0)
 
 ## essence/agent との対応表
 

@@ -5,7 +5,7 @@
 
 ## 対応 essence
 
-`/Users/camone/.claude/.docs/essence/skill-essentials.md` (v1.0)
+`~/.claude/.docs/essence/skill-essentials.md` (v1.0)
 
 ## essence/skill との対応表
 
@@ -53,7 +53,7 @@
 fork skill を使う/作る場合の本プロジェクト方針:
 
 - **in-process / out-of-process で挙動が揺れる公式 grayzone** (memory: `feedback_skill-fork-asymmetry.md`)
-- **cwd 継承対策必須**: subagent に渡すパスは絶対パス (例: `/Users/camone/.claude/.docs/essence/harness-essentials.md`)
+- **cwd 継承対策必須**: subagent に渡すパスは解決済みの絶対パス (`~` や相対パスは subagent コンテキストで展開されない可能性があるため、フルパスで渡す)
 - **相対パスを subagent プロンプトに含めない**
 
 ## TDD skill 使用時

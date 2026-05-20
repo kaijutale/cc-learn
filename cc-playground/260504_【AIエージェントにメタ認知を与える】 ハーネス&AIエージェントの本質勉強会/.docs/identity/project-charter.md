@@ -86,8 +86,8 @@ note記事原本: https://note.com/masa_wunder/n/nf03564a8d638 (まさお@未経
 
 - 元PDFを書いた「まさお@未経験からプロまでAI活用」氏の note: https://note.com/masa_wunder/n/nf03564a8d638
 - 関連論文: [Meta-Harness: End-to-End Optimization of Model Harnesses](https://arxiv.org/abs/2603.28052)
-- グローバル essence (このプロジェクトの成果反映先): `/Users/camone/.claude/.docs/essence/`
-- グローバル CLAUDE.md (個人ハーネスポリシー): `/Users/camone/.claude/CLAUDE.md`
+- グローバル essence (このプロジェクトの成果反映先): `~/.claude/.docs/essence/`
+- グローバル CLAUDE.md (個人ハーネスポリシー): `~/.claude/CLAUDE.md`
 
 ## 改訂履歴
 
