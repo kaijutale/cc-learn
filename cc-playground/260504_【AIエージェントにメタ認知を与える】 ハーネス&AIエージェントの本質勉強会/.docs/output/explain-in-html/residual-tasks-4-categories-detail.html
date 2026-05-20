@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>残タスク 4 カテゴリ詳解 — Session N+11 カテゴリ別深掘り</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Warm Paper palette (v3)
+     旧 v2 Amazing Spider-Man から値書換、変数名は維持 (CSS class 互換性のため)
+     意味マッピング: --copper = terracotta / --moss = teal / --rust = deep terracotta */
+  --bg-deep: #1c1a17;        /* 温かいダークブラウン背景 */
+  --bg-surface: #252019;     /* 中間サーフェス */
+  --bg-card: #2a241c;        /* カード背景 */
+  --border-soft: #3a3228;    /* 温かいブラウン境界線 */
+  --copper: #e8623c;         /* terracotta, 主アクセント */
+  --copper-bright: #f47a52;  /* bright terracotta, highlight */
+  --rust: #c4421f;           /* deep terracotta, 警告/差分 */
+  --moss: #3f8f7b;           /* teal, 副アクセント */
+  --moss-dark: #2f6e5e;      /* deep teal */
+  --ivory: #f3ede1;          /* warm cream text */
+  --pearl: #b3a896;          /* warm gray, 副テキスト */
+  --shadow: #13110e;         /* code block 背景, 最暗ブラウン */
+  --accent-line: #3a3228;    /* line */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(232, 98, 60, 0.18), transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, rgba(63, 143, 123, 0.14), transparent 55%),
+    var(--bg-deep);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(243, 237, 225, 0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #2a241c 0%, #4a2418 100%); }
+.stat .num {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(196, 66, 31, 0.14);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 12px 12px 0;
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(63, 143, 123, 0.20); color: #6fcdb3; border: 1px solid var(--moss); border-radius: 999px; }
+.verdict-row .severity.low { background: rgba(232, 98, 60, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); border-radius: 999px; }
+.verdict-row .severity.medium { background: rgba(196, 66, 31, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); border-radius: 999px; }
+.verdict-row .severity.high { background: rgba(232, 98, 60, 0.35); color: var(--ivory); border: 1px solid var(--copper); border-radius: 999px; }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Plain prose (本文段落用) === */
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+/* === Code block === */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0 96px;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table tr:hover td { background: rgba(232, 98, 60, 0.06); }
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">Session N+11 · 4 Categories · Deep Dive</div>
+  <h1 class="title">
+    残タスクを<br>
+    <em>4 カテゴリ</em>で<br>
+    解剖する
+    <span class="pct">[ 4 · cat ]</span>
+  </h1>
+  <p class="lede">
+    PDR (プロジェクトドメインレビューア) 構築が完走した今、残るタスクは性質の異なる <strong>4 つのカテゴリ</strong>に整理できる。<br>
+    「<strong>すぐ終わる事務</strong>」「<strong>急がない保留</strong>」「<strong>要仕分けの backlog</strong>」「<strong>運用</strong>」— 1 つずつ、なぜそこに居るのかまで掘り下げる。
+  </p>
+
+  <!-- ここから本論 -->
+
+  <div class="stat-bar">
+    <div class="stat zero"><span class="num">2</span><span class="label">① 事務 手続き</span><span class="desc">状態更新 + アーカイブ</span></div>
+    <div class="stat"><span class="num">3</span><span class="label">② Deferred</span><span class="desc">急がない保留</span></div>
+    <div class="stat featured"><span class="num">9</span><span class="label">③ Backlog</span><span class="desc">要仕分け · 本ページ主題</span></div>
+    <div class="stat zero"><span class="num">1</span><span class="label">④ Process</span><span class="desc">handoff 更新</span></div>
+  </div>
+
+  <div class="prose">
+    <p>4 カテゴリは「<strong>対応コスト</strong>」と「<strong>緊急度</strong>」で並べると、左から ① 事務 → ② 保留 → ③ backlog → ④ 運用 の順に温度が変わる。①④ は軽くてすぐ終わり、② は急がない、③ だけが「中身を見て仕分ける」重さを持つ。以下、カテゴリごとに <strong>何が残り・なぜ残り・次に何が要るか</strong> を 1 枚ずつ解剖する。</p>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// 4 CATEGORIES · 詳解</div>
+    <h2>カテゴリ別の深掘り</h2>
+  </div>
+
+  <section class="cards">
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">①</div>
+        <div class="card-title">
+          <span class="tag">Category 01 · 事務処理</span>
+          <h3>PDR 計画 (plan) の正式クローズ</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>内容 = 全完了</h4><p>5-2a〜5-6 の 6 サブタスクすべての成果物が存在。特に 5-4 / 5-5 は実機での起動検証も通過済。</p></div>
+        <div class="b"><h4>手続き = 未了</h4><p>計画ファイルの状態 (status) が <code>planning</code> のまま。<code>completed</code> への更新と <code>archived/</code> への移動が残る。</p></div>
+      </div>
+      <div class="gap-block">
+        <span class="label">なぜ「事務」が必要か</span>
+        <p>計画が <code>planning</code> のままだと、次回の再開 (pickup) が「まだ作業中」と誤読する。これは単なる事務ではなく<strong>状態の遷移</strong>。あわせて、N+9 で「宙吊り」だった B1 4 軸目 (プロジェクトドメインのレビューアを作るべきか) は、PDR を作ったこと自体で決着済。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">所要: <strong>5 分未満</strong></span>
+        <span class="severity harmless">Low Effort</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">②</div>
+        <div class="card-title">
+          <span class="tag">Category 02 · deferred</span>
+          <h3>急がない保留 3 件</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p><strong>重複 #1 — persona の要点再掲を圧縮</strong><br>口調定義 (persona) が global の CLAUDE.md と一部重複。参照リンクに寄せられるが、固有の合図 (🌟 開始 / 🎉 完了) は global と差があるので残す。<em>なぜ保留</em>: 重複を全部調べた結果、純粋な冗長はこの 1 箇所だけで、直す便益が小さい。</p>
+        <p><strong>重複 #5 — skill-identity のレビュー基準節</strong><br>harness-identity への参照に寄せられる。<em>なぜ保留</em>: 「skill 観点で再掲する」と意図が明示されており、許容範囲。</p>
+        <p><strong>モデル B 判断 — identity を真実の出どころに昇格</strong><br>大改修案。<em>なぜ保留</em>: global の CLAUDE.md / rules は全プロジェクト共通資産で、本プロジェクト都合の <code>@</code> 参照化は越権になる。別の計画 (<code>2026-05-20-identity-source-of-truth-modelB.md</code>) に判断材料を逃がし、条件が揃った時に再検討する。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">共通項: <strong>やる便益が今は薄い</strong></span>
+        <span class="severity low">Deferred</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">③</div>
+        <div class="card-title">
+          <span class="tag">Category 03 · backlog · 主題</span>
+          <h3>広域ハーネス backlog 9 件</h3>
+        </div>
+      </div>
+      <div class="progress-meter">
+        <div class="meta"><span>消し込み済 (Session N+9 → 今回)</span><span class="val">14 / 22 タスク</span></div>
+        <div class="bar"><div class="fill" style="width: 64%"></div></div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>読めば消える (内容走査 4)</h4><p>A3 / B2 / D2 / E1。essentials.md・レビューア定義・orchestrator 実装・skill の Gotcha を<strong>読まないと判定不能</strong>なもの。</p></div>
+        <div class="b"><h4>動かせば消える (運用 3 + 着手可 1)</h4><p>D4 / G2 / G3 は運用で実測が要る。D1 は対応ツール (<code>enumerating-verifiable-workflows</code>) があり<strong>起動するだけ</strong>。</p></div>
+      </div>
+      <div class="gap-block">
+        <span class="label">最大の塊</span>
+        <p>G1 (PR 駆動の 5 ステップ = PR 自動作成 + Discord 通知 + 人間の判断ゲート) は範囲が広く、これ単独で計画ファイル化が必要なレベル。9 件の中で別格。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">対応: <strong>性質ごとに個別判断</strong></span>
+        <span class="severity medium">要 仕分け</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">④</div>
+        <div class="card-title">
+          <span class="tag">Category 04 · process</span>
+          <h3>プロセス系 (push / handoff)</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>解消済</h4><p>未 push だった 3 コミット (<code>931936c</code> / <code>e055341</code> / <code>ccb7621</code>) は <code>main</code> へ push 完了。</p></div>
+        <div class="b"><h4>次の推奨</h4><p>引き継ぎファイル (handoff) の次フェーズ欄が全部完了済 → <code>/handoff</code> で状態更新するのが自然な次手。</p></div>
+      </div>
+      <div class="gap-block">
+        <span class="label">なぜ handoff 更新が要るか</span>
+        <p>引き継ぎファイルの状態は、次回の再開 (pickup) が読む<strong>自動分岐の入力</strong>。正確に保たないと「まだ 5-5/5-6 作業中」と誤分岐して、終わった作業を再開しようとしてしまう。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">対応: <strong>handoff 更新を推奨</strong></span>
+        <span class="severity low">運用</span>
+      </div>
+    </article>
+
+  </section>
+
+  <div class="prose">
+    <p>カテゴリ ③ の 9 件を「性質」と「次に必要なこと」で展開すると、こうなる。色分けの 4 性質 — <strong>内容走査 / 運用フェーズ / 着手可能 / 大規模</strong> — が、それぞれ消し込みに必要な動作の違いを表している。</p>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>ID</th><th>タスク</th><th>性質</th><th>次に必要なこと</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>A3</td><td>5 原理の網羅チェック</td><td>内容走査</td><td>essentials.md を逐次照合する</td></tr>
+      <tr><td>B2</td><td>レビューア終了条件の明文化</td><td>内容走査</td><td>各レビューア定義の中身を走査する</td></tr>
+      <tr><td>D2</td><td>進捗 JSON の外部化</td><td>内容走査</td><td>orchestrator の内部実装を走査する</td></tr>
+      <tr><td>E1</td><td>Gotcha (注意事項) の蓄積</td><td>内容走査</td><td>頻用 skill の上位 3 つを特定する</td></tr>
+      <tr><td>D4</td><td>計画と実行で制約の強さを分離</td><td>運用フェーズ</td><td>意識的な切り替えを実測する</td></tr>
+      <tr><td>G2</td><td>四半期ごとの定例レビュー</td><td>運用フェーズ</td><td>運用を開始する</td></tr>
+      <tr><td>G3</td><td>人間の判断 (HITL) ポリシー明文化</td><td>運用フェーズ</td><td>PR テンプレに信頼性チェック欄を足す</td></tr>
+      <tr><td>D1</td><td>決定論化できる工程の洗い出し</td><td>着手可能</td><td><code>enumerating-verifiable-workflows</code> を起動するだけ</td></tr>
+      <tr><td>G1</td><td>PR 駆動の 5 ステップ</td><td>大規模 · 要計画化</td><td>PR 自動作成 + 通知 + 判断ゲートを設計する</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ここまで本論 -->
+
+  <div class="closing">
+    <p class="quote">①④ は今すぐ、② は待ち、<br>③ は読むか動かすか。<br>カテゴリの温度が、次の順番を決める。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.21 04:44 JST</p>
+  </div>
+
+</main>
+</body>
+</html>

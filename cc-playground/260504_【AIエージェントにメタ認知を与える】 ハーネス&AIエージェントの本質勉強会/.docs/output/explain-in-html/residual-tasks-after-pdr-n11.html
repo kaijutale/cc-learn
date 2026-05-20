@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDR 完了後の残タスク全景 — Session N+11 進捗俯瞰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Warm Paper palette (v3)
+     旧 v2 Amazing Spider-Man から値書換、変数名は維持 (CSS class 互換性のため)
+     意味マッピング: --copper = terracotta / --moss = teal / --rust = deep terracotta */
+  --bg-deep: #1c1a17;        /* 温かいダークブラウン背景 */
+  --bg-surface: #252019;     /* 中間サーフェス */
+  --bg-card: #2a241c;        /* カード背景 */
+  --border-soft: #3a3228;    /* 温かいブラウン境界線 */
+  --copper: #e8623c;         /* terracotta, 主アクセント */
+  --copper-bright: #f47a52;  /* bright terracotta, highlight */
+  --rust: #c4421f;           /* deep terracotta, 警告/差分 */
+  --moss: #3f8f7b;           /* teal, 副アクセント */
+  --moss-dark: #2f6e5e;      /* deep teal */
+  --ivory: #f3ede1;          /* warm cream text */
+  --pearl: #b3a896;          /* warm gray, 副テキスト */
+  --shadow: #13110e;         /* code block 背景, 最暗ブラウン */
+  --accent-line: #3a3228;    /* line */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(232, 98, 60, 0.18), transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, rgba(63, 143, 123, 0.14), transparent 55%),
+    var(--bg-deep);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(243, 237, 225, 0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #2a241c 0%, #4a2418 100%); }
+.stat .num {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(196, 66, 31, 0.14);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 12px 12px 0;
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(63, 143, 123, 0.20); color: #6fcdb3; border: 1px solid var(--moss); border-radius: 999px; }
+.verdict-row .severity.low { background: rgba(232, 98, 60, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); border-radius: 999px; }
+.verdict-row .severity.medium { background: rgba(196, 66, 31, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); border-radius: 999px; }
+.verdict-row .severity.high { background: rgba(232, 98, 60, 0.35); color: var(--ivory); border: 1px solid var(--copper); border-radius: 999px; }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Plain prose (本文段落用) === */
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+/* === Code block === */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0 96px;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table tr:hover td { background: rgba(232, 98, 60, 0.06); }
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">Session N+11 · 残タスク全景 · Status</div>
+  <h1 class="title">
+    PDR <em>完了</em>。<br>
+    残タスクの全景
+    <span class="pct">[ 残 9 ]</span>
+  </h1>
+  <p class="lede">
+    プロジェクトドメインレビューア (PDR) の構築が <strong>5-2a〜5-6 まで完走</strong>し、本日 <strong>3 コミットを push 完了</strong>。<br>
+    残るのは「<strong>すぐ終わる事務処理</strong>」「急がない保留」「<strong>広域 backlog 9 件</strong>」の 3 層。優先度を温度で見分ける俯瞰図。
+  </p>
+
+  <!-- ここから本論 -->
+
+  <div class="stat-bar">
+    <div class="stat zero"><span class="num">6</span><span class="label">PDR Subtasks Done</span><span class="desc">5-2a〜5-6 完了</span></div>
+    <div class="stat zero"><span class="num">3</span><span class="label">Commits Pushed</span><span class="desc">本日 main に push 済</span></div>
+    <div class="stat featured"><span class="num">9</span><span class="label">Backlog Remaining</span><span class="desc">本ページの主題</span></div>
+    <div class="stat zero"><span class="num">1</span><span class="label">Ready to Start</span><span class="desc">D1 = 即着手可能</span></div>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// DONE · 01</div>
+    <h2>今セッションの到達点</h2>
+  </div>
+
+  <div class="prose">
+    <p>今回のセッションで、<strong>PDR (プロジェクトドメインレビューア)</strong> の構築計画 (2026-05-18 の plan) が実質的に完了した。具体的には:</p>
+    <ul>
+      <li><strong>5-5 フル起動検証</strong>: 中枢の統括 skill (orchestrator) を実際に起動し、3 つのレビュー分岐 (fork) が並列で走り → 主導役の Claude (Lead) が結果を統合 → 9 つのステップを完走したかの機械検証 (validate) まで一気通貫で通った</li>
+      <li><strong>5-6 source of truth (真実の出どころ) 整理</strong>: identity (自己定義文書) と CLAUDE.md の重複を洗い出し、「真実は CLAUDE.md 側、identity は補助マッピング」というモデル A 維持を確定。あわせて skill-identity.md の自己矛盾を根本から修正</li>
+      <li><strong>git 追跡の整理</strong>: PDR の本体 (エージェント定義・skill 定義) を <code>.gitignore</code> の負パターン (除外の例外) で選択的に追跡対象化し、手作業の可視化 HTML も追跡フォルダへ移動</li>
+      <li><strong>3 コミット → push 完了</strong>: <code>931936c</code> (PDR 追跡) / <code>e055341</code> (5-6 整理) / <code>ccb7621</code> (HTML 移動)</li>
+    </ul>
+  </div>
+
+  <div class="section-head">
+    <div class="num">// REMAINING · 02</div>
+    <h2>残タスク、4 つのカテゴリ</h2>
+  </div>
+
+  <section class="cards">
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">①</div>
+        <div class="card-title">
+          <span class="tag">事務処理 · Low Effort</span>
+          <h3>PDR 計画 (plan) のクローズ</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>計画ファイルの状態 (status) が <code>planning</code> のまま残っている。<strong>completed に更新</strong>し、<code>.docs/plans/archived/</code> へ移動するだけ (plan-workflow 規約)。</p>
+      </div>
+      <div class="gap-block">
+        <span class="label">あわせて解決済の項目</span>
+        <p>N+9 のログで「宙吊り」だった B1 4 軸目 (プロジェクトドメインのレビューアを作るべきか否かの判断) は、今回その PDR を作ったこと自体で決着した。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">対応: <strong>今すぐ片付く</strong></span>
+        <span class="severity harmless">Low Effort</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">②</div>
+        <div class="card-title">
+          <span class="tag">deferred · Low Priority</span>
+          <h3>今セッション由来の保留 3 件</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <ul>
+          <li><strong>重複 #1</strong>: persona (口調定義) の要点再掲を参照リンクに圧縮する案。ただし固有の合図 (🌟 開始 / 🎉 完了) は残す — 認識のみで即修正は不要と判断済</li>
+          <li><strong>重複 #5</strong>: skill-identity のレビュー基準節を harness-identity への参照に寄せる案 — 意図が明示されており許容範囲、将来の整理候補</li>
+          <li><strong>モデル B 判断</strong>: identity を「真実の出どころ」に昇格する大改修案 — 別の計画ファイルに分割済 (<code>2026-05-20-identity-source-of-truth-modelB.md</code>)、条件が揃った時に再検討</li>
+        </ul>
+      </div>
+      <div class="verdict-row">
+        <span class="target">対応: <strong>急がない</strong></span>
+        <span class="severity low">Deferred</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">③</div>
+        <div class="card-title">
+          <span class="tag">backlog · 本ページ主題</span>
+          <h3>広域ハーネス backlog 9 件</h3>
+        </div>
+      </div>
+      <div class="progress-meter">
+        <div class="meta"><span>消し込み済 (Session N+9 → 今回)</span><span class="val">14 / 22 タスク</span></div>
+        <div class="bar"><div class="fill" style="width: 64%"></div></div>
+      </div>
+      <div class="prose">
+        <p>note 記事由来のハーネス構築 22 タスクのうち、構造の存在を確認できた分は消し込み済。残る <strong>9 件</strong>は「中身を読む / 運用で実測する / 着手する」が必要なもので、性質が 4 つに分かれる (次の表)。</p>
+      </div>
+      <div class="gap-block">
+        <span class="label">最大の塊</span>
+        <p>G1 (PR 駆動の 5 ステップ = PR 自動作成 + Discord 通知 + 人間の判断ゲート) は範囲が広く、これ単独で計画ファイル化が必要なレベル。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">対応: <strong>性質ごとに個別判断</strong></span>
+        <span class="severity medium">要 仕分け</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">④</div>
+        <div class="card-title">
+          <span class="tag">process · 運用</span>
+          <h3>push 済 + 引き継ぎ更新待ち</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>解消済</h4><p>未 push だった 3 コミットは、本セッションで <code>main</code> に push 完了した。</p></div>
+        <div class="b"><h4>次の推奨</h4><p>引き継ぎファイル (handoff) の次フェーズ欄が全部完了済なので、<code>/handoff</code> で状態を更新するのが自然な次の一手。</p></div>
+      </div>
+      <div class="verdict-row">
+        <span class="target">対応: <strong>handoff 更新を推奨</strong></span>
+        <span class="severity low">運用</span>
+      </div>
+    </article>
+  </section>
+
+  <div class="section-head">
+    <div class="num">// BACKLOG · 03</div>
+    <h2>残 9 件を性質で仕分ける</h2>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>ID</th><th>タスク</th><th>性質</th><th>次に必要なこと</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>A3</td><td>5 原理の網羅チェック</td><td>内容走査</td><td>essentials.md を逐次照合する</td></tr>
+      <tr><td>B2</td><td>レビューア終了条件の明文化</td><td>内容走査</td><td>各レビューア定義の中身を走査する</td></tr>
+      <tr><td>D2</td><td>進捗 JSON の外部化</td><td>内容走査</td><td>orchestrator の内部実装を走査する</td></tr>
+      <tr><td>E1</td><td>Gotcha (注意事項) の蓄積</td><td>内容走査</td><td>頻用 skill の上位 3 つを特定する</td></tr>
+      <tr><td>D4</td><td>計画と実行で制約の強さを分離</td><td>運用フェーズ</td><td>意識的な切り替えを実測する</td></tr>
+      <tr><td>G2</td><td>四半期ごとの定例レビュー</td><td>運用フェーズ</td><td>運用を開始する</td></tr>
+      <tr><td>G3</td><td>人間の判断 (HITL) ポリシー明文化</td><td>運用フェーズ</td><td>PR テンプレに信頼性チェック欄を足す</td></tr>
+      <tr><td>D1</td><td>決定論化できる工程の洗い出し</td><td>着手可能</td><td><code>enumerating-verifiable-workflows</code> を起動するだけ</td></tr>
+      <tr><td>G1</td><td>PR 駆動の 5 ステップ</td><td>大規模 · 要計画化</td><td>PR 自動作成 + 通知 + 判断ゲートを設計する</td></tr>
+    </tbody>
+  </table>
+
+  <section class="roadmap">
+    <h2>次の一手、3 つの選択肢</h2>
+    <p class="sub">Admin → Actionable → Pause</p>
+
+    <div class="timeline">
+      <div class="tl-item current">
+        <div class="session">Option A · 事務処理</div>
+        <h4>計画クローズ + 引き継ぎ更新</h4>
+        <p>PDR 計画を archived へ移動し、引き継ぎファイル (handoff) の状態を更新する。最小コストでセッションを綺麗に締める動線。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Option B · 着手可能</div>
+        <h4>D1 = 決定論化候補の洗い出し</h4>
+        <p><code>enumerating-verifiable-workflows</code> という対応 skill が既にある。起動すれば backlog を 1 件すぐ消化できる。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Option C · 区切る</div>
+        <h4>ここで一旦停止</h4>
+        <p>PDR が完走し push も済んだ自然な区切り。残りは性質ごとに次セッションで判断する。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ここまで本論 -->
+
+  <div class="closing">
+    <p class="quote">PDR は完走した。<br>残る 9 件は欠落ではなく、<br>「次に何を読み、何を試すか」の地図。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.21 01:25 JST</p>
+  </div>
+
+</main>
+</body>
+</html>
