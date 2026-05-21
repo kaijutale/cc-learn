@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ハーネス構築 残りタスク一覧 — Session N+12 時点の人間ゲート 8 件</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Warm Paper palette (v3)
+     旧 v2 Amazing Spider-Man から値書換、変数名は維持 (CSS class 互換性のため)
+     意味マッピング: --copper = terracotta / --moss = teal / --rust = deep terracotta */
+  --bg-deep: #1c1a17;        /* 温かいダークブラウン背景 */
+  --bg-surface: #252019;     /* 中間サーフェス */
+  --bg-card: #2a241c;        /* カード背景 */
+  --border-soft: #3a3228;    /* 温かいブラウン境界線 */
+  --copper: #e8623c;         /* terracotta, 主アクセント */
+  --copper-bright: #f47a52;  /* bright terracotta, highlight */
+  --rust: #c4421f;           /* deep terracotta, 警告/差分 */
+  --moss: #3f8f7b;           /* teal, 副アクセント */
+  --moss-dark: #2f6e5e;      /* deep teal */
+  --ivory: #f3ede1;          /* warm cream text */
+  --pearl: #b3a896;          /* warm gray, 副テキスト */
+  --shadow: #13110e;         /* code block 背景, 最暗ブラウン */
+  --accent-line: #3a3228;    /* line */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(232, 98, 60, 0.18), transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, rgba(63, 143, 123, 0.14), transparent 55%),
+    var(--bg-deep);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(243, 237, 225, 0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #2a241c 0%, #4a2418 100%); }
+.stat .num {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(196, 66, 31, 0.14);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 12px 12px 0;
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(63, 143, 123, 0.20); color: #6fcdb3; border: 1px solid var(--moss); border-radius: 999px; }
+.verdict-row .severity.low { background: rgba(232, 98, 60, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); border-radius: 999px; }
+.verdict-row .severity.medium { background: rgba(196, 66, 31, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); border-radius: 999px; }
+.verdict-row .severity.high { background: rgba(232, 98, 60, 0.35); color: var(--ivory); border: 1px solid var(--copper); border-radius: 999px; }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Plain prose (本文段落用) === */
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+/* === Code block === */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table tr:hover td { background: rgba(232, 98, 60, 0.06); }
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">Session N+12 · Harness Backlog</div>
+  <h1 class="title">
+    決定論化は<br>
+    出し切った。<br>
+    残る <em>8 件</em>は人間の領域
+    <span class="pct">[ 15/23 done ]</span>
+  </h1>
+  <p class="lede">
+    今セッションで <strong>機械に任せられる工程</strong>（ルールを自動で強制するフック 6 件）を出し切った。
+    残る <strong>8 件</strong>は機械実装で完結するものが一つもなく、すべて
+    <strong>価値判断・実データ・外部インフラ・人間の最終確認 (HITL)</strong> が本質。<br>
+    これは詰まりではなく、ハーネスが「人間が握るべき境界」を正しく保っている証拠である。
+  </p>
+
+  <!-- 数値ハイライト -->
+  <div class="stat-bar">
+    <div class="stat zero"><span class="num">15</span><span class="label">Tasks Done</span><span class="desc">全 23 中。D1 / A3 / C1〜C6 等</span></div>
+    <div class="stat"><span class="num">6</span><span class="label">Hooks 稼働中</span><span class="desc">C1〜C6 の決定論化フック</span></div>
+    <div class="stat featured"><span class="num">8</span><span class="label">残タスク</span><span class="desc">本ページの主題</span></div>
+    <div class="stat zero"><span class="num">0</span><span class="label">機械で完結</span><span class="desc">残りは全て人間ゲート</span></div>
+  </div>
+
+  <!-- ===== 完了サマリー ===== -->
+  <div class="section-head">
+    <div class="num">// DONE · 今セッションの完走</div>
+    <h2>機械化できる工程は、出し切った</h2>
+  </div>
+
+  <div class="prose">
+    <p>
+      Session N+12 で <strong>D1</strong>（決定論化できる工程の洗い出し）→ <strong>C1〜C6</strong>（決定論化フック 6 件）→ <strong>A3</strong>（本質ドキュメントの 5 原理が揃っているかの確認）を完走した。
+      フック群は <code>CLAUDE.md</code> のルールを「Claude が覚えていれば守る (確率的)」から「保存・コミット時に自動で止める (決定論的)」へ移したもの。
+    </p>
+    <ul>
+      <li><strong>C1</strong> hardcode-hygiene — グローバル設定への機種固有パス混入を block (拒否)</li>
+      <li><strong>C2</strong> generated-comment-ban — 禁止コメントを commit / PR コマンドで block (拒否)</li>
+      <li><strong>C3</strong> fork-disable-lint — スキル設定の矛盾を warn (警告)</li>
+      <li><strong>C4</strong> file-line-limit — 500 行超を warn (警告)</li>
+      <li><strong>C5</strong> skill-bang-selfref-lint — <code>!構文</code> の自己参照トラップを warn (警告)</li>
+      <li><strong>C6</strong> skill-frontmatter-schema — 必須キー欠落を warn (警告)</li>
+    </ul>
+    <p>禁止事項は事前 block、推奨事項は事後 warn という<strong>強制レベルの使い分け</strong>を効かせている。</p>
+  </div>
+
+  <!-- ===== 残タスク ===== -->
+  <div class="section-head">
+    <div class="num">// REMAINING · 残 8 件</div>
+    <h2>すべて「人間ゲート」── 着手に何が要るか</h2>
+  </div>
+
+  <section class="cards">
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">E1</div>
+        <div class="card-title">
+          <span class="tag">P0 · 自己強化</span>
+          <h3>よく使うスキル末尾に Gotcha (失敗の注意書き) を追加</h3>
+        </div>
+      </div>
+      <div class="progress-meter">
+        <div class="meta"><span>Gotcha 保有率</span><span class="val">61 / 78 skill</span></div>
+        <div class="bar"><div class="fill" style="width: 78%"></div></div>
+      </div>
+      <div class="gap-block">
+        <span class="label">なぜ機械で完結しないか</span>
+        <p>残 17 スキルへの Gotcha は<strong>実際に起きた失敗データ</strong>が要る。一般論の埋め草を書くと、誤った注意喚起がレビュー基準を歪めるため害になる (fabricate 禁止)。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">ゲート: camone が <strong>「どのスキルの・どんな失敗か」</strong>を提供</span>
+        <span class="severity high">Gate · 実データ</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">B2</div>
+        <div class="card-title">
+          <span class="tag">P1 · レビューア</span>
+          <h3>各レビューアの「フィードバック終了条件」を明文化</h3>
+        </div>
+      </div>
+      <div class="gap-block">
+        <span class="label">なぜ機械で完結しないか</span>
+        <p>終了条件をレビューア定義に書き込むのは<strong>既存ハーネスの改修</strong>にあたる。協調ハーネスの無断改修は禁止ルールがあるため、追記の可否判断が先。閾値も実測が要る。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">ゲート: <strong>既存レビューアへの追記許可</strong> or 別ドキュメント化方針</span>
+        <span class="severity medium">Gate · 改修可否</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">D2</div>
+        <div class="card-title">
+          <span class="tag">P1 · 制御バランス</span>
+          <h3>オーケストレーション系スキルにチェックリスト外部化を導入</h3>
+        </div>
+      </div>
+      <div class="gap-block">
+        <span class="label">なぜ機械で完結しないか</span>
+        <p>対象スキルの特定と、それへの<strong>改修可否</strong>が必要 (B2 と同じく既存ハーネス改修の壁)。なお「10 ステップ以上」という閾値は形骸で、本質は<strong>ステップ抜けを検証する仕組み</strong>の有無。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">ゲート: <strong>対象スキル特定 + 改修可否の判断</strong></span>
+        <span class="severity medium">Gate · 改修可否</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">G1</div>
+        <div class="card-title">
+          <span class="tag">P1 · 運用フロー</span>
+          <h3>PR 駆動 5 ステップ (収集→提案→通知→レビュー→取込) の実装</h3>
+        </div>
+      </div>
+      <div class="progress-meter">
+        <div class="meta"><span>段階進捗 (設計 / Phase A / Phase B)</span><span class="val">設計✓ A✓ B✗</span></div>
+        <div class="bar"><div class="fill" style="width: 40%"></div></div>
+      </div>
+      <div class="dual">
+        <div class="a">
+          <h4>済んでいる</h4>
+          <p>設計 (design doc) は完成。Phase A = <code>--pr</code> フラグも実装済。Phase C = AI 自動レビューは廃止確定 (従量課金違反 + HITL 精神に反する)。</p>
+        </div>
+        <div class="b">
+          <h4>止まっている</h4>
+          <p>Phase B の Discord 通知 + GitHub Actions は外部インフラ依存。さらに設計の抜けが 3 つ残る (Secret 検証 / 通知内容 / データ取得ロジック)。</p>
+        </div>
+      </div>
+      <div class="verdict-row">
+        <span class="target">ゲート: <strong>Discord webhook URL + Actions 有効化 + 抜け 3 つの判断</strong></span>
+        <span class="severity medium">Gate · インフラ</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">P2</div>
+        <div class="card-title">
+          <span class="tag">P2 · 継続運用 4 件</span>
+          <h3>B4 / D4 / G2 / G3 ── 運用として「定着」させる類</h3>
+        </div>
+      </div>
+      <div class="prose" style="margin-bottom:0">
+        <ul>
+          <li><strong>B4</strong> 最後の 20 点をレビューループで埋める運用 (Before / After の実測)</li>
+          <li><strong>D4</strong> 計画フェーズは緩く・実行フェーズは締める、制約強度の分離</li>
+          <li><strong>G2</strong> 本質ドキュメントの四半期クリーンアップ (定例化)</li>
+          <li><strong>G3</strong> 論文の信頼性判定を人間が行う HITL ポリシーの明文化</li>
+        </ul>
+      </div>
+      <div class="verdict-row">
+        <span class="target">ゲート: <strong>運用ルールの定義 (1 ターンで完了しない性質)</strong></span>
+        <span class="severity low">Gate · 運用定着</span>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- ===== キー洞察 ===== -->
+  <blockquote class="pull-quote">
+    残り 8 件に、機械実装で完結するものは一つもない。
+    それは詰まりではなく、決定論化できる工程を出し切った後に、
+    人間にしか握れない判断だけが残ったということ。
+    <cite>— ハーネスの HITL 境界</cite>
+  </blockquote>
+
+  <div class="closing">
+    <p class="quote">決定論化できる工程は、機械へ。<br>残ったのは、人間にしか<br>握れない判断だった。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.21 10:09 JST</p>
+  </div>
+
+</main>
+</body>
+</html>
