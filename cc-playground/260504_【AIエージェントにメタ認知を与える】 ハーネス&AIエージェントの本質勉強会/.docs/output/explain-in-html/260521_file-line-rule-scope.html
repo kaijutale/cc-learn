@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>500行ルールの「対象」とは — 合図と、まだ決まっていない A/B の境界</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Warm Paper palette (v3)
+     旧 v2 Amazing Spider-Man から値書換、変数名は維持 (CSS class 互換性のため)
+     意味マッピング: --copper = terracotta / --moss = teal / --rust = deep terracotta */
+  --bg-deep: #1c1a17;        /* 温かいダークブラウン背景 */
+  --bg-surface: #252019;     /* 中間サーフェス */
+  --bg-card: #2a241c;        /* カード背景 */
+  --border-soft: #3a3228;    /* 温かいブラウン境界線 */
+  --copper: #e8623c;         /* terracotta, 主アクセント */
+  --copper-bright: #f47a52;  /* bright terracotta, highlight */
+  --rust: #c4421f;           /* deep terracotta, 警告/差分 */
+  --moss: #3f8f7b;           /* teal, 副アクセント */
+  --moss-dark: #2f6e5e;      /* deep teal */
+  --ivory: #f3ede1;          /* warm cream text */
+  --pearl: #b3a896;          /* warm gray, 副テキスト */
+  --shadow: #13110e;         /* code block 背景, 最暗ブラウン */
+  --accent-line: #3a3228;    /* line */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(232, 98, 60, 0.18), transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, rgba(63, 143, 123, 0.14), transparent 55%),
+    var(--bg-deep);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(243, 237, 225, 0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #2a241c 0%, #4a2418 100%); }
+.stat .num {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(196, 66, 31, 0.14);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 12px 12px 0;
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(63, 143, 123, 0.20); color: #6fcdb3; border: 1px solid var(--moss); border-radius: 999px; }
+.verdict-row .severity.low { background: rgba(232, 98, 60, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); border-radius: 999px; }
+.verdict-row .severity.medium { background: rgba(196, 66, 31, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); border-radius: 999px; }
+.verdict-row .severity.high { background: rgba(232, 98, 60, 0.35); color: var(--ivory); border: 1px solid var(--copper); border-radius: 999px; }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Plain prose (本文段落用) === */
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+/* === Code block === */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0 96px;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table tr:hover td { background: rgba(232, 98, 60, 0.06); }
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">CLAUDE.md · 500行ルールの設計</div>
+  <h1 class="title">
+    500行ルールの<br>
+    <em>「対象」</em>とは何か
+    <span class="pct">[ A or B ? ]</span>
+  </h1>
+  <p class="lede">
+    「ファイルは 500 行以内」という決まりを、<strong>命令(上限)から合図に直す</strong>のがゴール。<br>
+    でも「合図を出す対象」を決めるには、<strong>どのファイルに効かせて、どれを外すか</strong>を言い切る必要がある。<br>
+    その境界線と、まだ決まっていない <strong>A / B の分かれ道</strong>を整理する。
+  </p>
+
+  <!-- ここから本論 -->
+
+  <!-- 1. 核心句: 上限ではなく合図 -->
+  <blockquote class="pull-quote">
+    500 行は「ここで分割しろ」という上限ではなく、<br>「分割を検討してみては?」という合図だ。
+    <cite>— 出発点となる考え方</cite>
+  </blockquote>
+
+  <!-- 2. 対象 vs 対象外 -->
+  <div class="section-head">
+    <div class="num">// PART · 01 — 境界を分ける一本の基準</div>
+    <h2>合図を「効かせる側」と「外す側」</h2>
+  </div>
+
+  <div class="prose">
+    <p>対象かどうかを分ける基準は、たった一つ。<strong>「分割するか否かを人が判断できて、その分割に意味があるか」</strong>。この一本でスパッと割れる。</p>
+  </div>
+
+  <div class="dual">
+    <div class="a">
+      <h4>対象 (合図を効かせる)</h4>
+      <p><strong>人が書いて保守するソースコード。</strong><br>
+      <code>.ts</code> <code>.tsx</code> <code>.js</code> <code>.py</code> <code>.go</code> <code>.rs</code> など。<br><br>
+      人が構造を決め、読んで、差分(diff)を取り、直し続ける。だから「責務ごとに分ける」判断に意味がある。500 行の合図が活きるのはここだけ。</p>
+    </div>
+    <div class="b">
+      <h4>対象外 (合図を出さない)</h4>
+      <p><strong>行数を人が制御しない、または分割しても無意味なファイル。</strong><br><br>
+      機械が吐き出すもの・データ・ロックファイルなど。ここに合図を出しても「分割しろ」が成り立たない(分けようがない / 分ける意味がない)ので、ノイズにしかならない。</p>
+    </div>
+  </div>
+
+  <!-- 3. 対象外の4分類 -->
+  <div class="section-head">
+    <div class="num">// PART · 02 — 対象外の中身</div>
+    <h2>「外す側」は 4 種類に分かれる</h2>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>分類</th><th>なぜ外すか</th><th>具体例</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>① 機械生成物</td><td>行数を人が制御しない</td><td>生成HTML(<code>.docs/output/**</code>)、ビルド出力、コード自動生成</td></tr>
+      <tr><td>② データ</td><td>分割が無意味</td><td><code>.json</code> / <code>.csv</code> / <code>.tsv</code></td></tr>
+      <tr><td>③ ロックファイル</td><td>ツールが管理、人は触らない</td><td><code>*.lock</code> / <code>*-lock.json</code></td></tr>
+      <tr><td>④ ベクタ・圧縮・記録系</td><td>機械フォーマットで分割不可</td><td><code>.svg</code> / <code>.map</code> / <code>.min.*</code> / <code>.snap</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="prose">
+    <p>②③④ は今のフックが<strong>既に外している</strong>。さっき HTML が警告に引っかかったのは、<strong>① の生成HTMLが漏れていた</strong>から。<code>.docs/output/**</code> を足せば、フックが元々意図していた「生成物は外す」が完成する。</p>
+  </div>
+
+  <!-- 4. A vs B の分かれ道 -->
+  <div class="section-head">
+    <div class="num">// PART · 03 — まだ決まっていない分かれ道</div>
+    <h2>Markdown や設定ファイルは、どっち?</h2>
+  </div>
+
+  <div class="prose">
+    <p>ここが宙ぶらりん。<code>.md</code>(解説ドキュメント)や <code>.yaml</code>(設定)は「コード」ではないけれど、生成物でもない。<strong>対象に入れるか外すか</strong>で、2 つの設計に分かれる。</p>
+  </div>
+
+  <div class="dual">
+    <div class="a">
+      <h4>案 A — コード限定 (推奨)</h4>
+      <p><strong>コードの拡張子だけを対象にする。</strong><br>
+      <code>.md</code> や <code>.yaml</code> は対象外。<br><br>
+      長所: 元の「<strong>コードファイル</strong>」という言葉に忠実で、境界が明確。長文の解説ドキュメントに警告が出ない。<br>
+      短所: 対象とする拡張子の一覧を持つ必要がある。</p>
+    </div>
+    <div class="b">
+      <h4>案 B — 生成物以外は全部</h4>
+      <p><strong>外す 4 種以外は、すべて対象。</strong><br>
+      <code>.md</code> も <code>.yaml</code> も 500 行超なら警告。<br><br>
+      長所: 仕組みが単純(今のフックのまま)。<br>
+      短所: 600 行の解説ドキュメントにも警告が出る。長文が妥当な場面でもノイズになる。</p>
+    </div>
+  </div>
+
+  <!-- 5. 推奨 -->
+  <div class="prose">
+    <p><strong>わたしの推奨は案 A(コード限定)。</strong>理由は 2 つ。元のルールが「コードファイル」と限定していた意図に忠実であること。そして、解説 Markdown や設定 YAML は「責務ごとに分割する」対象ではなく、<strong>長文が自然な場面が多い</strong>から。500 行の合図は、人が凝集度(=一つの責務にまとまっているか)で割るべきコードにこそ効く。</p>
+  </div>
+
+  <!-- ここまで本論 -->
+
+  <div class="closing">
+    <p class="quote">行数は「上限」ではなく「合図」。<br>そして合図を鳴らす相手は、<br>人が凝集度で割れるコードだけ。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.21 14:07 JST</p>
+  </div>
+
+</main>
+</body>
+</html>
