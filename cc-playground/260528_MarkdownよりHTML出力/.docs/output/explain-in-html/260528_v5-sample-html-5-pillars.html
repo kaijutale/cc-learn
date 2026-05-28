@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML 5 Pillars — v5 Thariq Dark Editorial Sample</title>
+<style>
+:root {
+  /* v5 Thariq Dark Editorial — Thariq Shihipar Design System (2026-05) inspired
+     CSS class 名は v3/v4 完全互換、palette だけ書換。Google Fonts 依存解消。 */
+  --bg-deep:     #141413;   /* page bg (warm slate) */
+  --bg-surface:  #1F1E1B;   /* card bg (panel) */
+  --bg-card:     #1F1E1B;   /* card bg (alias) */
+  --bg-sub:      #252420;   /* subtle bg (sub panel) */
+  --border-soft: #3D3D3A;   /* border (warm gray-700) */
+  --shadow:      #0F0E0D;   /* code block bg (deepest) */
+  --accent-line: #3D3D3A;
+
+  --copper:        #D97757;   /* primary accent (clay = terracotta 系) */
+  --copper-bright: #E89070;   /* highlight (clay bright) */
+  --rust:          #B85C3E;   /* warning/danger (deep clay) */
+  --moss:          #8FA672;   /* secondary accent (olive、dark bg 用に明るく) */
+  --moss-dark:     #788C5D;   /* deep olive */
+  --oat:           #E3DACC;   /* highlight bg (warm cream pill) */
+  --oat-tint:      #4A4438;   /* oat dark tinted (sub bg) */
+
+  --ivory:  #FAF9F5;   /* primary text */
+  --cream:  #F0EEE6;   /* warm text fallback */
+  --pearl:  #B8B5AC;   /* body text / secondary */
+  --gray-400: #87867F; /* tertiary text */
+  --gray-600: #5D5C58; /* deepest sub text */
+
+  --serif: ui-serif, Georgia, 'Times New Roman', Times, serif;
+  --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono:  ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--ivory);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.65;
+  min-height: 100vh;
+  padding: 72px 24px 96px;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header trio === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(36px, 5.4vw, 56px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 600; }
+
+/* === Stats / Metrics (Thariq style 4-col) === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 56px;
+}
+@media (max-width: 720px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative;
+}
+.stat.featured { border-left: 3px solid var(--copper); }
+.stat .num {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--gray-400);
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12.5px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section head (Thariq numbered badge pattern) === */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 64px 0 28px;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  background: var(--oat);
+  color: var(--bg-deep);
+  padding: 4px 11px;
+  border-radius: 999px;
+  text-transform: none;
+  white-space: nowrap;
+}
+.section-head h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 24px; margin-bottom: 72px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 28px 32px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(2px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: var(--serif);
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 0.95;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ivory);
+  line-height: 1.3;
+}
+
+.progress-meter { margin-bottom: 20px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 5px; background: var(--bg-deep); position: relative; overflow: hidden; border-radius: 999px; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 18px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 10px;
+}
+.dual h4 {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.6; }
+.dual code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 3px;
+}
+
+.gap-block {
+  margin: 18px 0;
+  padding: 18px 22px;
+  background: rgba(184, 92, 62, 0.12);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 10px 10px 0;
+}
+.gap-block .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 6px;
+  display: block;
+  font-weight: 600;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
+  margin-top: 22px;
+  border-top: 1.5px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.04em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 999px;
+}
+.verdict-row .severity.harmless { background: rgba(143, 166, 114, 0.18); color: var(--moss); border-color: var(--moss-dark); }
+.verdict-row .severity.low      { background: rgba(217, 119, 87, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.verdict-row .severity.medium   { background: rgba(184, 92, 62, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.verdict-row .severity.high     { background: rgba(217, 119, 87, 0.32); color: var(--ivory); border-color: var(--copper); }
+
+/* === Roadmap (Thariq milestone timeline pattern) === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  margin-bottom: 72px;
+}
+.roadmap h2 {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--ivory);
+}
+.roadmap .sub {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--pearl);
+  letter-spacing: 0.08em;
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+
+.timeline { margin: 8px 0; }
+.tl-item {
+  display: grid;
+  grid-template-columns: 110px 28px 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 0;
+  position: relative;
+}
+.tl-item .session {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.04em;
+  padding-top: 6px;
+  text-transform: uppercase;
+}
+.tl-item .dot-line {
+  position: relative;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+.tl-item .dot-line::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+  margin-top: 8px;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.tl-item.current .dot-line::before { background: var(--copper); }
+.tl-item.done .dot-line::before { background: var(--moss); border-color: var(--moss); }
+.tl-item .dot-line::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: -14px;
+  width: 2px;
+  background: var(--border-soft);
+  left: 50%;
+  transform: translateX(-50%);
+}
+.tl-item:last-child .dot-line::after { display: none; }
+.tl-item h4 {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin-bottom: 4px;
+}
+.tl-item p { font-size: 14.5px; color: var(--pearl); line-height: 1.55; }
+.tl-item code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--copper-bright);
+  background: var(--bg-deep);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* === Plain prose === */
+.prose { margin-bottom: 40px; }
+.prose p { font-size: 16px; color: var(--pearl); margin-bottom: 14px; line-height: 1.75; }
+.prose p:first-of-type { color: var(--cream); }
+.prose strong { color: var(--ivory); font-weight: 600; }
+.prose em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--bg-sub);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+.prose ul, .prose ol { margin: 14px 0 16px 26px; }
+.prose li { font-size: 16px; color: var(--pearl); margin-bottom: 6px; line-height: 1.65; }
+.prose li strong { color: var(--ivory); }
+
+/* === Code block === */
+.code-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 22px 0;
+  line-height: 1.6;
+}
+.code-block .kw  { color: var(--copper-bright); font-weight: 600; }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--gray-400); font-style: normal; }
+
+/* === Pull quote (italic 廃止、color + serif + 〝〟 で) === */
+.pull-quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 14px 0 14px 26px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 14px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 22px 0;
+  font-size: 14.5px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.data-table th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  font-weight: 500;
+}
+.data-table td {
+  color: var(--pearl);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table td:first-child { color: var(--ivory); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(217, 119, 87, 0.05); }
+
+/* === Closing === */
+.closing {
+  margin-top: 80px;
+  padding-top: 36px;
+  border-top: 1.5px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1.55;
+  color: var(--cream);
+  max-width: 600px;
+  margin: 0 auto 22px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* === v5 Focus & Accessibility === */
+:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+}
+
+/* === v5 Scroll progress bar === */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--copper);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 100;
+  transition: transform 0.05s linear;
+  pointer-events: none;
+}
+
+/* === v5 TOC === */
+.toc {
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 24px 0 48px;
+}
+.toc .toc-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 14px;
+}
+.toc-list { list-style: none; margin: 0; padding: 0; }
+.toc-list li { font-size: 14.5px; margin-bottom: 6px; }
+.toc-link {
+  color: var(--ivory);
+  text-decoration: none;
+  display: inline-flex;
+  gap: 12px;
+  transition: color 0.15s;
+}
+.toc-link:hover { color: var(--copper-bright); }
+.toc-link.active { color: var(--copper-bright); font-weight: 600; }
+.toc-link .num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gray-400);
+  width: 24px;
+}
+.toc-toggle {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--copper);
+  cursor: pointer;
+  user-select: none;
+  display: inline-block;
+}
+
+/* === v5 Collapsible (details) === */
+details.collapsible {
+  margin: 22px 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+details.collapsible[open] { border-left: 3px solid var(--copper); }
+details.collapsible > summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ivory);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: color 0.2s;
+  font-weight: 500;
+}
+details.collapsible > summary:hover { color: var(--copper-bright); }
+details.collapsible > summary::-webkit-details-marker { display: none; }
+details.collapsible > summary::before {
+  content: '▶';
+  color: var(--copper);
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+details.collapsible[open] > summary::before { transform: rotate(90deg); }
+.collapsible-content {
+  overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+details.collapsible > *:not(summary):not(.collapsible-content) { margin-top: 14px; }
+
+/* === v5 Copy button === */
+.copy-btn {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper);
+  background: transparent;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  margin-left: 8px;
+  font-weight: 500;
+}
+.copy-btn:hover {
+  background: rgba(217, 119, 87, 0.1);
+  border-color: var(--copper-bright);
+  color: var(--copper-bright);
+}
+.copy-btn:active { transform: scale(0.98); }
+.copy-btn.copied {
+  background: rgba(143, 166, 114, 0.15);
+  border-color: var(--moss);
+  color: var(--moss);
+}
+.copy-btn.copied::after { content: ' ✓'; }
+
+/* === v5 Copy-prompt-bar === */
+.copy-prompt-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg-sub);
+  border-top: 1.5px solid var(--border-soft);
+  padding: 14px 24px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  cursor: pointer;
+  z-index: 80;
+  transition: background 0.2s, color 0.2s;
+}
+.copy-prompt-bar:hover { background: rgba(217, 119, 87, 0.1); color: var(--copper-bright); }
+.copy-prompt-bar::before { content: '⌘ '; margin-right: 6px; }
+.copy-prompt-bar.copied { background: rgba(143, 166, 114, 0.15); color: var(--moss); }
+.copy-prompt-bar.copied::after { content: ' ✓'; }
+
+/* === v5 Severity badge (standalone, 7段階) === */
+.severity-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-weight: 500;
+}
+.severity-badge.crit     { background: rgba(184, 92, 62, 0.32); color: var(--ivory);         border-color: var(--rust); }
+.severity-badge.high     { background: rgba(217, 119, 87, 0.32); color: var(--ivory);        border-color: var(--copper); }
+.severity-badge.med      { background: rgba(184, 92, 62, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.severity-badge.low      { background: rgba(217, 119, 87, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.severity-badge.info     { background: rgba(106, 140, 175, 0.18); color: #9FB3CA;            border-color: #4A6B8F; }
+.severity-badge.pass     { background: rgba(143, 166, 114, 0.22); color: var(--moss);        border-color: var(--moss); }
+.severity-badge.harmless { background: rgba(179, 168, 150, 0.15); color: var(--pearl);       border-color: var(--accent-line); }
+
+/* === v5 Annotated code === */
+.anno-code {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 22px;
+  margin: 28px 0;
+  background: var(--shadow);
+  border-left: 2px solid var(--copper);
+  border-radius: 0 12px 12px 0;
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+@media (max-width: 880px) { .anno-code { grid-template-columns: 1fr; } }
+.anno-code-body {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre;
+  color: var(--ivory);
+}
+.anno-line { display: block; padding: 2px 8px; border-left: 2px solid transparent; }
+.anno-line.diff-add { background: rgba(143, 166, 114, 0.10); border-left-color: var(--moss); }
+.anno-line.diff-del { background: rgba(184, 92, 62, 0.10); border-left-color: var(--rust); text-decoration: line-through; opacity: 0.85; }
+.anno-margin {
+  font-size: 12.5px;
+  color: var(--pearl);
+  border-left: 1px dashed var(--border-soft);
+  padding-left: 16px;
+  line-height: 1.6;
+}
+.anno-note { color: var(--copper); margin-bottom: 12px; font-weight: 600; }
+
+/* === v5 Diff block === */
+.diff-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  background: var(--shadow);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 22px 0;
+  overflow-x: auto;
+}
+.diff-line { display: block; padding: 2px 8px; }
+.diff-line.add { background: rgba(143, 166, 114, 0.10); color: var(--moss); }
+.diff-line.del { background: rgba(184, 92, 62, 0.10); color: var(--copper-bright); text-decoration: line-through; opacity: 0.85; }
+.diff-line.ctx { color: var(--gray-400); }
+
+/* === v5 SVG diagram === */
+figure.svg-diagram { margin: 28px auto; max-width: 720px; text-align: center; }
+figure.svg-diagram svg { max-width: 100%; height: auto; }
+.svg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.svg-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.svg-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+
+/* === v5 Filter table === */
+.filter-table { margin: 28px 0; }
+.filter-table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.filter-input {
+  flex: 1;
+  min-width: 220px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ivory);
+  transition: border-color 0.2s;
+}
+.filter-input:focus { outline: none; border-color: var(--copper); }
+.filter-input::placeholder { color: var(--gray-400); }
+.filter-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  background: transparent;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  user-select: none;
+}
+.filter-chip:hover { background: rgba(143, 166, 114, 0.10); color: var(--ivory); }
+.filter-chip:active { transform: scale(0.98); }
+.filter-chip.active { background: rgba(143, 166, 114, 0.22); color: var(--moss); border-color: var(--moss); }
+.filter-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.filter-table th {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+.filter-table th[data-sort-by]:hover { color: var(--copper-bright); }
+.filter-table .sort-indicator::before { content: ' ⇅'; color: var(--gray-400); opacity: 0.5; }
+.filter-table th[data-sort-dir="asc"] .sort-indicator::before { content: ' ↑'; color: var(--copper-bright); opacity: 1; }
+.filter-table th[data-sort-dir="desc"] .sort-indicator::before { content: ' ↓'; color: var(--copper-bright); opacity: 1; }
+.filter-table td { color: var(--pearl); padding: 14px 16px; border-bottom: 1px solid var(--border-soft); }
+.filter-table td:first-child { color: var(--ivory); }
+.filter-table tr:last-child td { border-bottom: none; }
+.filter-table tr:hover td { background: rgba(217, 119, 87, 0.05); }
+
+/* === v5 Slider control === */
+.slider-control {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin: 22px 0;
+}
+.slider-control label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.slider-control input[type=range] {
+  width: 100%;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  margin: 8px 0;
+}
+.slider-control input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.slider-control input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.slider-control input[type=range]::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+}
+.slider-output {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--copper-bright);
+  margin-top: 12px;
+  line-height: 1;
+}
+.slider-formula { margin-top: 10px; font-size: 13px; color: var(--gray-400); }
+.slider-formula code {
+  font-family: var(--mono);
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+
+/* === v5 Cover page (print only) === */
+.cover-page { display: none; }
+
+/* === v5 Print styles === */
+@media print {
+  body {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    padding: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .toc, .copy-btn, .copy-prompt-bar, .scroll-progress { display: none; }
+  .cover-page {
+    display: block;
+    page-break-after: always;
+    padding: 32mm 18mm;
+  }
+  .cover-page h1 {
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 500;
+    color: var(--bg-deep);
+    margin-bottom: 22px;
+  }
+  .cover-page .meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--rust);
+    text-transform: uppercase;
+  }
+  details.collapsible { border: 1px solid var(--gray-600); }
+  details.collapsible > *:not(summary) { display: block !important; }
+  .card, .roadmap, .stat, .data-table, .filter-table table {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    border: 1px solid var(--gray-600);
+    page-break-inside: avoid;
+  }
+  .card-title h3, .prose p, .prose li, .tl-item h4, .tl-item p, .lede, .stat .num, .stat .label {
+    color: var(--bg-deep);
+  }
+  .lede strong, .prose strong { color: var(--rust); }
+  .card-id, h1.title em, .stat.featured .num { color: var(--rust); }
+  h1.title, .closing .quote { color: var(--bg-deep); }
+  .prose em { color: var(--rust); font-weight: 700; font-style: normal; }
+  @page { margin: 18mm; size: A4; }
+}
+</style>
+</head>
+<body>
+<div class="scroll-progress" role="progressbar" aria-label="読了率"></div>
+
+<!--
+  COVER PAGE: print 時のみ可視。screen では display:none。
+  生成時に title と JST timestamp を埋め込む。
+-->
+<div class="cover-page">
+  <h1>HTML 5 Pillars — v5 Thariq Dark Editorial</h1>
+  <p class="meta">2026.05.28 20:04 JST — explain-in-html v5 Thariq Dark Editorial</p>
+</div>
+
+<main class="wrap">
+
+  <!--
+    BODY CONTENT GOES HERE
+    references/component-library.md を参照し、トピックに合わせて以下のコンポーネント (19 種類) を組み立てる:
+
+    Header (常に必須):
+      - .eyebrow / h1.title / .lede
+
+    本論コンポーネント (3-9 個から選択):
+      - .stat-bar                          (4-col metrics、Thariq style)
+      - .section-head + .cards > .card     (主要構造)
+      - .prose                             (段落本文)
+      - .pull-quote                        (キーフレーズ、italic 廃止・color+bold)
+      - .data-table                        (≤10行)
+      - .code-block                        (コード例)
+      - .roadmap > .timeline               (milestone timeline、Thariq style)
+
+    v4 interactive (v5 で継承、Thariq dark で再着色):
+      - .toc (上の <main> 直前に挿入)     (sticky/inline、section≥3 のとき)
+      - <details class="collapsible">     (折り畳み)
+      - .copy-btn                          (clipboard)
+      - .copy-prompt-bar (</main> 直後に挿入) (audit/plan/dashboard のみ)
+      - .anno-code                         (注釈付き、≥5行)
+      - .filter-table                      (検索/ソート、>10行)
+      - figure.svg-diagram                 (inline SVG)
+      - .slider-control                    (動的モデル)
+      - .severity-badge (.crit/.high/.med/.low/.info/.pass/.harmless)
+
+    Closing (常に必須):
+      - .closing > .quote
+
+    v5 Critical Rules:
+      - italic 完全廃止。em / .quote / .pull-quote はすべて font-style: normal
+      - 強調は color (--copper / --copper-bright) + font-weight (600-700)
+      - Google Fonts CDN 依存なし、ui-serif/system-ui/ui-monospace のみ
+      - JST タイムスタンプを .closing .footer-meta に必ず入れる
+      - .section-head に id="sec-{slug}" を必須化 (TOC scroll spy のため)
+  -->
+
+  <div class="eyebrow">HTML Effectiveness · v5 Thariq Dark Editorial · 2026.05.28</div>
+  <h1 class="title"><em>HTML</em> が Markdown を<br>超える 5 つの理由 <span class="pct">[ v5 ]</span></h1>
+  <p class="lede"><strong>Thariq Shihipar</strong> (Anthropic Claude Code、2026-05、8M views) Design System を採用した <strong>v5 Thariq Dark Editorial</strong>。 clay + olive + warm slate の palette、ui-serif Georgia + system-ui + ui-monospace の typography、 <strong>Google Fonts CDN 依存なし</strong>、 <strong>italic 完全禁止</strong> (強調は color + bold)。 同じトピックを v3/v4 と比較できる検証 sample。</p>
+
+  <nav class="toc" aria-label="目次">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a class="toc-link" href="#sec-density"><span class="num">01</span>情報密度</a></li>
+      <li><a class="toc-link" href="#sec-clarity"><span class="num">02</span>視覚的明快さ</a></li>
+      <li><a class="toc-link" href="#sec-share"><span class="num">03</span>共有のしやすさ</a></li>
+      <li><a class="toc-link" href="#sec-interactive"><span class="num">04</span>双方向性</a></li>
+      <li><a class="toc-link" href="#sec-context"><span class="num">05</span>context 幅拡大</a></li>
+      <li><a class="toc-link" href="#sec-judgment"><span class="num">06</span>住み分け判定</a></li>
+    </ul>
+  </nav>
+
+  <!-- ここから本論 -->
+
+  <div class="stat-bar">
+    <div class="stat featured"><span class="num">5</span><span class="label">Pillars</span><span class="desc">情報密度 / 明快さ / 共有 / 双方向 / context</span></div>
+    <div class="stat"><span class="num">8M</span><span class="label">Views</span><span class="desc">Thariq 元投稿、2026-05-08 から 48h</span></div>
+    <div class="stat zero"><span class="num">100</span><span class="label">行の壁</span><span class="desc">Markdown が「読む」から「探す」に転落する境界</span></div>
+    <div class="stat"><span class="num">2-4x</span><span class="label">生成コスト</span><span class="desc">HTML は Markdown より時間 2-4 倍</span></div>
+  </div>
+
+  <div class="section-head" id="sec-density">
+    <span class="num">01</span>
+    <h2>情報密度 — 1 ファイルに表・SVG・JS が同居</h2>
+  </div>
+  <div class="prose">
+    <p>Markdown は <strong>線形テキスト</strong>。空間的関係 (依存グラフ・フロー・複数案の並列) を表現するには <em>読み手の脳内で組み立て直す</em> 必要がある。HTML は CSS Grid + SVG + inline JS を 1 ファイルに同居させ、空間情報をそのまま視覚化できる。</p>
+    <p>Thariq の表現: <em>"Diffs and call-graphs are spatial information; markdown flattens them."</em></p>
+  </div>
+
+  <div class="section-head" id="sec-clarity">
+    <span class="num">02</span>
+    <h2>視覚的明快さ — 色分けで重大度を即把握</h2>
+  </div>
+  <div class="prose">
+    <p>PR レビュー HTML を例に挙げる。Blocking / Nit / Nice-to-have を <strong>色分け severity badge</strong> で示すと、読まずに重大度を理解できる。</p>
+    <p>v5 では <code>.severity-badge</code> を 7 段階で実装:</p>
+    <p>
+      <span class="severity-badge crit">CRIT</span>
+      <span class="severity-badge high">HIGH</span>
+      <span class="severity-badge med">MED</span>
+      <span class="severity-badge low">LOW</span>
+      <span class="severity-badge info">INFO</span>
+      <span class="severity-badge pass">PASS</span>
+      <span class="severity-badge harmless">HARMLESS</span>
+    </p>
+  </div>
+
+  <div class="section-head" id="sec-share">
+    <span class="num">03</span>
+    <h2>共有のしやすさ — URL 1 本でブラウザ即動作</h2>
+  </div>
+  <div class="prose">
+    <p>self-contained HTML は <strong>外部依存ゼロ</strong>。 v5 では Google Fonts CDN 依存も解消、<code>ui-serif</code> / <code>system-ui</code> / <code>ui-monospace</code> の OS native font のみ。リンク 1 本でブラウザに開いたら即動作、 CDN 切断・offline も影響なし。</p>
+    <p>Thariq 観測: PDF メール送信より <strong>開封率が約 2 倍</strong>。</p>
+  </div>
+
+  <div class="section-head" id="sec-interactive">
+    <span class="num">04</span>
+    <h2>双方向性 — slider / toggle / copy で値を返す</h2>
+  </div>
+  <div class="prose">
+    <p>HTML の真骨頂は <strong>「触れる」</strong>。 v5 でも v4 から継承した interactive components (<code>.copy-btn</code> / <code>.collapsible</code> / <code>.slider-control</code> / <code>.filter-table</code> / <code>.toc</code> scroll-spy) はすべて維持。</p>
+    <p>下の <code>&lt;details class="collapsible"&gt;</code> をクリックして開閉を試せる:</p>
+  </div>
+
+  <details class="collapsible">
+    <summary>collapsible の動作確認 (クリックで展開) ▼</summary>
+    <p>これは <code>&lt;details class="collapsible"&gt;</code> の動作例。 JS 無効でも native の <code>&lt;details&gt;</code> として動作し、 JS 有効時は height transition が滑らかに適用される。</p>
+    <p>v5 では <strong>border-left 3px clay</strong> でアクティブ状態を示す (v4 までの border-left 2px から強化)。</p>
+  </details>
+
+  <div class="section-head" id="sec-context">
+    <span class="num">05</span>
+    <h2>context 幅拡大 — MCP + git + web を 1 面に</h2>
+  </div>
+  <div class="prose">
+    <p>HTML は <strong>複数情報源を 1 つの「レビュー面」に圧縮</strong> できる。MCP の最新データ、git の diff、web スクレイピング結果を inline SVG + 表 + コードブロックで混在配置可能。</p>
+    <p>Thariq の MCP ダッシュボード例: <em>"開くたびに Stripe や Git から最新データを取って表示する HTML 軽量エディタ"</em>。静的レポートではなく「ライブダッシュボード」。</p>
+  </div>
+
+  <div class="section-head" id="sec-judgment">
+    <span class="num">06</span>
+    <h2>住み分け判定 — 4 段階の意思決定ルール</h2>
+  </div>
+  <div class="prose">
+    <p>Thariq は「HTML 万能論」ではなく <strong>住み分け</strong> を結論にしている。</p>
+    <ol>
+      <li><strong>短文か?</strong> → Markdown (HTML は過剰)</li>
+      <li><strong>git で追跡するか?</strong> → Markdown (HTML diff はノイジー)</li>
+      <li><strong>100 行超か?</strong> → HTML を検討</li>
+      <li><strong>他者に送るか?</strong> → HTML 強く推奨 (決定的要因)</li>
+    </ol>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Trade-off</th>
+        <th>Severity</th>
+        <th>Mitigation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>生成時間が Markdown の 2-4 倍</td>
+        <td><span class="severity-badge med">MED</span></td>
+        <td>Opus 1M context で許容、長文・配布前提のみ HTML 化</td>
+      </tr>
+      <tr>
+        <td>HTML diff が git で読みにくい</td>
+        <td><span class="severity-badge high">HIGH</span></td>
+        <td>ソースは Markdown / JSON、HTML はオンデマンド生成</td>
+      </tr>
+      <tr>
+        <td>20 行以下では HTML は過剰</td>
+        <td><span class="severity-badge low">LOW</span></td>
+        <td>短文判定ルールで Markdown 自動分岐</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <section class="roadmap">
+    <h2>v3 → v4 → v5 美学進化</h2>
+    <p class="sub">explain-in-html aesthetic evolution timeline</p>
+
+    <div class="timeline">
+      <div class="tl-item done">
+        <div class="session">2026.05.20</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>v3 Warm Paper</h4>
+          <p>terracotta + teal + 丸ゴシック + ドット方眼。 camone 独自美学が確立、AI slop 回避。</p>
+        </div>
+      </div>
+      <div class="tl-item done">
+        <div class="session">2026.05.28 AM</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>v4 Warm Paper · Interactive</h4>
+          <p>Thariq 5 本柱を取り込み、interactive components 8 種を追加。 美学は v3 を完全継承。</p>
+        </div>
+      </div>
+      <div class="tl-item current">
+        <div class="session">2026.05.28 PM</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>v5 Thariq Dark Editorial (本ファイル)</h4>
+          <p>Thariq Shihipar Design System を完全採用。 clay + olive + warm slate, ui-serif Georgia, Google Fonts 依存解消, italic 完全禁止。 v4 interactive は全継承。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <blockquote class="pull-quote">
+    "Machines read Markdown.<br>Humans judge HTML.<br>Draw the line at 100 lines and the recipient."
+    <cite>— Thariq Shihipar (要約)</cite>
+  </blockquote>
+
+  <!-- ここまで本論 -->
+
+  <div class="closing">
+    <p class="quote">機械が読むなら Markdown、<br>人間が判断するなら HTML。<br>境界は 100 行と「他者送付」で引け。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.28 20:04 JST</p>
+  </div>
+
+</main>
+
+<!--
+  COPY-PROMPT-BAR (optional): 監査・計画書・MCPダッシュボードの時のみ挿入。
+  例:
+    <div class="copy-prompt-bar" aria-label="ページ全体をプロンプトとしてコピー">
+      このページを LLM 用 prompt として clipboard へコピー
+    </div>
+-->
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initCopyButtons();
+  initCopyPromptBar();
+  initTOCScrollSpy();
+  initFilterTables();
+  initSliders();
+  initCollapsibles();
+  initScrollProgress();
+});
+
+function initCopyButtons() {
+  document.querySelectorAll('.copy-btn[data-copy-target]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = document.querySelector(btn.dataset.copyTarget);
+      if (!target) return;
+      const text = target.innerText.trim();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+      }
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 2000);
+    });
+  });
+}
+
+function initCopyPromptBar() {
+  const bar = document.querySelector('.copy-prompt-bar');
+  if (!bar) return;
+  bar.addEventListener('click', async () => {
+    const title = document.title;
+    const h1 = document.querySelector('h1.title')?.innerText ?? '';
+    const sections = Array.from(document.querySelectorAll('.section-head + *, .prose, .cards, .roadmap'))
+      .map(el => el.innerText.trim())
+      .filter(Boolean)
+      .join('\n\n---\n\n');
+    const prompt = `# ${title}\n\n## ${h1}\n\n${sections}`;
+    try { await navigator.clipboard.writeText(prompt); } catch (e) {}
+    bar.classList.add('copied');
+    setTimeout(() => bar.classList.remove('copied'), 2000);
+  });
+}
+
+function initTOCScrollSpy() {
+  const links = document.querySelectorAll('.toc-link[href^="#"]');
+  if (!links.length) return;
+  const headings = Array.from(links)
+    .map(a => document.getElementById(a.getAttribute('href').slice(1)))
+    .filter(Boolean);
+  if (!headings.length) return;
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+  headings.forEach(h => observer.observe(h));
+
+  const toc = document.querySelector('.toc');
+  const toggle = document.querySelector('.toc-toggle');
+  if (toggle && toc) {
+    toggle.addEventListener('click', () => toc.toggleAttribute('data-open'));
+  }
+}
+
+function initFilterTables() {
+  document.querySelectorAll('.filter-table').forEach(table => {
+    const input = table.querySelector('.filter-input');
+    const chips = table.querySelectorAll('.filter-chip');
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const q = (input?.value ?? '').toLowerCase();
+      const activeChips = Array.from(chips).filter(c => c.classList.contains('active')).map(c => c.dataset.value);
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const tags = (row.dataset.tags ?? '').split(',').map(t => t.trim());
+        const matchQ = !q || text.includes(q);
+        const matchChip = !activeChips.length || activeChips.some(v => tags.includes(v));
+        row.style.display = (matchQ && matchChip) ? '' : 'none';
+      });
+    }
+
+    input?.addEventListener('input', applyFilters);
+    chips.forEach(c => {
+      c.setAttribute('tabindex', '0');
+      const toggle = () => { c.classList.toggle('active'); applyFilters(); };
+      c.addEventListener('click', toggle);
+      c.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+
+    table.querySelectorAll('th[data-sort-by]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sortBy;
+        const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+        table.querySelectorAll('th[data-sort-by]').forEach(t => delete t.dataset.sortDir);
+        th.dataset.sortDir = dir;
+        rows.sort((a, b) => {
+          const av = a.querySelector(`[data-${key}]`)?.dataset[key] ?? a.querySelector('td')?.innerText ?? '';
+          const bv = b.querySelector(`[data-${key}]`)?.dataset[key] ?? b.querySelector('td')?.innerText ?? '';
+          const cmp = isNaN(Number(av)) || isNaN(Number(bv))
+            ? String(av).localeCompare(String(bv), 'ja')
+            : Number(av) - Number(bv);
+          return dir === 'asc' ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+}
+
+function initSliders() {
+  const FORMULA_WHITELIST = /^[\d\s+\-*/().x]+$/;
+  document.querySelectorAll('.slider-control').forEach(ctrl => {
+    const input = ctrl.querySelector('input[type=range]');
+    const output = ctrl.querySelector('.slider-output');
+    const formula = ctrl.dataset.formula ?? 'x';
+    if (!input || !output) return;
+    if (!FORMULA_WHITELIST.test(formula)) {
+      output.textContent = 'rejected';
+      return;
+    }
+    let fn;
+    try { fn = new Function('x', `return ${formula};`); }
+    catch (e) { output.textContent = 'rejected'; return; }
+    function update() {
+      const x = Number(input.value);
+      try {
+        const result = fn(x);
+        output.textContent = typeof result === 'number' ? result.toFixed(2) : String(result);
+      } catch (e) { output.textContent = 'error'; }
+    }
+    input.addEventListener('input', update);
+    update();
+  });
+}
+
+function initCollapsibles() {
+  document.querySelectorAll('details.collapsible').forEach(details => {
+    const summary = details.querySelector('summary');
+    if (!summary) return;
+    const content = Array.from(details.children).filter(c => c.tagName !== 'SUMMARY');
+    if (!content.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'collapsible-content';
+    content.forEach(c => wrap.appendChild(c));
+    details.appendChild(wrap);
+
+    summary.addEventListener('click', e => {
+      e.preventDefault();
+      if (details.open) {
+        wrap.style.height = wrap.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+          wrap.style.height = '0';
+          wrap.addEventListener('transitionend', () => {
+            details.open = false;
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      } else {
+        details.open = true;
+        wrap.style.height = '0';
+        requestAnimationFrame(() => {
+          wrap.style.height = wrap.scrollHeight + 'px';
+          wrap.addEventListener('transitionend', () => {
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      }
+    });
+  });
+}
+
+function initScrollProgress() {
+  const bar = document.querySelector('.scroll-progress');
+  if (!bar) return;
+  let ticking = false;
+  function update() {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = total > 0 ? window.scrollY / total : 0;
+    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, ratio))})`;
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  update();
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML 5 Pillars — Thariq Style Sample</title>
+<style>
+:root {
+  --ivory:    #FAF9F5;
+  --paper:    #FFFFFF;
+  --slate:    #141413;
+  --clay:     #D97757;
+  --clay-d:   #B85C3E;
+  --oat:      #E3DACC;
+  --olive:    #788C5D;
+  --olive-d:  #5F7148;
+  --gray-100: #F0EEE6;
+  --gray-300: #D1CFC5;
+  --gray-500: #87867F;
+  --gray-700: #3D3D3A;
+
+  --serif: ui-serif, Georgia, 'Times New Roman', Times, serif;
+  --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono:  ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+
+  --max:           720px;
+  --radius-card:   12px;
+  --radius-pill:   999px;
+  --radius-tag:    6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--ivory);
+  color: var(--slate);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.65;
+  padding: 72px 24px 96px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: var(--max); margin: 0 auto; }
+
+/* === Header trio === */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  margin-bottom: 18px;
+}
+
+h1.title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(36px, 5.2vw, 54px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--slate);
+  margin-bottom: 24px;
+}
+h1.title em {
+  font-style: italic;
+  color: var(--clay);
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--gray-700);
+  max-width: 620px;
+  margin-bottom: 56px;
+}
+.lede strong { color: var(--slate); font-weight: 600; }
+
+/* === TOC inline (Thariq does sidebar; sample uses inline) === */
+.toc {
+  background: var(--gray-100);
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius-card);
+  padding: 20px 24px;
+  margin: 32px 0 56px;
+}
+.toc .toc-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  margin-bottom: 14px;
+}
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc li { font-size: 14.5px; margin-bottom: 6px; }
+.toc li a {
+  color: var(--slate);
+  text-decoration: none;
+  display: inline-flex;
+  gap: 12px;
+  transition: color 0.15s;
+}
+.toc li a:hover { color: var(--clay); }
+.toc li a .num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gray-500);
+  width: 24px;
+}
+
+/* === Summary strip (Thariq 16-impl-plan pattern) === */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 56px;
+}
+@media (max-width: 720px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
+.metric {
+  background: var(--paper);
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius-card);
+  padding: 16px 18px;
+}
+.metric .key {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  margin-bottom: 6px;
+}
+.metric .val {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--slate);
+  line-height: 1.1;
+}
+.metric .val.accent { color: var(--clay); }
+.metric .val.complete { color: var(--olive); }
+
+/* === Section head with numbered badge (Thariq pattern) === */
+.sec-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 64px 0 24px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px solid var(--gray-300);
+}
+.sec-head .count {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  background: var(--oat);
+  color: var(--slate);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+.sec-head h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 26px;
+  line-height: 1.25;
+  color: var(--slate);
+  letter-spacing: -0.005em;
+}
+
+/* === Prose === */
+.prose p { margin-bottom: 14px; color: var(--gray-700); }
+.prose p:first-of-type { color: var(--slate); }
+.prose strong { color: var(--slate); font-weight: 600; }
+.prose em { font-style: italic; color: var(--clay-d); }
+.prose code {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--gray-100);
+  color: var(--clay-d);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.prose ol, .prose ul { margin: 12px 0 16px 28px; }
+.prose li { margin-bottom: 6px; color: var(--gray-700); line-height: 1.55; }
+.prose li strong { color: var(--slate); }
+
+/* === Severity badges (Thariq warm tones) === */
+.badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0;
+}
+.badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid;
+  display: inline-block;
+}
+.badge.high    { background: #F3D9CC; color: var(--clay-d); border-color: #E8B89E; }
+.badge.med     { background: var(--oat); color: var(--slate); border-color: #C9BFAF; }
+.badge.low     { background: #E4E9DC; color: var(--olive-d); border-color: #C7D2B5; }
+.badge.info    { background: #DCE5F0; color: #4A6B8F; border-color: #B5C7DD; }
+.badge.success { background: var(--gray-100); color: var(--olive-d); border-color: #C7D2B5; }
+
+/* === Risk & mitigation table (Thariq pattern) === */
+.risk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  margin: 24px 0;
+  background: var(--paper);
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.risk-table th, .risk-table td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--gray-300);
+}
+.risk-table th {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  font-weight: 500;
+}
+.risk-table tr:last-child td { border-bottom: none; }
+.risk-table td.severity-col { width: 92px; white-space: nowrap; }
+.risk-table td { color: var(--gray-700); }
+.risk-table td:first-child { color: var(--slate); }
+
+/* === Milestone timeline (Thariq 16-impl-plan pattern) === */
+.timeline { margin: 28px 0; }
+.milestone {
+  display: grid;
+  grid-template-columns: 110px 28px 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 0;
+  position: relative;
+}
+.milestone .date {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gray-500);
+  padding-top: 6px;
+  letter-spacing: 0.02em;
+}
+.milestone .dot-line {
+  position: relative;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+.milestone .dot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--clay);
+  background: var(--paper);
+  border-radius: 50%;
+  margin-top: 8px;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.milestone.done .dot { background: var(--olive); border-color: var(--olive); }
+.milestone .dot-line::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: -14px;
+  width: 2px;
+  background: var(--gray-300);
+}
+.milestone:last-child .dot-line::after { display: none; }
+.milestone .ctx h3 {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--slate);
+  margin-bottom: 4px;
+}
+.milestone .ctx p {
+  font-size: 14.5px;
+  color: var(--gray-700);
+  line-height: 1.55;
+}
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: var(--serif);
+  font-size: 22px;
+  line-height: 1.4;
+  font-style: italic;
+  color: var(--slate);
+  border-left: 3px solid var(--clay);
+  padding: 12px 0 12px 26px;
+  margin: 40px 0;
+}
+.pull-quote cite {
+  display: block;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  margin-top: 14px;
+}
+
+/* === Closing === */
+.closing {
+  margin-top: 80px;
+  padding-top: 36px;
+  border-top: 1.5px solid var(--gray-300);
+  text-align: center;
+}
+.closing .quote {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-style: italic;
+  color: var(--slate);
+  max-width: 520px;
+  margin: 0 auto 18px;
+  line-height: 1.5;
+}
+.closing .meta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+}
+
+/* Focus state for keyboard nav */
+:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="eyebrow">HTML Effectiveness · Thariq Style Sample · 2026.05.28</div>
+
+  <h1 class="title">
+    HTML が <em>Markdown</em> を超える 5 つの理由<br>
+    — Thariq style サンプル
+  </h1>
+
+  <p class="lede">
+    Anthropic Claude Code チーム <strong>Thariq Shihipar</strong> (2026-05-08、8M views) が示した <strong>5 本柱</strong> を、彼自身の Design System
+    (ivory + clay + olive + serif heading + border-based hierarchy) で再現したサンプル。
+    <strong>camone v4 (Warm Paper Dark + 丸ゴシック)</strong> との直接比較用。同じトピック、異なる美学。
+  </p>
+
+  <nav class="toc" aria-label="目次">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#sec-density"><span class="num">01</span>情報密度</a></li>
+      <li><a href="#sec-clarity"><span class="num">02</span>視覚的明快さ</a></li>
+      <li><a href="#sec-share"><span class="num">03</span>共有のしやすさ</a></li>
+      <li><a href="#sec-interactive"><span class="num">04</span>双方向性</a></li>
+      <li><a href="#sec-context"><span class="num">05</span>context 幅拡大</a></li>
+      <li><a href="#sec-judgment"><span class="num">06</span>住み分け判定</a></li>
+      <li><a href="#sec-roadmap"><span class="num">07</span>実装ロードマップ</a></li>
+    </ol>
+  </nav>
+
+  <div class="metrics">
+    <div class="metric"><div class="key">Pillars</div><div class="val accent">5</div></div>
+    <div class="metric"><div class="key">Views</div><div class="val">8M</div></div>
+    <div class="metric"><div class="key">Threshold</div><div class="val">100 lines</div></div>
+    <div class="metric"><div class="key">Cost</div><div class="val">2–4×</div></div>
+  </div>
+
+  <div class="sec-head" id="sec-density">
+    <span class="count">01</span>
+    <h2>情報密度 — 1 ファイルに表・SVG・JS が同居</h2>
+  </div>
+  <div class="prose">
+    <p>Markdown は <strong>線形テキスト</strong>。空間的関係 (依存グラフ・フロー・複数案の並列) を表現するには <em>読み手の脳内で組み立て直す</em> 必要がある。HTML は CSS Grid + SVG + inline JS を 1 ファイルに同居させ、空間情報をそのまま視覚化できる。</p>
+    <p>Thariq の表現: <em>"Diffs and call-graphs are spatial information; markdown flattens them."</em></p>
+  </div>
+
+  <div class="sec-head" id="sec-clarity">
+    <span class="count">02</span>
+    <h2>視覚的明快さ — 色分けで重大度を即把握</h2>
+  </div>
+  <div class="prose">
+    <p>PR レビュー HTML を例に挙げる。Blocking / Nit / Nice-to-have を <strong>色分け severity badge</strong> で示すと、読まずに重大度を理解できる。</p>
+    <div class="badges-row">
+      <span class="badge high">HIGH</span>
+      <span class="badge med">MED</span>
+      <span class="badge low">LOW</span>
+      <span class="badge info">INFO</span>
+      <span class="badge success">SUCCESS</span>
+    </div>
+    <p>このサンプルでは Thariq 流の warm tinted badges (clay <code>#D97757</code> / oat <code>#E3DACC</code> / olive <code>#788C5D</code> 系) を採用。 box-shadow を使わず、 <code>1.5px</code> の border で hierarchy を作る。</p>
+  </div>
+
+  <div class="sec-head" id="sec-share">
+    <span class="count">03</span>
+    <h2>共有のしやすさ — URL 1 本でブラウザ即動作</h2>
+  </div>
+  <div class="prose">
+    <p>self-contained HTML は <strong>外部依存ゼロ</strong>。CDN 切断、Gmail 添付、Slack 共有、すべて「リンク 1 本で開いたら動く」。Markdown は GitHub / Confluence の renderer 経由必須。</p>
+    <p>Thariq 観測: PDF メール送信より <strong>開封率が約 2 倍</strong>。本サンプルも CSS は inline、フォントは <code>system-ui</code> 系で <strong>外部 CDN 依存ゼロ</strong> (camone v4 は Google Fonts CDN 依存あり、ここが差別ポイント)。</p>
+  </div>
+
+  <div class="sec-head" id="sec-interactive">
+    <span class="count">04</span>
+    <h2>双方向性 — slider / toggle / copy で値を返す</h2>
+  </div>
+  <div class="prose">
+    <p>HTML の真骨頂は <strong>「触れる」</strong>。slider でパラメータを動かす、toggle で詳細を展開する、copy button で「LLM に渡す prompt」を生成する。</p>
+    <p>本サンプルは <em>静的</em> だが、実用版では <code>&lt;input type="range"&gt;</code> + 微量 vanilla JS で十分。Thariq 公式の Consistent Hashing 解説 (<code>15-research-concept-explainer.html</code>) では range slider と SVG ring が連動している。</p>
+  </div>
+
+  <div class="sec-head" id="sec-context">
+    <span class="count">05</span>
+    <h2>context 幅拡大 — MCP + git + web を 1 面に</h2>
+  </div>
+  <div class="prose">
+    <p>HTML は <strong>複数情報源を 1 つの「レビュー面」に圧縮</strong> できる。MCP の最新データ、git の diff、web スクレイピング結果を inline SVG + 表 + コードブロックで混在配置可能。</p>
+    <p>Thariq の MCP ダッシュボード例: <em>"開くたびに Stripe や Git から最新データを取って表示する HTML 軽量エディタ"</em>。静的レポートではなく「ライブダッシュボード」。</p>
+  </div>
+
+  <div class="sec-head" id="sec-judgment">
+    <span class="count">06</span>
+    <h2>住み分け判定 — 4 段階の意思決定ルール</h2>
+  </div>
+  <div class="prose">
+    <p>Thariq は「HTML 万能論」ではなく <strong>住み分け</strong> を結論にしている。</p>
+    <ol>
+      <li><strong>短文か?</strong> → Markdown (HTML は過剰)</li>
+      <li><strong>git で追跡するか?</strong> → Markdown (HTML diff はノイジー)</li>
+      <li><strong>100 行超か?</strong> → HTML を検討 (Markdown は scroll 専用に堕ちる)</li>
+      <li><strong>他者に送るか?</strong> → HTML 強く推奨 (決定的要因)</li>
+    </ol>
+  </div>
+
+  <table class="risk-table">
+    <thead>
+      <tr>
+        <th>Trade-off</th>
+        <th class="severity-col">Severity</th>
+        <th>Mitigation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>生成時間が Markdown の 2–4 倍</td>
+        <td class="severity-col"><span class="badge med">MED</span></td>
+        <td>Opus 1M context で許容、長文・配布前提のみ HTML 化</td>
+      </tr>
+      <tr>
+        <td>HTML diff が git で読みにくい</td>
+        <td class="severity-col"><span class="badge high">HIGH</span></td>
+        <td>ソースは Markdown / JSON、HTML はオンデマンド生成、gitignore</td>
+      </tr>
+      <tr>
+        <td>20 行以下では HTML は過剰</td>
+        <td class="severity-col"><span class="badge low">LOW</span></td>
+        <td>短文判定ルールで Markdown 自動分岐</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sec-head" id="sec-roadmap">
+    <span class="count">07</span>
+    <h2>実装ロードマップ — Thariq style milestone</h2>
+  </div>
+
+  <div class="timeline">
+    <div class="milestone done">
+      <div class="date">2026.05.08</div>
+      <div class="dot-line"><div class="dot"></div></div>
+      <div class="ctx">
+        <h3>Thariq 元記事公開</h3>
+        <p>"The Unreasonable Effectiveness of HTML" を Anthropic Claude Code チームから発表。48h 以内に 8M views。</p>
+      </div>
+    </div>
+
+    <div class="milestone done">
+      <div class="date">2026.05.28</div>
+      <div class="dot-line"><div class="dot"></div></div>
+      <div class="ctx">
+        <h3>camone v4 (Warm Paper · Interactive) リリース</h3>
+        <p>5 本柱と interactive components を取り込み、Warm Paper 美学 (Dark + 丸ゴシック) は完全維持。</p>
+      </div>
+    </div>
+
+    <div class="milestone">
+      <div class="date">2026.05.28</div>
+      <div class="dot-line"><div class="dot"></div></div>
+      <div class="ctx">
+        <h3>Thariq style サンプル比較 (本ファイル)</h3>
+        <p>同じトピックを Thariq 美学 (Light + serif + ivory bg) で再構築。 camone v4 と並べて美学差を可視化し、 v4 の方向性を camone 自身に判断してもらう材料に。</p>
+      </div>
+    </div>
+  </div>
+
+  <blockquote class="pull-quote">
+    "Machines read Markdown.<br>Humans judge HTML.<br>Draw the line at 100 lines and the recipient."
+    <cite>— Thariq Shihipar (要約)</cite>
+  </blockquote>
+
+  <div class="closing">
+    <p class="quote">"Twenty self-contained HTML files an agent produced<br>instead of a wall of markdown."</p>
+    <p class="meta">explain-in-html · Thariq style sample · 2026.05.28 19:15 JST</p>
+  </div>
+
+</main>
+</body>
+</html>
