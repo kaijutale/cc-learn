@@ -1,0 +1,23 @@
+# claude
+.claude/
+
+# ローカルログ
+.docs/logs/local/
+
+# 生成物
+# 末尾 /* で「中身を 1 つずつ ignore」にしないと、配下の ! 例外が効かない
+.docs/output/*
+# ただし explain-in-html/ は手作業生成物なので追跡対象
+!.docs/output/explain-in-html/
+
+# プラン出力先
+.docs/plans/
+
+# 参照資料
+.docs/references/
+
+# タスク
+.docs/tasks/
+
+# .env
+.env
