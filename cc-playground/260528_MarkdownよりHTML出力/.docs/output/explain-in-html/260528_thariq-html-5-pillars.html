@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thariq HTML 5 pillars を解説 — explain-in-html v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Warm Paper palette (v3)
+     旧 v2 Amazing Spider-Man から値書換、変数名は維持 (CSS class 互換性のため)
+     意味マッピング: --copper = terracotta / --moss = teal / --rust = deep terracotta */
+  --bg-deep: #1c1a17;        /* 温かいダークブラウン背景 */
+  --bg-surface: #252019;     /* 中間サーフェス */
+  --bg-card: #2a241c;        /* カード背景 */
+  --border-soft: #3a3228;    /* 温かいブラウン境界線 */
+  --copper: #e8623c;         /* terracotta, 主アクセント */
+  --copper-bright: #f47a52;  /* bright terracotta, highlight */
+  --rust: #c4421f;           /* deep terracotta, 警告/差分 */
+  --moss: #3f8f7b;           /* teal, 副アクセント */
+  --moss-dark: #2f6e5e;      /* deep teal */
+  --ivory: #f3ede1;          /* warm cream text */
+  --pearl: #b3a896;          /* warm gray, 副テキスト */
+  --shadow: #13110e;         /* code block 背景, 最暗ブラウン */
+  --accent-line: #3a3228;    /* line */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(232, 98, 60, 0.18), transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, rgba(63, 143, 123, 0.14), transparent 55%),
+    var(--bg-deep);
+  background-attachment: fixed;
+  color: var(--ivory);
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Meiryo', sans-serif;
+  font-weight: 400;
+  line-height: 1.75;
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(243, 237, 225, 0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Maru Gothic Pro', 'YuKyokasho', 'Yu Gothic UI', sans-serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 18px;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 500; }
+
+/* === Stats === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 96px;
+}
+@media (max-width: 640px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  text-align: left;
+  position: relative;
+}
+.stat.featured { background: linear-gradient(135deg, #2a241c 0%, #4a2418 100%); }
+.stat .num {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Maru Gothic Pro', 'YuKyokasho', 'Yu Gothic UI', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--pearl);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section header === */
+.section-head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+.section-head h2 {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Maru Gothic Pro', 'YuKyokasho', 'Yu Gothic UI', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 32px; margin-bottom: 96px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(4px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Maru Gothic Pro', 'YuKyokasho', 'Yu Gothic UI', sans-serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Meiryo', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ivory);
+  line-height: 1.35;
+}
+
+.progress-meter { margin-bottom: 24px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 6px; background: var(--bg-deep); position: relative; overflow: hidden; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--copper-bright);
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.dual h4 {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.7; }
+.dual code {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.gap-block {
+  margin: 20px 0;
+  padding: 20px 24px;
+  background: rgba(196, 66, 31, 0.14);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 12px 12px 0;
+}
+.gap-block .label {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 8px;
+  display: block;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.05em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+.verdict-row .severity.harmless { background: rgba(63, 143, 123, 0.20); color: #6fcdb3; border: 1px solid var(--moss); border-radius: 999px; }
+.verdict-row .severity.low { background: rgba(232, 98, 60, 0.15); color: var(--copper-bright); border: 1px solid var(--copper); border-radius: 999px; }
+.verdict-row .severity.medium { background: rgba(196, 66, 31, 0.22); color: var(--copper-bright); border: 1px solid var(--rust); border-radius: 999px; }
+.verdict-row .severity.high { background: rgba(232, 98, 60, 0.35); color: var(--ivory); border: 1px solid var(--copper); border-radius: 999px; }
+
+/* === Roadmap === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 48px;
+  position: relative;
+  margin-bottom: 96px;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60px; height: 60px;
+  border-top: 1px solid var(--copper);
+  border-left: 1px solid var(--copper);
+}
+.roadmap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60px; height: 60px;
+  border-bottom: 1px solid var(--copper);
+  border-right: 1px solid var(--copper);
+}
+.roadmap h2 {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Maru Gothic Pro', 'YuKyokasho', 'Yu Gothic UI', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--copper), var(--moss-dark), transparent);
+}
+.tl-item { position: relative; margin-bottom: 32px; }
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -32px; top: 8px;
+  width: 17px; height: 17px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+.tl-item.current::before { background: var(--copper); }
+.tl-item .session {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.tl-item h4 {
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Meiryo', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin: 6px 0 8px;
+}
+.tl-item p { font-size: 14px; color: var(--pearl); }
+.tl-item code {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  color: var(--copper-bright);
+}
+
+/* === Plain prose (本文段落用) === */
+.prose { margin-bottom: 48px; }
+.prose p { font-size: 16px; color: var(--ivory); margin-bottom: 16px; line-height: 1.8; }
+.prose strong { color: var(--copper-bright); font-weight: 600; }
+.prose code {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 14px;
+  background: var(--bg-surface);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+}
+.prose ul, .prose ol { margin: 16px 0 16px 24px; }
+.prose li { font-size: 16px; color: var(--ivory); margin-bottom: 8px; line-height: 1.7; }
+
+/* === Code block === */
+.code-block {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 24px 0;
+  line-height: 1.6;
+}
+.code-block .kw { color: var(--copper-bright); }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--pearl); font-style: italic; }
+
+/* === Pull quote === */
+.pull-quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Maru Gothic Pro', 'YuKyokasho', 'Yu Gothic UI', sans-serif;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 16px 0 16px 28px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--copper);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+}
+.data-table th {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+}
+.data-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table tr:hover td { background: rgba(232, 98, 60, 0.06); }
+
+/* === Closing === */
+.closing {
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Maru Gothic Pro', 'YuKyokasho', 'Yu Gothic UI', sans-serif;
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ivory);
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+  font-style: normal;
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 10px;
+  color: var(--pearl);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* === v4: Focus & Accessibility === */
+:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+}
+
+/* === v4: Scroll progress bar === */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--copper);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 100;
+  transition: transform 0.05s linear;
+  pointer-events: none;
+}
+
+/* === v4: TOC (sticky sidebar nav) === */
+.toc {
+  position: fixed;
+  top: 80px;
+  left: 24px;
+  width: 200px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  z-index: 50;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  padding: 16px 0;
+}
+.toc-list { list-style: none; padding: 0; margin: 0; }
+.toc-list li { margin-bottom: 14px; }
+.toc-link {
+  display: block;
+  color: var(--pearl);
+  text-decoration: none;
+  padding: 4px 0 4px 12px;
+  border-left: 1px solid var(--border-soft);
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  transition: color 0.2s, border-color 0.2s;
+}
+.toc-link:hover { color: var(--ivory); border-left-color: var(--copper); }
+.toc-link.active {
+  color: var(--copper-bright);
+  border-left: 2px solid var(--copper);
+  padding-left: 11px;
+}
+.toc-toggle { display: none; cursor: pointer; font-size: 20px; color: var(--copper); }
+@media (max-width: 1099px) {
+  .toc {
+    top: auto; bottom: 24px; left: 24px;
+    width: auto; max-height: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    padding: 8px 12px;
+  }
+  .toc-toggle { display: inline-block; }
+  .toc:not([data-open]) .toc-list { display: none; }
+  .toc[data-open] { padding: 12px 16px; }
+}
+@media (min-width: 1100px) {
+  body { padding-left: 248px; }
+}
+
+/* === v4: Collapsible (details) === */
+details.collapsible {
+  margin: 24px 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+details.collapsible[open] { border-left: 2px solid var(--copper); }
+details.collapsible > summary {
+  cursor: pointer;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ivory);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: color 0.2s;
+}
+details.collapsible > summary:hover { color: var(--copper-bright); }
+details.collapsible > summary::-webkit-details-marker { display: none; }
+details.collapsible > summary::before {
+  content: '▶';
+  color: var(--copper);
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+details.collapsible[open] > summary::before { transform: rotate(90deg); }
+.collapsible-content {
+  overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+details.collapsible > *:not(summary):not(.collapsible-content) { margin-top: 16px; }
+
+/* === v4: Copy button === */
+.copy-btn {
+  display: inline-block;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  background: transparent;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  margin-left: 8px;
+}
+.copy-btn:hover {
+  background: rgba(232, 98, 60, 0.08);
+  border-color: var(--copper-bright);
+  color: var(--copper-bright);
+}
+.copy-btn:active { transform: scale(0.98); }
+.copy-btn.copied {
+  background: rgba(63, 143, 123, 0.15);
+  border-color: var(--moss);
+  color: var(--moss);
+}
+.copy-btn.copied::after { content: ' ✓'; }
+
+/* === v4: Copy-prompt-bar === */
+.copy-prompt-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-soft);
+  padding: 14px 24px;
+  text-align: center;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  cursor: pointer;
+  z-index: 80;
+  transition: background 0.2s, color 0.2s;
+}
+.copy-prompt-bar:hover { background: rgba(232, 98, 60, 0.08); color: var(--copper-bright); }
+.copy-prompt-bar::before { content: '⌘ '; margin-right: 6px; }
+.copy-prompt-bar.copied { background: rgba(63, 143, 123, 0.15); color: var(--moss); }
+.copy-prompt-bar.copied::after { content: ' ✓'; }
+@media (min-width: 1100px) { .copy-prompt-bar { left: 248px; } }
+
+/* === v4: Severity badge (standalone, 7段階) === */
+.severity-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.severity-badge.crit     { background: rgba(196, 66, 31, 0.35); color: var(--ivory); border-color: var(--rust); }
+.severity-badge.high     { background: rgba(232, 98, 60, 0.35); color: var(--ivory); border-color: var(--copper); }
+.severity-badge.med      { background: rgba(196, 66, 31, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.severity-badge.low      { background: rgba(232, 98, 60, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.severity-badge.info     { background: rgba(63, 143, 123, 0.15); color: var(--moss); border-color: var(--moss-dark); }
+.severity-badge.pass     { background: rgba(63, 143, 123, 0.20); color: #6fcdb3; border-color: var(--moss); }
+.severity-badge.harmless { background: rgba(179, 168, 150, 0.15); color: var(--pearl); border-color: var(--accent-line); }
+
+/* === v4: Annotated code === */
+.anno-code {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 24px;
+  margin: 32px 0;
+  background: var(--shadow);
+  border-left: 2px solid var(--copper);
+  border-radius: 0 12px 12px 0;
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+@media (max-width: 880px) { .anno-code { grid-template-columns: 1fr; } }
+.anno-code-body {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre;
+  color: var(--ivory);
+}
+.anno-line {
+  display: block;
+  padding: 2px 8px;
+  border-left: 2px solid transparent;
+}
+.anno-line.diff-add {
+  background: rgba(63, 143, 123, 0.10);
+  border-left-color: var(--moss);
+}
+.anno-line.diff-del {
+  background: rgba(196, 66, 31, 0.10);
+  border-left-color: var(--rust);
+  text-decoration: line-through;
+  opacity: 0.85;
+}
+.anno-margin {
+  font-size: 12px;
+  color: var(--pearl);
+  border-left: 1px dashed var(--border-soft);
+  padding-left: 16px;
+  line-height: 1.6;
+}
+.anno-note { color: var(--copper); margin-bottom: 12px; }
+
+/* === v4: Diff block === */
+.diff-block {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  background: var(--shadow);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 24px 0;
+  overflow-x: auto;
+}
+.diff-line { display: block; padding: 2px 8px; }
+.diff-line.add { background: rgba(63, 143, 123, 0.10); color: #6fcdb3; }
+.diff-line.del { background: rgba(196, 66, 31, 0.10); color: var(--copper-bright); text-decoration: line-through; opacity: 0.85; }
+.diff-line.ctx { color: var(--pearl); }
+
+/* === v4: SVG diagram === */
+figure.svg-diagram { margin: 32px auto; max-width: 720px; text-align: center; }
+figure.svg-diagram svg { max-width: 100%; height: auto; }
+.svg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 16px;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  color: var(--pearl);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.svg-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.svg-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+
+/* === v4: Filter table === */
+.filter-table { margin: 32px 0; }
+.filter-table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.filter-input {
+  flex: 1;
+  min-width: 240px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Meiryo', sans-serif;
+  font-size: 14px;
+  color: var(--ivory);
+  transition: border-color 0.2s;
+}
+.filter-input:focus { outline: none; border-color: var(--copper); }
+.filter-input::placeholder { color: var(--pearl); }
+.filter-chip {
+  display: inline-block;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pearl);
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  user-select: none;
+}
+.filter-chip:hover { background: rgba(63, 143, 123, 0.08); color: var(--ivory); }
+.filter-chip:active { transform: scale(0.98); }
+.filter-chip.active { background: rgba(63, 143, 123, 0.20); color: var(--moss); border-color: var(--moss); }
+.filter-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.filter-table th {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--copper);
+  background: var(--bg-surface);
+  cursor: pointer;
+  user-select: none;
+}
+.filter-table th[data-sort-by]:hover { color: var(--copper-bright); }
+.filter-table .sort-indicator::before { content: ' ⇅'; color: var(--pearl); opacity: 0.5; }
+.filter-table th[data-sort-dir="asc"] .sort-indicator::before { content: ' ↑'; color: var(--copper-bright); opacity: 1; }
+.filter-table th[data-sort-dir="desc"] .sort-indicator::before { content: ' ↓'; color: var(--copper-bright); opacity: 1; }
+.filter-table td {
+  color: var(--ivory);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.filter-table tr:hover td { background: rgba(232, 98, 60, 0.06); }
+
+/* === v4: Slider control === */
+.slider-control {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin: 24px 0;
+}
+.slider-control label {
+  display: block;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pearl);
+  margin-bottom: 12px;
+}
+.slider-control input[type=range] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  margin: 8px 0;
+}
+.slider-control input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.slider-control input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.slider-control input[type=range]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+}
+.slider-output {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Maru Gothic Pro', 'YuKyokasho', 'Yu Gothic UI', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--copper-bright);
+  margin-top: 12px;
+  line-height: 1;
+}
+.slider-formula { margin-top: 12px; font-size: 13px; color: var(--pearl); }
+.slider-formula code {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+
+/* === v4: Cover page (print only) === */
+.cover-page { display: none; }
+
+/* === v4: Print styles === */
+@media print {
+  body {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    padding: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  body::before { display: none; }
+  .toc, .copy-btn, .copy-prompt-bar, .scroll-progress { display: none; }
+  .cover-page {
+    display: block;
+    page-break-after: always;
+    padding: 32mm 18mm;
+  }
+  .cover-page h1 {
+    font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Maru Gothic Pro', 'YuKyokasho', 'Yu Gothic UI', sans-serif;
+    font-size: 40px;
+    color: var(--bg-deep);
+    margin-bottom: 24px;
+  }
+  .cover-page .meta {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    color: var(--rust);
+    text-transform: uppercase;
+  }
+  details.collapsible { border: 1px solid var(--pearl); }
+  details.collapsible > *:not(summary) { display: block !important; }
+  details.collapsible[open] { border-left-color: var(--copper); }
+  .card, .roadmap {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    border: 1px solid var(--pearl);
+    page-break-inside: avoid;
+  }
+  .card-title h3, .card .prose p, .card .prose li, .roadmap .timeline h4, .tl-item p { color: var(--bg-deep); }
+  .prose p, .prose li, .lede { color: var(--bg-deep); }
+  .lede strong, .prose strong { color: var(--rust); }
+  .card-id, .stat .num, h1.title em { color: var(--rust); }
+  h1.title { color: var(--bg-deep); }
+  .closing .quote { color: var(--bg-deep); }
+  @page { margin: 18mm; size: A4; }
+}
+</style>
+</head>
+<body>
+<div class="scroll-progress" role="progressbar" aria-label="読了率"></div>
+
+<!--
+  COVER PAGE: print 時のみ可視。screen では display:none。
+  生成時に title と JST timestamp を埋め込む。
+-->
+<div class="cover-page">
+  <h1>Thariq HTML 5 pillars を解説</h1>
+  <p class="meta">2026.05.28 18:56 JST — explain-in-html v4</p>
+</div>
+
+<nav class="toc" aria-label="目次">
+  <div class="toc-toggle" aria-label="目次を開閉">≡ TOC</div>
+  <ul class="toc-list">
+    <li><a class="toc-link" href="#sec-density">01 · 情報密度</a></li>
+    <li><a class="toc-link" href="#sec-clarity">02 · 視覚的明快さ</a></li>
+    <li><a class="toc-link" href="#sec-share">03 · 共有のしやすさ</a></li>
+    <li><a class="toc-link" href="#sec-interactive">04 · 双方向性</a></li>
+    <li><a class="toc-link" href="#sec-context">05 · context 幅拡大</a></li>
+    <li><a class="toc-link" href="#sec-judgment">06 · 住み分け判定</a></li>
+  </ul>
+</nav>
+
+<main class="wrap">
+
+  <!--
+    BODY CONTENT GOES HERE
+    references/component-library.md を参照し、トピックに合わせて以下のコンポーネント (19 種類) を組み立てる:
+
+    v3 既存 11 種:
+      - .eyebrow / h1.title / .lede        (Header trio, 通常必須)
+      - .stat-bar                          (数値ハイライトがあるとき)
+      - .section-head + .cards > .card     (本論の主要構造)
+      - .prose                             (段落本文)
+      - .pull-quote                        (キーフレーズ強調)
+      - .data-table                        (比較・一覧、10行以下)
+      - .code-block                        (コード例)
+      - .roadmap > .timeline               (時系列展望)
+      - .closing > .quote                  (締めの引用、通常必須)
+
+    v4 追加 8 種 (Thariq 5本柱対応):
+      - .toc (上の <main> 直前に挿入)     (sticky sidebar, section≥3 のとき)
+      - <details class="collapsible">     (折り畳み)
+      - .copy-btn                          (clipboard、.code-block 等の隣)
+      - .copy-prompt-bar (</main> 直後に挿入) (audit/plan/dashboard のみ)
+      - .anno-code                         (注釈付きコード、5行以上)
+      - .filter-table                      (検索/ソート可能、>10行)
+      - figure.svg-diagram                 (inline SVG)
+      - .slider-control                    (動的モデル)
+      - .severity-badge (.crit/.high/.med/.low/.info/.pass/.harmless)
+
+    制約:
+      - 最低 3 コンポーネント、v3 範囲なら最大 9 (v4 interactive 追加時は最大 11)
+      - 全コンポーネント詰め込まない (情報密度過多 = AI slop の別形態)
+      - JST タイムスタンプを .closing .footer-meta に必ず入れる
+      - .section-head に id="sec-{slug}" を必須化 (TOC scroll spy のため)
+      - copy-prompt-bar / TOC / slider は use-case-templates.md の判定基準に従う
+  -->
+
+  <div class="eyebrow">Concept · HTML Effectiveness · 2026.05.28</div>
+  <h1 class="title"><em>HTML</em> は<br>なぜ Markdown を<br>超えるのか <span class="pct">[ 5 pillars ]</span></h1>
+  <p class="lede"><strong>Thariq Shihipar</strong> (Anthropic Claude Code チーム、2026 年 5 月) が 8M views を獲得した記事は、<strong>5 本柱</strong>で「<strong>HTML 出力推奨</strong>」の構造的根拠を語った。<br>Markdown と棲み分ける 4 段階の判定軸まで含めて、わたしたち (camone とハーネス) がどう取り込むべきかを整理する。</p>
+
+  <!-- ここから本論 (コンポーネント自由配置) -->
+
+  <div class="stat-bar">
+    <div class="stat featured"><span class="num">5</span><span class="label">Pillars</span><span class="desc">情報密度 / 視覚的明快さ / 共有 / 双方向 / context</span></div>
+    <div class="stat"><span class="num">8M</span><span class="label">Views</span><span class="desc">Thariq 元投稿、2026-05-08 から 48h</span></div>
+    <div class="stat zero"><span class="num">100</span><span class="label">行の壁</span><span class="desc">Markdown が「読む」から「探す」に転落する境界</span></div>
+    <div class="stat"><span class="num">2-4x</span><span class="label">生成コスト</span><span class="desc">HTML は Markdown より時間 2-4 倍、トークン 4-8 倍</span></div>
+  </div>
+
+  <div class="section-head" id="sec-density">
+    <div class="num">// PILLAR · 01</div>
+    <h2>情報密度 — 1 ファイルに表 + SVG + JS が同居</h2>
+  </div>
+
+  <div class="prose">
+    <p>Markdown は <strong>線形テキスト</strong>。空間的関係 (依存グラフ、フロー、複数案の並列) を表現すると <em>読み手の脳内で組み立て直す</em> 必要がある。HTML は <strong>CSS Grid + SVG + inline JS</strong> を 1 ファイルに同居させ、空間情報をそのまま視覚化できる。</p>
+    <p>Thariq の元主張: <em>「diff も call-graph も spatial information で、markdown はそれを潰してしまう」</em>。本ページの <code>.stat-bar</code> や <code>.cards</code> のような 2 次元配置は、Markdown では再現不能。</p>
+  </div>
+
+  <div class="section-head" id="sec-clarity">
+    <div class="num">// PILLAR · 02</div>
+    <h2>視覚的明快さ — 色分けで重大度を可視化</h2>
+  </div>
+
+  <div class="prose">
+    <p>Thariq の代表例は <strong>PR レビュー HTML</strong>。Blocking (赤) / Nit (黄) / Nice-to-have (緑) を <strong>色分け severity badge</strong> で示すと、長文を読まずに重大度が即座に分かる。</p>
+    <p>本 skill ではこれを <code>.severity-badge</code> の 7 段階 (crit / high / med / low / info / pass / harmless) として実装。terracotta 系で「赤」、teal 系で「無害・成功」の二極を作り、Bootstrap red との同質化を避ける。</p>
+    <p>severity の見本:
+      <span class="severity-badge crit">CRIT</span>
+      <span class="severity-badge high">HIGH</span>
+      <span class="severity-badge med">MED</span>
+      <span class="severity-badge low">LOW</span>
+      <span class="severity-badge info">INFO</span>
+      <span class="severity-badge pass">PASS</span>
+      <span class="severity-badge harmless">HARMLESS</span>
+    </p>
+  </div>
+
+  <div class="section-head" id="sec-share">
+    <div class="num">// PILLAR · 03</div>
+    <h2>共有のしやすさ — URL 1 本でブラウザ即動作</h2>
+  </div>
+
+  <div class="prose">
+    <p>self-contained HTML は <strong>外部依存ゼロ</strong>。CDN 切断、Gmail 添付、Slack 共有、すべてで「リンク 1 本 → ブラウザで開いたら即動作」。Markdown は GitHub / Confluence 等の renderer を経由しないと表組すら表示されない。</p>
+    <p>Thariq 観測: PDF メール送信より <strong>開封率が約 2 倍</strong>。本 skill では Google Fonts のみが外部依存だが、fallback chain (Hiragino → Yu Gothic UI → Meiryo) を強化して CDN 切断時も Warm Paper の「丸み」が残るよう設計。</p>
+  </div>
+
+  <div class="section-head" id="sec-interactive">
+    <div class="num">// PILLAR · 04</div>
+    <h2>双方向性 — slider/toggle/copy で値を返す</h2>
+  </div>
+
+  <div class="prose">
+    <p>HTML の真骨頂は <strong>「触れる」</strong>。slider でパラメータを動かして結果を確認、toggle で詳細を選択的に展開、copy button で「この内容を LLM に渡す prompt」を生成。</p>
+    <p>本 skill v4 で実装: <code>.copy-btn</code> (clipboard) / <code>.copy-prompt-bar</code> (ページ全体を prompt 化) / <code>.collapsible</code> (details 折り畳み) / <code>.slider-control</code> (whitelist 式評価) / <code>.filter-table</code> (検索 + ソート)。inline vanilla JS で実装、合計 5KB 以内。</p>
+  </div>
+
+  <details class="collapsible">
+    <summary>collapsible の実例 (クリックで展開) ▼</summary>
+    <p style="color: var(--ivory); font-size: 14px; line-height: 1.8;">これは <code>&lt;details class="collapsible"&gt;</code> の動作例。JS 無効でも native の <code>&lt;details&gt;</code> として動作し、JS 有効時は height transition が滑らかに適用される (progressive enhancement)。</p>
+    <p style="color: var(--ivory); font-size: 14px; line-height: 1.8;">補足: <strong>結論</strong>や<strong>主要情報</strong>を畳むのは anti-pattern。「初見では飛ばしてよい補足・引用元・raw data」だけを collapsible にする。</p>
+  </details>
+
+  <div class="section-head" id="sec-context">
+    <div class="num">// PILLAR · 05</div>
+    <h2>context 幅拡大 — MCP + git + web を横断</h2>
+  </div>
+
+  <div class="prose">
+    <p>HTML は <strong>複数情報源を 1 つの「レビュー面」に圧縮</strong> できる。MCP で取った最新データ、git の diff、web スクレイピング結果、すべてを inline SVG + 表 + コードブロックとして混在配置可能。</p>
+    <p>Thariq の MCP ダッシュボード例: <em>「開くたびに Stripe や Git から最新データを取って表示する HTML 軽量エディタ」</em>。静的レポートではなく「ライブダッシュボード」。本 skill では <code>.filter-table</code> + <code>.svg-diagram</code> + <code>.collapsible</code> 組み合わせで dashboard ユースケースをカバー。</p>
+  </div>
+
+  <div class="section-head" id="sec-judgment">
+    <div class="num">// JUDGMENT · 06</div>
+    <h2>住み分け判定 — 4 段階の意思決定ルール</h2>
+  </div>
+
+  <div class="prose">
+    <p>Thariq は「HTML 万能論」ではなく <strong>住み分け</strong>を結論にしている。4 段階で判定:</p>
+    <ol>
+      <li><strong>短文か?</strong> → Markdown (HTML は過剰)</li>
+      <li><strong>git で追跡するか?</strong> → Markdown (HTML の diff は属性ノイズで読みにくい)</li>
+      <li><strong>100 行超か?</strong> → HTML を検討 (Markdown は scroll 専用に堕ちる)</li>
+      <li><strong>他者に送るか?</strong> → HTML 強く推奨 (決定的要因)</li>
+    </ol>
+    <p>本 skill は (3) (4) に該当するユースケース (audit / plan / research / dynamic / dashboard / explainer) を 6 種類のテンプレに整理。短文の概念解説では interaction layer を最小限 (TOC のみ条件付き)、長文 / 配布前提では完全装備で生成する。</p>
+  </div>
+
+  <blockquote class="pull-quote">
+    機械が読むなら Markdown、人間が判断するなら HTML。<br>その境界を 100 行と「他者送付」で引け。
+    <cite>— Thariq Shihipar (要約)</cite>
+  </blockquote>
+
+  <!-- ここまで本論 -->
+
+  <div class="closing">
+    <p class="quote">機械が読むなら Markdown、<br>人間が判断するなら HTML。<br>Thariq の結論は<br>「住み分け」だった。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.05.28 18:56 JST</p>
+  </div>
+
+</main>
+
+<!--
+  COPY-PROMPT-BAR (optional): 監査・計画書・MCPダッシュボードの時のみ挿入。
+  例:
+    <div class="copy-prompt-bar" aria-label="ページ全体をプロンプトとしてコピー">
+      このページを LLM 用 prompt として clipboard へコピー
+    </div>
+-->
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initCopyButtons();
+  initCopyPromptBar();
+  initTOCScrollSpy();
+  initFilterTables();
+  initSliders();
+  initCollapsibles();
+  initScrollProgress();
+});
+
+function initCopyButtons() {
+  document.querySelectorAll('.copy-btn[data-copy-target]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = document.querySelector(btn.dataset.copyTarget);
+      if (!target) return;
+      const text = target.innerText.trim();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+      }
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 2000);
+    });
+  });
+}
+
+function initCopyPromptBar() {
+  const bar = document.querySelector('.copy-prompt-bar');
+  if (!bar) return;
+  bar.addEventListener('click', async () => {
+    const title = document.title;
+    const h1 = document.querySelector('h1.title')?.innerText ?? '';
+    const sections = Array.from(document.querySelectorAll('.section-head + *, .prose, .cards, .roadmap'))
+      .map(el => el.innerText.trim())
+      .filter(Boolean)
+      .join('\n\n---\n\n');
+    const prompt = `# ${title}\n\n## ${h1}\n\n${sections}`;
+    try { await navigator.clipboard.writeText(prompt); } catch (e) {}
+    bar.classList.add('copied');
+    setTimeout(() => bar.classList.remove('copied'), 2000);
+  });
+}
+
+function initTOCScrollSpy() {
+  const links = document.querySelectorAll('.toc-link[href^="#"]');
+  if (!links.length) return;
+  const headings = Array.from(links)
+    .map(a => document.getElementById(a.getAttribute('href').slice(1)))
+    .filter(Boolean);
+  if (!headings.length) return;
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+  headings.forEach(h => observer.observe(h));
+
+  const toc = document.querySelector('.toc');
+  const toggle = document.querySelector('.toc-toggle');
+  if (toggle && toc) {
+    toggle.addEventListener('click', () => toc.toggleAttribute('data-open'));
+  }
+}
+
+function initFilterTables() {
+  document.querySelectorAll('.filter-table').forEach(table => {
+    const input = table.querySelector('.filter-input');
+    const chips = table.querySelectorAll('.filter-chip');
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const q = (input?.value ?? '').toLowerCase();
+      const activeChips = Array.from(chips).filter(c => c.classList.contains('active')).map(c => c.dataset.value);
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const tags = (row.dataset.tags ?? '').split(',').map(t => t.trim());
+        const matchQ = !q || text.includes(q);
+        const matchChip = !activeChips.length || activeChips.some(v => tags.includes(v));
+        row.style.display = (matchQ && matchChip) ? '' : 'none';
+      });
+    }
+
+    input?.addEventListener('input', applyFilters);
+    chips.forEach(c => {
+      c.setAttribute('tabindex', '0');
+      const toggle = () => { c.classList.toggle('active'); applyFilters(); };
+      c.addEventListener('click', toggle);
+      c.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+
+    table.querySelectorAll('th[data-sort-by]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sortBy;
+        const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+        table.querySelectorAll('th[data-sort-by]').forEach(t => delete t.dataset.sortDir);
+        th.dataset.sortDir = dir;
+        rows.sort((a, b) => {
+          const av = a.querySelector(`[data-${key}]`)?.dataset[key] ?? a.querySelector('td')?.innerText ?? '';
+          const bv = b.querySelector(`[data-${key}]`)?.dataset[key] ?? b.querySelector('td')?.innerText ?? '';
+          const cmp = isNaN(Number(av)) || isNaN(Number(bv))
+            ? String(av).localeCompare(String(bv), 'ja')
+            : Number(av) - Number(bv);
+          return dir === 'asc' ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+}
+
+function initSliders() {
+  const FORMULA_WHITELIST = /^[\d\s+\-*/().x]+$/;
+  document.querySelectorAll('.slider-control').forEach(ctrl => {
+    const input = ctrl.querySelector('input[type=range]');
+    const output = ctrl.querySelector('.slider-output');
+    const formula = ctrl.dataset.formula ?? 'x';
+    if (!input || !output) return;
+    if (!FORMULA_WHITELIST.test(formula)) {
+      output.textContent = 'rejected';
+      return;
+    }
+    let fn;
+    try { fn = new Function('x', `return ${formula};`); }
+    catch (e) { output.textContent = 'rejected'; return; }
+    function update() {
+      const x = Number(input.value);
+      try {
+        const result = fn(x);
+        output.textContent = typeof result === 'number' ? result.toFixed(2) : String(result);
+      } catch (e) { output.textContent = 'error'; }
+    }
+    input.addEventListener('input', update);
+    update();
+  });
+}
+
+function initCollapsibles() {
+  document.querySelectorAll('details.collapsible').forEach(details => {
+    const summary = details.querySelector('summary');
+    if (!summary) return;
+    const content = Array.from(details.children).filter(c => c.tagName !== 'SUMMARY');
+    if (!content.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'collapsible-content';
+    content.forEach(c => wrap.appendChild(c));
+    details.appendChild(wrap);
+
+    summary.addEventListener('click', e => {
+      e.preventDefault();
+      if (details.open) {
+        wrap.style.height = wrap.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+          wrap.style.height = '0';
+          wrap.addEventListener('transitionend', () => {
+            details.open = false;
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      } else {
+        details.open = true;
+        wrap.style.height = '0';
+        requestAnimationFrame(() => {
+          wrap.style.height = wrap.scrollHeight + 'px';
+          wrap.addEventListener('transitionend', () => {
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      }
+    });
+  });
+}
+
+function initScrollProgress() {
+  const bar = document.querySelector('.scroll-progress');
+  if (!bar) return;
+  let ticking = false;
+  function update() {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = total > 0 ? window.scrollY / total : 0;
+    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, ratio))})`;
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  update();
+}
+</script>
+
+</body>
+</html>
