@@ -7,7 +7,7 @@
 # 生成物
 # 末尾 /* で「中身を 1 つずつ ignore」にしないと、配下の ! 例外が効かない
 .docs/output/*
-# ただし explain-in-html/ は手作業生成物なので追跡対象
+# ただし explain-in-html/ は追跡対象
 !.docs/output/explain-in-html/
 
 # プラン出力先
@@ -21,3 +21,6 @@
 
 # .env
 .env
+
+# C-4 検証用 sandbox (独立 git リポ・検証専用・使い捨て、node_modules 含む)
+c4-e2e-sandbox/
