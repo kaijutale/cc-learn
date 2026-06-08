@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>auto-memory 選別 — 37本を rules へ返すか memory に残すか</title>
+<style>
+:root {
+  /* v5 Thariq Dark Editorial — Thariq Shihipar Design System (2026-05) inspired
+     CSS class 名は v3/v4 完全互換、palette だけ書換。Google Fonts 依存解消。 */
+  --bg-deep:     #141413;   /* page bg (warm slate) */
+  --bg-surface:  #1F1E1B;   /* card bg (panel) */
+  --bg-card:     #1F1E1B;   /* card bg (alias) */
+  --bg-sub:      #252420;   /* subtle bg (sub panel) */
+  --border-soft: #3D3D3A;   /* border (warm gray-700) */
+  --shadow:      #0F0E0D;   /* code block bg (deepest) */
+  --accent-line: #3D3D3A;
+
+  --copper:        #E63946;   /* primary accent (vivid red) */
+  --copper-bright: #F26B75;   /* highlight (bright red) */
+  --rust:          #B5202C;   /* warning/danger (deep crimson) */
+  --moss:          #D9A05B;   /* secondary accent (warm amber) */
+  --moss-dark:     #B07C3E;   /* deep amber */
+  --oat:           #E3DACC;   /* highlight bg (warm cream pill) */
+  --oat-tint:      #4A4438;   /* oat dark tinted (sub bg) */
+
+  --ivory:  #FAF9F5;   /* primary text */
+  --cream:  #F0EEE6;   /* warm text fallback */
+  --pearl:  #B8B5AC;   /* body text / secondary */
+  --gray-400: #87867F; /* tertiary text */
+  --gray-600: #5D5C58; /* deepest sub text */
+
+  --serif: ui-serif, Georgia, 'Times New Roman', Times, serif;
+  --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono:  ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--ivory);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.65;
+  min-height: 100vh;
+  padding: 72px 24px 96px;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header trio === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(36px, 5.4vw, 56px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 600; }
+
+/* === Stats / Metrics (Thariq style 4-col) === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 56px;
+}
+@media (max-width: 720px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative;
+}
+.stat.featured { border-left: 3px solid var(--copper); }
+.stat .num {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--gray-400);
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12.5px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section head (Thariq numbered badge pattern) === */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 64px 0 28px;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  background: var(--oat);
+  color: var(--bg-deep);
+  padding: 4px 11px;
+  border-radius: 999px;
+  text-transform: none;
+  white-space: nowrap;
+}
+.section-head h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 24px; margin-bottom: 72px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 28px 32px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(2px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: var(--serif);
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 0.95;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ivory);
+  line-height: 1.3;
+}
+
+.progress-meter { margin-bottom: 20px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 5px; background: var(--bg-deep); position: relative; overflow: hidden; border-radius: 999px; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 18px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 10px;
+}
+.dual h4 {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.6; }
+.dual code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 3px;
+}
+
+.gap-block {
+  margin: 18px 0;
+  padding: 18px 22px;
+  background: rgba(181, 32, 44, 0.12);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 10px 10px 0;
+}
+.gap-block .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 6px;
+  display: block;
+  font-weight: 600;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
+  margin-top: 22px;
+  border-top: 1.5px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.04em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 999px;
+}
+.verdict-row .severity.harmless { background: rgba(217, 160, 91, 0.18); color: var(--moss); border-color: var(--moss-dark); }
+.verdict-row .severity.low      { background: rgba(230, 57, 70, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.verdict-row .severity.medium   { background: rgba(181, 32, 44, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.verdict-row .severity.high     { background: rgba(230, 57, 70, 0.32); color: var(--ivory); border-color: var(--copper); }
+
+/* === Roadmap (Thariq milestone timeline pattern) === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  margin-bottom: 72px;
+}
+.roadmap h2 {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--ivory);
+}
+.roadmap .sub {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--pearl);
+  letter-spacing: 0.08em;
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+
+.timeline { margin: 8px 0; }
+.tl-item {
+  display: grid;
+  grid-template-columns: 110px 28px 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 0;
+  position: relative;
+}
+.tl-item .session {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.04em;
+  padding-top: 6px;
+  text-transform: uppercase;
+}
+.tl-item .dot-line {
+  position: relative;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+.tl-item .dot-line::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+  margin-top: 8px;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.tl-item.current .dot-line::before { background: var(--copper); }
+.tl-item.done .dot-line::before { background: var(--moss); border-color: var(--moss); }
+.tl-item .dot-line::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: -14px;
+  width: 2px;
+  background: var(--border-soft);
+  left: 50%;
+  transform: translateX(-50%);
+}
+.tl-item:last-child .dot-line::after { display: none; }
+.tl-item h4 {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin-bottom: 4px;
+}
+.tl-item p { font-size: 14.5px; color: var(--pearl); line-height: 1.55; }
+.tl-item code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--copper-bright);
+  background: var(--bg-deep);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* === Plain prose === */
+.prose { margin-bottom: 40px; }
+.prose p { font-size: 16px; color: var(--pearl); margin-bottom: 14px; line-height: 1.75; }
+.prose p:first-of-type { color: var(--cream); }
+.prose strong { color: var(--ivory); font-weight: 600; }
+.prose em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--bg-sub);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+.prose ul, .prose ol { margin: 14px 0 16px 26px; }
+.prose li { font-size: 16px; color: var(--pearl); margin-bottom: 6px; line-height: 1.65; }
+.prose li strong { color: var(--ivory); }
+
+/* === Code block === */
+.code-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 22px 0;
+  line-height: 1.6;
+}
+.code-block .kw  { color: var(--copper-bright); font-weight: 600; }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--gray-400); font-style: normal; }
+
+/* === Pull quote (italic 廃止、color + serif + 〝〟 で) === */
+.pull-quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 14px 0 14px 26px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 14px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 22px 0;
+  font-size: 14.5px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.data-table th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  font-weight: 500;
+}
+.data-table td {
+  color: var(--pearl);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table td:first-child { color: var(--ivory); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(230, 57, 70, 0.05); }
+
+/* === Closing === */
+.closing {
+  margin-top: 80px;
+  padding-top: 36px;
+  border-top: 1.5px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1.55;
+  color: var(--cream);
+  max-width: 600px;
+  margin: 0 auto 22px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* === v5 Focus & Accessibility === */
+:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+}
+
+/* === v5 Scroll progress bar === */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--copper);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 100;
+  transition: transform 0.05s linear;
+  pointer-events: none;
+}
+
+/* === v5 TOC === */
+.toc {
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 24px 0 48px;
+}
+.toc .toc-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 14px;
+}
+.toc-list { list-style: none; margin: 0; padding: 0; }
+.toc-list li { font-size: 14.5px; margin-bottom: 6px; }
+.toc-link {
+  color: var(--ivory);
+  text-decoration: none;
+  display: inline-flex;
+  gap: 12px;
+  transition: color 0.15s;
+}
+.toc-link:hover { color: var(--copper-bright); }
+.toc-link.active { color: var(--copper-bright); font-weight: 600; }
+.toc-link .num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gray-400);
+  width: 24px;
+}
+.toc-toggle {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--copper);
+  cursor: pointer;
+  user-select: none;
+  display: inline-block;
+}
+
+/* === v5 Collapsible (details) === */
+details.collapsible {
+  margin: 22px 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+details.collapsible[open] { border-left: 3px solid var(--copper); }
+details.collapsible > summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ivory);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: color 0.2s;
+  font-weight: 500;
+}
+details.collapsible > summary:hover { color: var(--copper-bright); }
+details.collapsible > summary::-webkit-details-marker { display: none; }
+details.collapsible > summary::before {
+  content: '▶';
+  color: var(--copper);
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+details.collapsible[open] > summary::before { transform: rotate(90deg); }
+.collapsible-content {
+  overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+details.collapsible > *:not(summary):not(.collapsible-content) { margin-top: 14px; }
+
+/* === v5 Copy button === */
+.copy-btn {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper);
+  background: transparent;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  margin-left: 8px;
+  font-weight: 500;
+}
+.copy-btn:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: var(--copper-bright);
+  color: var(--copper-bright);
+}
+.copy-btn:active { transform: scale(0.98); }
+.copy-btn.copied {
+  background: rgba(217, 160, 91, 0.15);
+  border-color: var(--moss);
+  color: var(--moss);
+}
+.copy-btn.copied::after { content: ' ✓'; }
+
+/* === v5 Copy-prompt-bar === */
+.copy-prompt-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg-sub);
+  border-top: 1.5px solid var(--border-soft);
+  padding: 14px 24px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  cursor: pointer;
+  z-index: 80;
+  transition: background 0.2s, color 0.2s;
+}
+.copy-prompt-bar:hover { background: rgba(230, 57, 70, 0.1); color: var(--copper-bright); }
+.copy-prompt-bar::before { content: '⌘ '; margin-right: 6px; }
+.copy-prompt-bar.copied { background: rgba(217, 160, 91, 0.15); color: var(--moss); }
+.copy-prompt-bar.copied::after { content: ' ✓'; }
+
+/* === v5 Severity badge (standalone, 7段階) === */
+.severity-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-weight: 500;
+}
+.severity-badge.crit     { background: rgba(181, 32, 44, 0.32); color: var(--ivory);         border-color: var(--rust); }
+.severity-badge.high     { background: rgba(230, 57, 70, 0.32); color: var(--ivory);        border-color: var(--copper); }
+.severity-badge.med      { background: rgba(181, 32, 44, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.severity-badge.low      { background: rgba(230, 57, 70, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.severity-badge.info     { background: rgba(106, 140, 175, 0.18); color: #9FB3CA;            border-color: #4A6B8F; }
+.severity-badge.pass     { background: rgba(217, 160, 91, 0.22); color: var(--moss);        border-color: var(--moss); }
+.severity-badge.harmless { background: rgba(179, 168, 150, 0.15); color: var(--pearl);       border-color: var(--accent-line); }
+
+/* === v5 Annotated code === */
+.anno-code {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 22px;
+  margin: 28px 0;
+  background: var(--shadow);
+  border-left: 2px solid var(--copper);
+  border-radius: 0 12px 12px 0;
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+@media (max-width: 880px) { .anno-code { grid-template-columns: 1fr; } }
+.anno-code-body {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre;
+  color: var(--ivory);
+}
+.anno-line { display: block; padding: 2px 8px; border-left: 2px solid transparent; }
+.anno-line.diff-add { background: rgba(217, 160, 91, 0.10); border-left-color: var(--moss); }
+.anno-line.diff-del { background: rgba(181, 32, 44, 0.10); border-left-color: var(--rust); text-decoration: line-through; opacity: 0.85; }
+.anno-margin {
+  font-size: 12.5px;
+  color: var(--pearl);
+  border-left: 1px dashed var(--border-soft);
+  padding-left: 16px;
+  line-height: 1.6;
+}
+.anno-note { color: var(--copper); margin-bottom: 12px; font-weight: 600; }
+
+/* === v5 Diff block === */
+.diff-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  background: var(--shadow);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 22px 0;
+  overflow-x: auto;
+}
+.diff-line { display: block; padding: 2px 8px; }
+.diff-line.add { background: rgba(217, 160, 91, 0.10); color: var(--moss); }
+.diff-line.del { background: rgba(181, 32, 44, 0.10); color: var(--copper-bright); text-decoration: line-through; opacity: 0.85; }
+.diff-line.ctx { color: var(--gray-400); }
+
+/* === v5 SVG diagram === */
+figure.svg-diagram { margin: 28px auto; max-width: 720px; text-align: center; }
+figure.svg-diagram svg { max-width: 100%; height: auto; }
+.svg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.svg-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.svg-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+
+/* === v5 Filter table === */
+.filter-table { margin: 28px 0; }
+.filter-table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.filter-input {
+  flex: 1;
+  min-width: 220px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ivory);
+  transition: border-color 0.2s;
+}
+.filter-input:focus { outline: none; border-color: var(--copper); }
+.filter-input::placeholder { color: var(--gray-400); }
+.filter-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  background: transparent;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  user-select: none;
+}
+.filter-chip:hover { background: rgba(217, 160, 91, 0.10); color: var(--ivory); }
+.filter-chip:active { transform: scale(0.98); }
+.filter-chip.active { background: rgba(217, 160, 91, 0.22); color: var(--moss); border-color: var(--moss); }
+.filter-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.filter-table th {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+.filter-table th[data-sort-by]:hover { color: var(--copper-bright); }
+.filter-table .sort-indicator::before { content: ' ⇅'; color: var(--gray-400); opacity: 0.5; }
+.filter-table th[data-sort-dir="asc"] .sort-indicator::before { content: ' ↑'; color: var(--copper-bright); opacity: 1; }
+.filter-table th[data-sort-dir="desc"] .sort-indicator::before { content: ' ↓'; color: var(--copper-bright); opacity: 1; }
+.filter-table td { color: var(--pearl); padding: 14px 16px; border-bottom: 1px solid var(--border-soft); }
+.filter-table td:first-child { color: var(--ivory); }
+.filter-table tr:last-child td { border-bottom: none; }
+.filter-table tr:hover td { background: rgba(230, 57, 70, 0.05); }
+
+/* === v5 Slider control === */
+.slider-control {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin: 22px 0;
+}
+.slider-control label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.slider-control input[type=range] {
+  width: 100%;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  margin: 8px 0;
+}
+.slider-control input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.slider-control input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.slider-control input[type=range]::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+}
+.slider-output {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--copper-bright);
+  margin-top: 12px;
+  line-height: 1;
+}
+.slider-formula { margin-top: 10px; font-size: 13px; color: var(--gray-400); }
+.slider-formula code {
+  font-family: var(--mono);
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+
+/* === v5 Cover page (print only) === */
+.cover-page { display: none; }
+
+/* === v5 Print styles === */
+@media print {
+  body {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    padding: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .toc, .copy-btn, .copy-prompt-bar, .scroll-progress { display: none; }
+  .cover-page {
+    display: block;
+    page-break-after: always;
+    padding: 32mm 18mm;
+  }
+  .cover-page h1 {
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 500;
+    color: var(--bg-deep);
+    margin-bottom: 22px;
+  }
+  .cover-page .meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--rust);
+    text-transform: uppercase;
+  }
+  details.collapsible { border: 1px solid var(--gray-600); }
+  details.collapsible > *:not(summary) { display: block !important; }
+  .card, .roadmap, .stat, .data-table, .filter-table table {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    border: 1px solid var(--gray-600);
+    page-break-inside: avoid;
+  }
+  .card-title h3, .prose p, .prose li, .tl-item h4, .tl-item p, .lede, .stat .num, .stat .label {
+    color: var(--bg-deep);
+  }
+  .lede strong, .prose strong { color: var(--rust); }
+  .card-id, h1.title em, .stat.featured .num { color: var(--rust); }
+  h1.title, .closing .quote { color: var(--bg-deep); }
+  .prose em { color: var(--rust); font-weight: 700; font-style: normal; }
+  @page { margin: 18mm; size: A4; }
+}
+</style>
+</head>
+<body>
+<div class="scroll-progress" role="progressbar" aria-label="読了率"></div>
+
+<div class="cover-page">
+  <h1>auto-memory 選別 — 37本を rules へ返すか memory に残すか</h1>
+  <p class="meta">2026.06.07 22:41 JST — explain-in-html v6 Thariq Dark Editorial (red accent)</p>
+</div>
+
+<main class="wrap">
+
+  <div class="eyebrow">Auto-Memory Triage · 2026.06.07 JST</div>
+  <h1 class="title">37本の auto-memory、<br><em>何を rules へ返し</em>、<br>何を残すか</h1>
+  <p class="lede">
+    自動蓄積を <strong>OFF</strong> にした上で、紛れ込んだ <strong>振る舞いルール</strong>を <code>rules/</code> へ返し、
+    <strong>技術ノート・PJ固有の事実</strong>は memory に残す。その振り分けの全体像と、判断が割れる <strong>要再判断</strong>の9本。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat featured"><span class="num">9</span><span class="label">要再判断 / Review</span><span class="desc">計画は rules 行きだが中身が技術ノート</span></div>
+    <div class="stat"><span class="num">18</span><span class="label">rules移行 / Move</span><span class="desc">振る舞い・ポリシー・判断軸</span></div>
+    <div class="stat zero"><span class="num">6</span><span class="label">memory残置 / Keep</span><span class="desc">技術ノート・PJ固有・事実・本人像</span></div>
+    <div class="stat"><span class="num">4</span><span class="label">既存rules吸収 / Absorb</span><span class="desc">美学・セキュリティ</span></div>
+  </div>
+
+  <div class="prose">
+    <p>前提として <strong>自動蓄積を OFF</strong> にした(Claude が学びを勝手に書き込まなくなる)。だが既に溜まった37本はそのまま残る。ここからは「蛇口を締めた後、溜まった水をどう仕分けるか」じゃ。</p>
+    <p>仕分けの軸は3つ + 保留が1つ:</p>
+    <ul>
+      <li><strong>rules移行</strong> — 「常に効かせたい振る舞いルール」。memory の関連検索 (recall) に漏れると守られぬゆえ、毎セッション必ず読まれる <code>~/.claude/rules/</code> へ返す。</li>
+      <li><strong>memory残置</strong> — 「特定の作業でだけ要る技術ノート」「このプロジェクト専用の事実」「ツールの仕様」。常時持つ必要がなく、必要な時だけ呼び出す memory が正しい置き場。</li>
+      <li><strong>既存rules吸収</strong> — 美学は <code>frontend-aesthetics</code>、egress 遮断などのセキュリティは security として、既にあるルールへ統合。</li>
+      <li><em>要再判断</em> — 元の計画は rules 行きにしていたが、中身を見ると振る舞いではなく技術ノートで、rules に置くと常時ロードを汚すもの。ここが議論の本番じゃ。</li>
+    </ul>
+  </div>
+
+  <div class="section-head" id="sec-table">
+    <div class="num">// TABLE · 01</div>
+    <h2>全37本の振り分け</h2>
+  </div>
+
+  <div class="prose">
+    <p>下の表は検索と絞り込みができる。上のラベル (chip) を押すと、その仕分け先だけに絞れる。<strong>行</strong>の見出しを押すと行数で並べ替え ── 巨大ノートが一目で分かる。</p>
+  </div>
+
+  <div class="filter-table">
+    <div class="filter-table-controls">
+      <input class="filter-input" placeholder="検索 (名前・要約・カテゴリで絞り込み)">
+      <span class="filter-chip" data-value="review">要再判断</span>
+      <span class="filter-chip" data-value="move">rules移行</span>
+      <span class="filter-chip" data-value="keep">memory残置</span>
+      <span class="filter-chip" data-value="absorb">既存吸収</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th data-sort-by="name">memory 名 <span class="sort-indicator"></span></th>
+          <th>要約</th>
+          <th data-sort-by="rows">行 <span class="sort-indicator"></span></th>
+          <th>カテゴリ</th>
+          <th>暫定アクション</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-tags="review"><td>multi-agent-debate-design</td><td>debate はモデル混在禁忌、全員 Opus 固定。旧設計の改修方針メモ</td><td data-rows="141">141</td><td>技術ノート(巨大)</td><td><span class="severity-badge crit">要再判断 ◆</span></td></tr>
+        <tr data-tags="review"><td>skill-naming-vs-description</td><td>skill 選択は description 経由、name は手動 invoke 用</td><td data-rows="15">15</td><td>技術ノート(仕様)</td><td><span class="severity-badge high">要再判断</span></td></tr>
+        <tr data-tags="review"><td>tdd-red-stub-anti-pattern</td><td>RED stub で throw は禁忌、undefined 返しが正解</td><td data-rows="14">14</td><td>技術手法</td><td><span class="severity-badge high">要再判断</span></td></tr>
+        <tr data-tags="review"><td>pnpm-workspace-isolation</td><td>workspace 下の独立 PJ は --ignore-workspace 必須</td><td data-rows="18">18</td><td>ツール仕様</td><td><span class="severity-badge high">要再判断</span></td></tr>
+        <tr data-tags="review"><td>disable-model-invocation-blocks-skill-tool</td><td>その frontmatter は Skill ツールの明示呼出も block する</td><td data-rows="22">22</td><td>技術ノート(仕様)</td><td><span class="severity-badge high">要再判断</span></td></tr>
+        <tr data-tags="review"><td>skill-self-reference-bang-syntax</td><td>skill 内で ! 構文を説明すると前処理が exec を試みる罠</td><td data-rows="17">17</td><td>技術ノート(罠)</td><td><span class="severity-badge high">要再判断</span></td></tr>
+        <tr data-tags="review"><td>project-root-cwd-not-monorepo</td><td>project_root は cwd、monorepo 頂点を git_root に使わない</td><td data-rows="25">25</td><td>技術ノート</td><td><span class="severity-badge high">要再判断</span></td></tr>
+        <tr data-tags="review"><td>hooks-deny-install-via-tmp-cp</td><td>hook 設置は /tmp 正本 → cp、Bash 迂回禁止</td><td data-rows="26">26</td><td>技術手順</td><td><span class="severity-badge high">要再判断</span></td></tr>
+        <tr data-tags="review"><td>bash-oracle-authoring-traps</td><td>bash 検証器を書く時の罠5つ</td><td data-rows="26">26</td><td>技術ノート</td><td><span class="severity-badge high">要再判断</span></td></tr>
+        <tr data-tags="move"><td>claude-opus-only-for-multi-agent</td><td>multi-agent は全員 Opus 固定、外部モデル連携なし</td><td data-rows="17">17</td><td>ポリシー</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>harness-layer-selection</td><td>enforcement 層: 既定 L2、被害大か失敗実測で hooks 化</td><td data-rows="15">15</td><td>設計指針</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>personal-skill-context-first</td><td>個人用 skill に公開配布の儀礼を積まない</td><td data-rows="25">25</td><td>振る舞い</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>empirical-validation-required</td><td>書きっぱなし禁止、handoff 前に必ず実機起動検証</td><td data-rows="40">40</td><td>振る舞い</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>no-existing-harness-modification</td><td>協調ハーネス系の既存 skill/subagent は改修禁止</td><td data-rows="26">26</td><td>ポリシー</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>datetime-jst-not-utc</td><td>日時は JST 表記、UTC の機械選択禁止</td><td data-rows="26">26</td><td>振る舞い</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>step-skip-validation-essence</td><td>orchestration 評価は step skip 検証の有無で判定</td><td data-rows="33">33</td><td>評価基準</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>uninterrupted-task-completion</td><td>「止めないで」明示時は AskUserQuestion 最小化</td><td data-rows="33">33</td><td>振る舞い</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>reference-workflow-no-improvise</td><td>推奨ワークフローを独自フレーム化して対比禁止</td><td data-rows="14">14</td><td>振る舞い</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>subscription-only-no-api-billing</td><td>subscription 範囲内のみ、API 従量課金は組込み禁止</td><td data-rows="29">29</td><td>ポリシー</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>no-reflexive-concession</td><td>反射的撤回 → 案変更を繰り返す迎合パターン禁止</td><td data-rows="16">16</td><td>振る舞い</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>claude-md-edit-denied-self-modification</td><td>CLAUDE.md は Edit deny、変更は before/after で手動編集</td><td data-rows="14">14</td><td>制約事実+振る舞い</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>global-harness-completion-scope</td><td>完成判定はグローバルハーネス実体のみで数える</td><td data-rows="16">16</td><td>判断軸</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>judgment-material-global-scope</td><td>ハーネス設計判断に PJ 局所事情を持ち込まない</td><td data-rows="14">14</td><td>判断軸</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>audit-content-before-relocating-harness-component</td><td>部品の移設判断は中身を監査してから</td><td data-rows="19">19</td><td>判断軸</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>reference-resolvable-path</td><td>reference 表記は辿れる glob パスを併記</td><td data-rows="16">16</td><td>振る舞い</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>verification-artifacts-in-project</td><td>検証用 sandbox/成果物は作業 PJ 内に置く</td><td data-rows="14">14</td><td>振る舞い</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="move"><td>report-via-file-not-chat-dump</td><td>別セッションへの報告は file に書いてパス渡し</td><td data-rows="19">19</td><td>振る舞い</td><td><span class="severity-badge low">rules移行</span></td></tr>
+        <tr data-tags="keep"><td>skill-fork-asymmetry</td><td>skill fork の3類型 grayzone、cwd 継承 + 実機検証必須</td><td data-rows="121">121</td><td>技術ノート(巨大)</td><td><span class="severity-badge pass">memory残置</span></td></tr>
+        <tr data-tags="keep"><td>logging-implementation-scope</td><td>/logging は学習・Q&A も記録対象、配置先 local</td><td data-rows="26">26</td><td>PJ運用</td><td><span class="severity-badge pass">memory残置</span></td></tr>
+        <tr data-tags="keep"><td>git-untrack-committer-limitation</td><td>untrack は git rm --cached が正解(committer 不可)</td><td data-rows="20">20</td><td>ツール事実</td><td><span class="severity-badge pass">memory残置</span></td></tr>
+        <tr data-tags="keep"><td>rules-always-loaded-not-progressive-disclosure</td><td>rules/ は paths 無しだと常時フルロード(infra 事実)</td><td data-rows="24">24</td><td>infra事実</td><td><span class="severity-badge pass">memory残置</span></td></tr>
+        <tr data-tags="keep"><td>logging-shared-override-in-this-pj</td><td>この PJ のログは shared 直保存(PJ固有 override)</td><td data-rows="16">16</td><td>PJ固有(固定)</td><td><span class="severity-badge pass">memory残置</span></td></tr>
+        <tr data-tags="keep"><td>user_claude-code-learner</td><td>かもねの Claude Code 学習スタイル(仕組み重視)</td><td data-rows="16">16</td><td>本人像 (user)</td><td><span class="severity-badge pass">memory残置</span></td></tr>
+        <tr data-tags="absorb"><td>spidey-aesthetic-scope-explain-in-html-only</td><td>固定美学は explain-in-html 専用、他波及は scope creep</td><td data-rows="21">21</td><td>美学</td><td><span class="severity-badge info">既存吸収</span></td></tr>
+        <tr data-tags="absorb"><td>html-emphasis-no-italic</td><td>HTML 強調は italic 禁止、color + font-weight 700</td><td data-rows="25">25</td><td>美学</td><td><span class="severity-badge info">既存吸収</span></td></tr>
+        <tr data-tags="absorb"><td>public-repo-pre-publish-scan</td><td>public 化前は認証情報だけでなく出典・由来も精査</td><td data-rows="14">14</td><td>セキュリティ</td><td><span class="severity-badge info">既存吸収</span></td></tr>
+        <tr data-tags="absorb"><td>curl-ban-rationale</td><td>curl/wget 禁止の理由は egress 遮断 + injection</td><td data-rows="18">18</td><td>セキュリティ</td><td><span class="severity-badge info">既存吸収</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-head" id="sec-review">
+    <div class="num">// REVIEW · 02</div>
+    <h2>要再判断 — 計画のまま進めると逆効果</h2>
+  </div>
+
+  <div class="prose">
+    <p>元の計画 (plan) は、この9本も「振る舞いルールだから rules へ」と振り分けていた。だが中身を読むと、多くは <strong>振る舞いの指示ではなく技術ノート</strong> ── 特定の作業をする時だけ要る具体知識じゃ。これを常時ロードの rules に置くと、先の収支検算で否定した「<strong>汚染を常時ロードへ引っ越す</strong>」になる。代表3つを解剖する。</p>
+  </div>
+
+  <section class="cards">
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">A</div>
+        <div class="card-title">
+          <span class="tag">巨大ノート</span>
+          <h3>141行を rules に置く愚</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p><code>multi-agent-debate-design</code>(141行)を、元の計画は rules 行きに分類していた。だが rules は常時ロード ── 141行が <strong>毎セッション必ず読み込まれる</strong>。</p>
+      </div>
+      <div class="gap-block">
+        <span class="label">先の収支検算で否定した動き</span>
+        <p>「技術ノートを rules に移すと、特定作業でしか要らぬ知識が常時ロードを汚染する」。141行はその最たる例。memory の選択呼出(関連する時だけ読む)にこそ宿るべきじゃ。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">暫定: <strong>memory 残置</strong> または詳細遅延置き場へ</span>
+        <span class="severity high">要再判断 ◆</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">B</div>
+        <div class="card-title">
+          <span class="tag">仕様 か 振る舞い か</span>
+          <h3>「skill の挙動」は法か、知識か</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>計画の判定</h4><p>skill 作成グループとして <strong>rules移行</strong>。3本(<code>skill-naming</code> / <code>disable-model-invocation</code> / <code>skill-self-reference</code>)をまとめて。</p></div>
+        <div class="b"><h4>中身の実態</h4><p>「skill 選択は description 経由」等は<strong>客観的な仕様の事実</strong>。守らせる振る舞いではなく、skill を書く時だけ要る知識じゃ。</p></div>
+      </div>
+      <div class="prose">
+        <p>常に効かせたい振る舞いなら rules。作成時だけ要る仕様の事実なら memory。これらは後者寄りに見える。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">暫定: <strong>memory 残置</strong>寄り(skill 作成時に呼出)</span>
+        <span class="severity medium">要再判断</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">C</div>
+        <div class="card-title">
+          <span class="tag">手法 か ルール か</span>
+          <h3>特定作業でだけ要る手順</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>計画が rules 行きにしていた、残る5本:</p>
+        <ul>
+          <li><code>pnpm-workspace-isolation</code> — pnpm 作業時のみ</li>
+          <li><code>tdd-red-stub-anti-pattern</code> — TDD 実践時のみ</li>
+          <li><code>bash-oracle-authoring-traps</code> — bash 検証器を書く時のみ</li>
+          <li><code>project-root-cwd-not-monorepo</code> — パス解決の判断時</li>
+          <li><code>hooks-deny-install-via-tmp-cp</code> — hook 設置時のみ</li>
+        </ul>
+      </div>
+      <div class="gap-block">
+        <span class="label">境界の問い</span>
+        <p>「その作業をする時だけ」要る具体ノウハウか、常に守らせたい汎用ルールか ── 1本ずつ性質が違う。<code>hooks-deny</code> や <code>project-root</code> は判断軸の色が濃く rules 寄り、<code>pnpm</code> や <code>bash-oracle</code> は技術ノート寄り。一括せず個別精査が要る。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">暫定: <strong>1本ずつ精査</strong>(残置 と rules が混在)</span>
+        <span class="severity medium">要再判断</span>
+      </div>
+    </article>
+  </section>
+
+  <blockquote class="pull-quote">
+    振る舞いは rules に、知識は memory に。<br>141行のノートを常時ロードへ移すのは、<br>汚染の引っ越しにすぎぬ。
+    <cite>— 本論・収支検算より</cite>
+  </blockquote>
+
+  <div class="closing">
+    <p class="quote">memory は Claude の手記、<br>rules は そなたの法。<br>手記に法を書かせていたのが、混乱の源じゃ。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.06.07 22:41 JST</p>
+  </div>
+
+</main>
+
+<div class="copy-prompt-bar" aria-label="ページ全体をプロンプトとしてコピー">
+  この仕分け表を LLM 用 prompt として clipboard へコピー
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initCopyButtons();
+  initCopyPromptBar();
+  initTOCScrollSpy();
+  initFilterTables();
+  initSliders();
+  initCollapsibles();
+  initScrollProgress();
+});
+
+function initCopyButtons() {
+  document.querySelectorAll('.copy-btn[data-copy-target]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = document.querySelector(btn.dataset.copyTarget);
+      if (!target) return;
+      const text = target.innerText.trim();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+      }
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 2000);
+    });
+  });
+}
+
+function initCopyPromptBar() {
+  const bar = document.querySelector('.copy-prompt-bar');
+  if (!bar) return;
+  bar.addEventListener('click', async () => {
+    const title = document.title;
+    const h1 = document.querySelector('h1.title')?.innerText ?? '';
+    const sections = Array.from(document.querySelectorAll('.section-head + *, .prose, .cards, .roadmap'))
+      .map(el => el.innerText.trim())
+      .filter(Boolean)
+      .join('\n\n---\n\n');
+    const prompt = `# ${title}\n\n## ${h1}\n\n${sections}`;
+    try { await navigator.clipboard.writeText(prompt); } catch (e) {}
+    bar.classList.add('copied');
+    setTimeout(() => bar.classList.remove('copied'), 2000);
+  });
+}
+
+function initTOCScrollSpy() {
+  const links = document.querySelectorAll('.toc-link[href^="#"]');
+  if (!links.length) return;
+  const headings = Array.from(links)
+    .map(a => document.getElementById(a.getAttribute('href').slice(1)))
+    .filter(Boolean);
+  if (!headings.length) return;
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+  headings.forEach(h => observer.observe(h));
+
+  const toc = document.querySelector('.toc');
+  const toggle = document.querySelector('.toc-toggle');
+  if (toggle && toc) {
+    toggle.addEventListener('click', () => toc.toggleAttribute('data-open'));
+  }
+}
+
+function initFilterTables() {
+  document.querySelectorAll('.filter-table').forEach(table => {
+    const input = table.querySelector('.filter-input');
+    const chips = table.querySelectorAll('.filter-chip');
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const q = (input?.value ?? '').toLowerCase();
+      const activeChips = Array.from(chips).filter(c => c.classList.contains('active')).map(c => c.dataset.value);
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const tags = (row.dataset.tags ?? '').split(',').map(t => t.trim());
+        const matchQ = !q || text.includes(q);
+        const matchChip = !activeChips.length || activeChips.some(v => tags.includes(v));
+        row.style.display = (matchQ && matchChip) ? '' : 'none';
+      });
+    }
+
+    input?.addEventListener('input', applyFilters);
+    chips.forEach(c => {
+      c.setAttribute('tabindex', '0');
+      const toggle = () => { c.classList.toggle('active'); applyFilters(); };
+      c.addEventListener('click', toggle);
+      c.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+
+    table.querySelectorAll('th[data-sort-by]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sortBy;
+        const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+        table.querySelectorAll('th[data-sort-by]').forEach(t => delete t.dataset.sortDir);
+        th.dataset.sortDir = dir;
+        rows.sort((a, b) => {
+          const av = a.querySelector(`[data-${key}]`)?.dataset[key] ?? a.querySelector('td')?.innerText ?? '';
+          const bv = b.querySelector(`[data-${key}]`)?.dataset[key] ?? b.querySelector('td')?.innerText ?? '';
+          const cmp = isNaN(Number(av)) || isNaN(Number(bv))
+            ? String(av).localeCompare(String(bv), 'ja')
+            : Number(av) - Number(bv);
+          return dir === 'asc' ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+}
+
+function initSliders() {
+  const FORMULA_WHITELIST = /^[\d\s+\-*/().x]+$/;
+  document.querySelectorAll('.slider-control').forEach(ctrl => {
+    const input = ctrl.querySelector('input[type=range]');
+    const output = ctrl.querySelector('.slider-output');
+    const formula = ctrl.dataset.formula ?? 'x';
+    if (!input || !output) return;
+    if (!FORMULA_WHITELIST.test(formula)) {
+      output.textContent = 'rejected';
+      return;
+    }
+    let fn;
+    try { fn = new Function('x', `return ${formula};`); }
+    catch (e) { output.textContent = 'rejected'; return; }
+    function update() {
+      const x = Number(input.value);
+      try {
+        const result = fn(x);
+        output.textContent = typeof result === 'number' ? result.toFixed(2) : String(result);
+      } catch (e) { output.textContent = 'error'; }
+    }
+    input.addEventListener('input', update);
+    update();
+  });
+}
+
+function initCollapsibles() {
+  document.querySelectorAll('details.collapsible').forEach(details => {
+    const summary = details.querySelector('summary');
+    if (!summary) return;
+    const content = Array.from(details.children).filter(c => c.tagName !== 'SUMMARY');
+    if (!content.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'collapsible-content';
+    content.forEach(c => wrap.appendChild(c));
+    details.appendChild(wrap);
+
+    summary.addEventListener('click', e => {
+      e.preventDefault();
+      if (details.open) {
+        wrap.style.height = wrap.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+          wrap.style.height = '0';
+          wrap.addEventListener('transitionend', () => {
+            details.open = false;
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      } else {
+        details.open = true;
+        wrap.style.height = '0';
+        requestAnimationFrame(() => {
+          wrap.style.height = wrap.scrollHeight + 'px';
+          wrap.addEventListener('transitionend', () => {
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      }
+    });
+  });
+}
+
+function initScrollProgress() {
+  const bar = document.querySelector('.scroll-progress');
+  if (!bar) return;
+  let ticking = false;
+  function update() {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = total > 0 ? window.scrollY / total : 0;
+    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, ratio))})`;
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  update();
+}
+</script>
+
+</body>
+</html>

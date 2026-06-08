@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>auto-memory 照合結果 — 消せる13、救う21、残す3</title>
+<style>
+:root {
+  --bg-deep:     #141413;
+  --bg-surface:  #1F1E1B;
+  --bg-card:     #1F1E1B;
+  --bg-sub:      #252420;
+  --border-soft: #3D3D3A;
+  --shadow:      #0F0E0D;
+  --accent-line: #3D3D3A;
+
+  --copper:        #E63946;
+  --copper-bright: #F26B75;
+  --rust:          #B5202C;
+  --moss:          #D9A05B;
+  --moss-dark:     #B07C3E;
+  --oat:           #E3DACC;
+  --oat-tint:      #4A4438;
+
+  --ivory:  #FAF9F5;
+  --cream:  #F0EEE6;
+  --pearl:  #B8B5AC;
+  --gray-400: #87867F;
+  --gray-600: #5D5C58;
+
+  --serif: ui-serif, Georgia, 'Times New Roman', Times, serif;
+  --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono:  ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--ivory);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.65;
+  min-height: 100vh;
+  padding: 72px 24px 96px;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(36px, 5.4vw, 56px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 600; }
+
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 56px;
+}
+@media (max-width: 720px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative;
+}
+.stat.featured { border-left: 3px solid var(--copper); }
+.stat .num {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--gray-400);
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12.5px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 64px 0 28px;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  background: var(--oat);
+  color: var(--bg-deep);
+  padding: 4px 11px;
+  border-radius: 999px;
+  text-transform: none;
+  white-space: nowrap;
+}
+.section-head h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  color: var(--ivory);
+}
+
+.cards { display: flex; flex-direction: column; gap: 24px; margin-bottom: 72px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 28px 32px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(2px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: var(--serif);
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 0.95;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ivory);
+  line-height: 1.3;
+}
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 18px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 10px;
+}
+.dual h4 {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.6; }
+.dual code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 3px;
+}
+
+.gap-block {
+  margin: 18px 0;
+  padding: 18px 22px;
+  background: rgba(181, 32, 44, 0.12);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 10px 10px 0;
+}
+.gap-block .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 6px;
+  display: block;
+  font-weight: 600;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
+  margin-top: 22px;
+  border-top: 1.5px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.04em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 999px;
+}
+.verdict-row .severity.harmless { background: rgba(217, 160, 91, 0.18); color: var(--moss); border-color: var(--moss-dark); }
+.verdict-row .severity.low      { background: rgba(230, 57, 70, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.verdict-row .severity.medium   { background: rgba(181, 32, 44, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.verdict-row .severity.high     { background: rgba(230, 57, 70, 0.32); color: var(--ivory); border-color: var(--copper); }
+
+.prose { margin-bottom: 40px; }
+.prose p { font-size: 16px; color: var(--pearl); margin-bottom: 14px; line-height: 1.75; }
+.prose p:first-of-type { color: var(--cream); }
+.prose strong { color: var(--ivory); font-weight: 600; }
+.prose em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--bg-sub);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+.prose ul, .prose ol { margin: 14px 0 16px 26px; }
+.prose li { font-size: 16px; color: var(--pearl); margin-bottom: 6px; line-height: 1.65; }
+.prose li strong { color: var(--ivory); }
+
+.pull-quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 14px 0 14px 26px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 14px;
+}
+
+.closing {
+  margin-top: 80px;
+  padding-top: 36px;
+  border-top: 1.5px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1.55;
+  color: var(--cream);
+  max-width: 600px;
+  margin: 0 auto 22px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+}
+
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--copper);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 100;
+  transition: transform 0.05s linear;
+  pointer-events: none;
+}
+
+.copy-prompt-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg-sub);
+  border-top: 1.5px solid var(--border-soft);
+  padding: 14px 24px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  cursor: pointer;
+  z-index: 80;
+  transition: background 0.2s, color 0.2s;
+}
+.copy-prompt-bar:hover { background: rgba(230, 57, 70, 0.1); color: var(--copper-bright); }
+.copy-prompt-bar::before { content: '⌘ '; margin-right: 6px; }
+.copy-prompt-bar.copied { background: rgba(217, 160, 91, 0.15); color: var(--moss); }
+.copy-prompt-bar.copied::after { content: ' ✓'; }
+
+.severity-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.severity-badge.crit     { background: rgba(181, 32, 44, 0.32); color: var(--ivory);         border-color: var(--rust); }
+.severity-badge.high     { background: rgba(230, 57, 70, 0.32); color: var(--ivory);        border-color: var(--copper); }
+.severity-badge.med      { background: rgba(181, 32, 44, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.severity-badge.low      { background: rgba(230, 57, 70, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.severity-badge.info     { background: rgba(106, 140, 175, 0.18); color: #9FB3CA;            border-color: #4A6B8F; }
+.severity-badge.pass     { background: rgba(217, 160, 91, 0.22); color: var(--moss);        border-color: var(--moss); }
+.severity-badge.harmless { background: rgba(179, 168, 150, 0.15); color: var(--pearl);       border-color: var(--accent-line); }
+
+.filter-table { margin: 28px 0; }
+.filter-table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.filter-input {
+  flex: 1;
+  min-width: 220px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ivory);
+  transition: border-color 0.2s;
+}
+.filter-input:focus { outline: none; border-color: var(--copper); }
+.filter-input::placeholder { color: var(--gray-400); }
+.filter-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  background: transparent;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  user-select: none;
+}
+.filter-chip:hover { background: rgba(217, 160, 91, 0.10); color: var(--ivory); }
+.filter-chip:active { transform: scale(0.98); }
+.filter-chip.active { background: rgba(217, 160, 91, 0.22); color: var(--moss); border-color: var(--moss); }
+.filter-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.filter-table th {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+.filter-table th[data-sort-by]:hover { color: var(--copper-bright); }
+.filter-table .sort-indicator::before { content: ' ⇅'; color: var(--gray-400); opacity: 0.5; }
+.filter-table th[data-sort-dir="asc"] .sort-indicator::before { content: ' ↑'; color: var(--copper-bright); opacity: 1; }
+.filter-table th[data-sort-dir="desc"] .sort-indicator::before { content: ' ↓'; color: var(--copper-bright); opacity: 1; }
+.filter-table td { color: var(--pearl); padding: 13px 16px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+.filter-table td:first-child { color: var(--ivory); font-family: var(--mono); font-size: 12.5px; }
+.filter-table tr:last-child td { border-bottom: none; }
+.filter-table tr:hover td { background: rgba(230, 57, 70, 0.05); }
+
+.cover-page { display: none; }
+
+@media print {
+  body {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    padding: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .copy-prompt-bar, .scroll-progress { display: none; }
+  .cover-page {
+    display: block;
+    page-break-after: always;
+    padding: 32mm 18mm;
+  }
+  .cover-page h1 {
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 500;
+    color: var(--bg-deep);
+    margin-bottom: 22px;
+  }
+  .cover-page .meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--rust);
+    text-transform: uppercase;
+  }
+  .card, .stat, .filter-table table {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    border: 1px solid var(--gray-600);
+    page-break-inside: avoid;
+  }
+  .card-title h3, .prose p, .prose li, .lede, .stat .num, .stat .label {
+    color: var(--bg-deep);
+  }
+  .lede strong, .prose strong { color: var(--rust); }
+  .card-id, h1.title em, .stat.featured .num { color: var(--rust); }
+  h1.title, .closing .quote { color: var(--bg-deep); }
+  .prose em { color: var(--rust); font-weight: 700; font-style: normal; }
+  @page { margin: 18mm; size: A4; }
+}
+</style>
+</head>
+<body>
+<div class="scroll-progress" role="progressbar" aria-label="読了率"></div>
+
+<div class="cover-page">
+  <h1>auto-memory 照合結果 — 消せる13、救う21、残す3</h1>
+  <p class="meta">2026.06.08 09:12 JST — explain-in-html v6 Thariq Dark Editorial (red accent)</p>
+</div>
+
+<main class="wrap">
+
+  <div class="eyebrow">Collation Result · 2026.06.08 JST</div>
+  <h1 class="title">34本を照合した ─<br><em>消せる13</em>、救う21</h1>
+  <p class="lede">
+    かもねの黄金律「<strong>構造でカバー済みなら不要</strong>」を34本に厳密適用した。
+    <strong>13本は安全削除</strong>、<strong>10本は未カバー</strong>(消すと規律が消える)、<strong>11本は一部だけ抜ける</strong>(理由・手順のみ)。残す3本を加えた全37本の地図じゃ。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat zero"><span class="num">13</span><span class="label">安全削除 / Safe</span><span class="desc">既存カバー or 完了ログ</span></div>
+    <div class="stat featured"><span class="num">10</span><span class="label">未カバー / Uncovered</span><span class="desc">消すと規律喪失</span></div>
+    <div class="stat"><span class="num">11</span><span class="label">一部抜け / Partial</span><span class="desc">理由・手順だけ抜ける</span></div>
+    <div class="stat"><span class="num">3</span><span class="label">残す / Keep</span><span class="desc">かもね指定</span></div>
+  </div>
+
+  <div class="prose">
+    <p>照合とは「その memory を消しても、<strong>ハーネスの別の場所(CLAUDE.md / rules / skill / deny / PJ設定)が同じ動作を保つか</strong>」を1本ずつ確かめる作業じゃ。専任の調査エージェントが34本を全部読み、突き合わせた。結果が4色に割れた:</p>
+    <ul>
+      <li><strong>安全削除(13)</strong> ── 既に別の場所に明示されているか、強制(deny)で守られているか、完了済みの作業ログ。消してよい。</li>
+      <li><strong>未カバー(10)</strong> ── 守るべき行動規律だが、<em>どこにも書かれていない</em>。memory が唯一の歯止め。消すと静かに規律が欠ける。</li>
+      <li><strong>一部抜け(11)</strong> ── 禁止(deny)や skill が動作は守るが、「<em>なぜそうするか</em>」「どう手を動かすか」だけが memory にしかない。</li>
+      <li><strong>残す(3)</strong> ── そなたが残すと決めた3本(置き場は後で決める)。</li>
+    </ul>
+    <p>判断ポイントはこうじゃ ── 安全削除13は迷わず消せる。未カバー10は救わねば規律が消える。一部抜け11は「強制で動作は守られるが、理由・手順を捨てるか拾うか」の選択。下の表で4色を絞り込んで確かめよ。</p>
+  </div>
+
+  <div class="section-head" id="sec-table">
+    <div class="num">// MAP · 01</div>
+    <h2>全37本 ─ 照合結果の地図</h2>
+  </div>
+
+  <div class="prose">
+    <p>ラベルを押すと色で絞れる。「未カバー」だけ押せば、救出が要る10本が並ぶ。各行の右が「カバー先 / 抜ける部分」と「推奨」じゃ。</p>
+  </div>
+
+  <div class="filter-table">
+    <div class="filter-table-controls">
+      <input class="filter-input" placeholder="検索 (名前・カバー先で絞り込み)">
+      <span class="filter-chip" data-value="uncovered">未カバー</span>
+      <span class="filter-chip" data-value="partial">一部抜け</span>
+      <span class="filter-chip" data-value="safe">安全削除</span>
+      <span class="filter-chip" data-value="keep">残す</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th data-sort-by="name">memory 名 <span class="sort-indicator"></span></th>
+          <th>判定</th>
+          <th>カバー先 / 抜ける部分</th>
+          <th>推奨</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-tags="uncovered"><td>tdd-red-stub-anti-pattern</td><td><span class="severity-badge crit">未カバー</span></td><td>どこにも無し。RED stub は throw でなく undefined 返し</td><td>rules 救出</td></tr>
+        <tr data-tags="uncovered"><td>pnpm-workspace-isolation</td><td><span class="severity-badge crit">未カバー</span></td><td>どこにも無し。--ignore-workspace 必須の実務知</td><td>rules 救出</td></tr>
+        <tr data-tags="uncovered"><td>harness-layer-selection</td><td><span class="severity-badge crit">未カバー</span></td><td>3つの L1/L2/L3 は全部別概念。enforcement 層選択軸は未収録</td><td>rules 救出(設計中核)</td></tr>
+        <tr data-tags="uncovered"><td>personal-skill-context-first</td><td><span class="severity-badge crit">未カバー</span></td><td>どこにも無し。個人skillに公開儀礼を積まない</td><td>rules 救出</td></tr>
+        <tr data-tags="uncovered"><td>uninterrupted-task-completion</td><td><span class="severity-badge crit">未カバー</span></td><td>CLAUDE.md は逆向き(質問せよ)のみ。「止めるな指示時は確認抑制」が無い</td><td>rules 救出</td></tr>
+        <tr data-tags="uncovered"><td>reference-workflow-no-improvise</td><td><span class="severity-badge crit">未カバー</span></td><td>どこにも無し。参照元の独自フレーム化禁止</td><td>rules 救出</td></tr>
+        <tr data-tags="uncovered"><td>global-harness-completion-scope</td><td><span class="severity-badge crit">未カバー</span></td><td>どこにも無し。完成判定から PJ-local stale を除外</td><td>rules 救出</td></tr>
+        <tr data-tags="uncovered"><td>judgment-material-global-scope</td><td><span class="severity-badge crit">未カバー</span></td><td>どこにも無し。設計判断に PJ 局所事情を混ぜない</td><td>rules 救出</td></tr>
+        <tr data-tags="uncovered"><td>verification-artifacts-in-project</td><td><span class="severity-badge crit">未カバー</span></td><td>どこにも無し(実害実測あり)。検証物は作業PJ内に置く</td><td>rules 救出</td></tr>
+        <tr data-tags="uncovered"><td>report-via-file-not-chat-dump</td><td><span class="severity-badge crit">未カバー</span></td><td>どこにも無し。報告は file 経由、チャット dump 禁止</td><td>rules 救出</td></tr>
+        <tr data-tags="partial"><td>no-existing-harness-modification</td><td><span class="severity-badge med">一部抜け ⚠ 矛盾</span></td><td>現行 rules と衝突。memory=絶対禁止 / 現行=後方互換改修OK。memory が旧版</td><td>削除(方針追認要)</td></tr>
+        <tr data-tags="partial"><td>claude-md-edit-denied</td><td><span class="severity-badge med">一部抜け</span></td><td>Edit/Write deny は強制済。「Bash sed 迂回禁止」の裏道だけ抜ける</td><td>hook 昇格</td></tr>
+        <tr data-tags="partial"><td>curl-ban-rationale</td><td><span class="severity-badge med">一部抜け</span></td><td>禁止は deny+hook で二層強制。「禁止の理由(解禁論への反論)」が抜ける</td><td>hook/note 昇格</td></tr>
+        <tr data-tags="partial"><td>empirical-validation-required</td><td><span class="severity-badge med">一部抜け</span></td><td>「検証必須」は build-test-protocol。「ログ書いた≠完了」の具体が抜ける</td><td>具体を救出</td></tr>
+        <tr data-tags="partial"><td>no-reflexive-concession</td><td><span class="severity-badge med">一部抜け</span></td><td>「迎合禁止」精神はカバー。「反射撤回しない」具体パターンが抜ける</td><td>具体を救出</td></tr>
+        <tr data-tags="partial"><td>skill-fork-asymmetry</td><td><span class="severity-badge med">一部抜け</span></td><td>対策(2層防御)は fork skill に実装。「3類型 grayzone の体系知」が抜ける</td><td>reference 化検討</td></tr>
+        <tr data-tags="partial"><td>skill-self-reference-bang-syntax</td><td><span class="severity-badge med">一部抜け</span></td><td>回避策は実践済。「なぜ exec 暴走するか + 検証 regex」が抜ける</td><td>Gotcha へ</td></tr>
+        <tr data-tags="partial"><td>hooks-deny-install-via-tmp-cp</td><td><span class="severity-badge med">一部抜け</span></td><td>deny 壁はカバー。「設置手順 /tmp→cp + 貼付 gotcha」が抜ける</td><td>手順を救出 or 捨て</td></tr>
+        <tr data-tags="partial"><td>audit-content-before-relocating</td><td><span class="severity-badge med">一部抜け</span></td><td>結論はカバー。「移設前に中身を監査せよ」プロセスが抜ける</td><td>救出 or 捨て</td></tr>
+        <tr data-tags="partial"><td>git-untrack-committer-limitation</td><td><span class="severity-badge med">一部抜け</span></td><td>検出/警告は generating-gitignore。「committer不可+pathspec罠+正解手順」が抜ける</td><td>手順は捨て可</td></tr>
+        <tr data-tags="partial"><td>html-emphasis-no-italic</td><td><span class="severity-badge med">一部抜け</span></td><td>explain-in-html 内はカバー。「他HTML生成への汎用化」が抜ける</td><td>frontend-aesthetics 昇格</td></tr>
+        <tr data-tags="safe"><td>multi-agent-debate-design</td><td><span class="severity-badge pass">安全削除</span></td><td>核心は llm-debate/debating-roles に移植済。141行の改修ログは不要</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>skill-naming-vs-description</td><td><span class="severity-badge pass">安全削除</span></td><td>authoring-skills の設計前提。実害ゼロの知識</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>disable-model-invocation</td><td><span class="severity-badge pass">安全削除</span></td><td>全 fork skill で除去済 + gotchas.md に記録</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>project-root-cwd-not-monorepo</td><td><span class="severity-badge pass">安全削除</span></td><td>rules/plan-workflow + explain-in-html L141 に明示</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>bash-oracle-authoring-traps</td><td><span class="severity-badge pass">安全削除</span></td><td>enforcing-strict-tdd-cycle/scripts/README の Gotcha に5罠移植</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>claude-opus-only-for-multi-agent</td><td><span class="severity-badge pass">安全削除</span></td><td>CLAUDE.md L129-130 + three-elements-harness</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>datetime-jst-not-utc</td><td><span class="severity-badge pass">安全削除</span></td><td>handoff/logging skill に移植(汎用日時はやや弱め)</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>step-skip-validation-essence</td><td><span class="severity-badge pass">安全削除</span></td><td>essence-reviewing-orchestrator で検証機構が実装稼働</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>subscription-only-no-api-billing</td><td><span class="severity-badge pass">安全削除</span></td><td>CLAUDE.md L131 にほぼ逐語</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>logging-implementation-scope</td><td><span class="severity-badge pass">安全削除</span></td><td>logging SKILL.md に逐語移植</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>logging-shared-override-in-this-pj</td><td><span class="severity-badge pass">安全削除</span></td><td>PJ .claude/CLAUDE.md L13-15(PJ固有でグローバル不要)</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>spidey-aesthetic-scope</td><td><span class="severity-badge pass">安全削除</span></td><td>explain-in-html identity に self-contained</td><td>削除</td></tr>
+        <tr data-tags="safe"><td>user_claude-code-learner</td><td><span class="severity-badge harmless">安全削除(陳腐化)</span></td><td>人物プロフィール、数値が古い、行動規律ゼロ</td><td>削除</td></tr>
+        <tr data-tags="keep"><td>reference-resolvable-path</td><td><span class="severity-badge info">残す</span></td><td>そなた指定。reference は辿れる glob パス併記</td><td>memory or rules</td></tr>
+        <tr data-tags="keep"><td>rules-always-loaded-not-progressive-disclosure</td><td><span class="severity-badge info">残す</span></td><td>そなた指定。rules/ は paths 無しで常時フルロード(infra 事実)</td><td>memory 残置</td></tr>
+        <tr data-tags="keep"><td>public-repo-pre-publish-scan</td><td><span class="severity-badge info">残す</span></td><td>そなた指定。public 化前は出典・由来も精査</td><td>memory or security</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-head" id="sec-special">
+    <div class="num">// FLAG · 02</div>
+    <h2>見逃せぬ特例 3つ</h2>
+  </div>
+
+  <section class="cards">
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">A</div>
+        <div class="card-title">
+          <span class="tag">方針の矛盾</span>
+          <h3>memory が古いポリシーで現行を誤誘導</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>memory(旧)</h4><p><code>no-existing-harness-modification</code>: 協調ハーネスは<strong>絶対改修禁止</strong>・必ず新規作成</p></div>
+        <div class="b"><h4>現行 rules / CLAUDE.md</h4><p><strong>後方互換なら改修して深める</strong>のがデフォルト、契約を壊す時だけ新規作成</p></div>
+      </div>
+      <div class="gap-block">
+        <span class="label">なぜ危険か</span>
+        <p>memory が旧・厳格版のまま残り、現行ポリシーと衝突する。これを recall すると「絶対禁止」の古い判断軸で誤誘導される。削除が正しい(現行 rules が新)。ただし方針転換の追認が要る。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">判定: <strong>削除</strong>(現行 rules が上書き済)</span>
+        <span class="severity medium">追認 要</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">B</div>
+        <div class="card-title">
+          <span class="tag">救出でなく構造昇格</span>
+          <h3>抜けるのは「裏道の歯止め」と「理由」</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>この2本は、禁止そのもの(deny)は構造が守るが、抜ける部分の性質が違う:</p>
+        <ul>
+          <li><code>claude-md-edit-denied</code> ── Edit/Write は deny 済。だが <strong>Bash の sed で書き換える裏道</strong>は deny に無い。抜けるのは「裏道の歯止め」。</li>
+          <li><code>curl-ban-rationale</code> ── curl 禁止は deny+hook で二層強制。抜けるのは「<strong>なぜ禁止か</strong>(解禁論を迫られた時の反論)」。</li>
+        </ul>
+        <p>これらは rules に文章で救うより、<strong>裏道を hook で塞ぐ(構造昇格)</strong>のが筋。理由は note 索引に残す手もある。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">推奨: <strong>hook 昇格</strong> + 理由は索引へ</span>
+        <span class="severity low">別宿題</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">C</div>
+        <div class="card-title">
+          <span class="tag">その場で実証</span>
+          <h3>curl 禁止 hook が照合中に発火した</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>照合エージェントが調査中、<code>curl</code> という文字列を含む grep コマンドが、禁止 hook に<strong>実際に弾かれた</strong>(exit 2)。</p>
+      </div>
+      <div class="gap-block">
+        <span class="label">memory が書いていた通り</span>
+        <p><code>curl-ban-rationale</code> は「過剰ブロックは難読化 egress への意図的な保険で、現状維持が正」と記している。その挙動が、照合作業の最中に偶然証明された。理由(rationale)を捨てると、この設計判断の根拠も消える。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">含意: <strong>理由には現役の価値</strong>がある</span>
+        <span class="severity harmless">記録</span>
+      </div>
+    </article>
+  </section>
+
+  <blockquote class="pull-quote">
+    強制(deny)は動作を縛る。<br>だが「なぜそうするか」と「どう振る舞うか」は、<br>言葉でしか残せぬ ── それが rules の領分じゃ。
+    <cite>— 照合の結論</cite>
+  </blockquote>
+
+  <div class="closing">
+    <p class="quote">13本は黄金律が「消してよい」と裏付けた。<br>だが21本には、強制では守れぬ<br>"なぜ"と"行動規律"が宿っておる。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.06.08 09:12 JST</p>
+  </div>
+
+</main>
+
+<div class="copy-prompt-bar" aria-label="ページ全体をプロンプトとしてコピー">
+  この照合結果を LLM 用 prompt として clipboard へコピー
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initCopyPromptBar();
+  initFilterTables();
+  initScrollProgress();
+});
+
+function initCopyPromptBar() {
+  const bar = document.querySelector('.copy-prompt-bar');
+  if (!bar) return;
+  bar.addEventListener('click', async () => {
+    const title = document.title;
+    const h1 = document.querySelector('h1.title')?.innerText ?? '';
+    const sections = Array.from(document.querySelectorAll('.section-head + *, .prose, .cards'))
+      .map(el => el.innerText.trim())
+      .filter(Boolean)
+      .join('\n\n---\n\n');
+    const prompt = `# ${title}\n\n## ${h1}\n\n${sections}`;
+    try { await navigator.clipboard.writeText(prompt); } catch (e) {}
+    bar.classList.add('copied');
+    setTimeout(() => bar.classList.remove('copied'), 2000);
+  });
+}
+
+function initFilterTables() {
+  document.querySelectorAll('.filter-table').forEach(table => {
+    const input = table.querySelector('.filter-input');
+    const chips = table.querySelectorAll('.filter-chip');
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const q = (input?.value ?? '').toLowerCase();
+      const activeChips = Array.from(chips).filter(c => c.classList.contains('active')).map(c => c.dataset.value);
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const tags = (row.dataset.tags ?? '').split(',').map(t => t.trim());
+        const matchQ = !q || text.includes(q);
+        const matchChip = !activeChips.length || activeChips.some(v => tags.includes(v));
+        row.style.display = (matchQ && matchChip) ? '' : 'none';
+      });
+    }
+
+    input?.addEventListener('input', applyFilters);
+    chips.forEach(c => {
+      c.setAttribute('tabindex', '0');
+      const toggle = () => { c.classList.toggle('active'); applyFilters(); };
+      c.addEventListener('click', toggle);
+      c.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+
+    table.querySelectorAll('th[data-sort-by]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sortBy;
+        const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+        table.querySelectorAll('th[data-sort-by]').forEach(t => delete t.dataset.sortDir);
+        th.dataset.sortDir = dir;
+        rows.sort((a, b) => {
+          const av = a.querySelector('td')?.innerText ?? '';
+          const bv = b.querySelector('td')?.innerText ?? '';
+          const cmp = String(av).localeCompare(String(bv), 'ja');
+          return dir === 'asc' ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+}
+
+function initScrollProgress() {
+  const bar = document.querySelector('.scroll-progress');
+  if (!bar) return;
+  let ticking = false;
+  function update() {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = total > 0 ? window.scrollY / total : 0;
+    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, ratio))})`;
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  update();
+}
+</script>
+
+</body>
+</html>
