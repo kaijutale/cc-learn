@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>整理後の memory 配置地図 — 6PJ・12項目のパスと構造</title>
+<style>
+:root {
+  --bg-deep:     #141413;
+  --bg-surface:  #1F1E1B;
+  --bg-card:     #1F1E1B;
+  --bg-sub:      #252420;
+  --border-soft: #3D3D3A;
+  --shadow:      #0F0E0D;
+  --accent-line: #3D3D3A;
+  --copper:        #E63946;
+  --copper-bright: #F26B75;
+  --rust:          #B5202C;
+  --moss:          #D9A05B;
+  --moss-dark:     #B07C3E;
+  --oat:           #E3DACC;
+  --oat-tint:      #4A4438;
+  --ivory:  #FAF9F5;
+  --cream:  #F0EEE6;
+  --pearl:  #B8B5AC;
+  --gray-400: #87867F;
+  --gray-600: #5D5C58;
+  --serif: ui-serif, Georgia, 'Times New Roman', Times, serif;
+  --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono:  ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body { background: var(--bg-deep); color: var(--ivory); font-family: var(--sans); font-weight: 400; font-size: 16px; line-height: 1.65; min-height: 100vh; padding: 72px 24px 96px; position: relative; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--copper); text-transform: uppercase; margin-bottom: 24px; }
+.eyebrow::before { content: ''; width: 28px; height: 1px; background: var(--copper); }
+
+h1.title { font-family: var(--serif); font-weight: 500; font-size: clamp(36px, 5.4vw, 56px); line-height: 1.1; letter-spacing: -0.01em; color: var(--ivory); margin-bottom: 28px; }
+h1.title em { font-style: normal; color: var(--copper-bright); font-weight: 700; }
+h1.title .pct { font-family: var(--mono); font-style: normal; font-size: 0.85em; color: var(--moss); letter-spacing: -0.02em; }
+
+.lede { font-size: 17px; line-height: 1.55; color: var(--pearl); max-width: 640px; margin-bottom: 56px; border-left: 2px solid var(--copper); padding-left: 20px; }
+.lede strong { color: var(--ivory); font-weight: 600; }
+.lede code { font-family: var(--mono); font-size: 14px; background: var(--bg-sub); color: var(--copper-bright); padding: 2px 6px; border: 1px solid var(--border-soft); border-radius: 4px; }
+
+.stat-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 56px; }
+@media (max-width: 720px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+.stat { background: var(--bg-card); border: 1.5px solid var(--border-soft); border-radius: 12px; padding: 18px 20px; position: relative; }
+.stat.featured { border-left: 3px solid var(--copper); }
+.stat .num { font-family: var(--serif); font-size: 28px; font-weight: 500; line-height: 1.1; color: var(--ivory); display: block; }
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--gray-400); margin-top: 10px; text-transform: uppercase; }
+.stat .desc { font-size: 12.5px; color: var(--pearl); margin-top: 6px; line-height: 1.5; }
+
+.section-head { display: flex; align-items: center; gap: 14px; margin: 64px 0 28px; padding-bottom: 14px; border-bottom: 1.5px solid var(--border-soft); }
+.section-head .num { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em; background: var(--oat); color: var(--bg-deep); padding: 4px 11px; border-radius: 999px; text-transform: none; white-space: nowrap; }
+.section-head h2 { font-family: var(--serif); font-weight: 500; font-size: 28px; line-height: 1.25; letter-spacing: -0.005em; color: var(--ivory); }
+
+.cards { display: flex; flex-direction: column; gap: 24px; margin-bottom: 72px; }
+.card { background: var(--bg-card); border: 1.5px solid var(--border-soft); border-left: 3px solid var(--copper); border-radius: 12px; padding: 28px 32px; position: relative; transition: border-left-color 0.3s, transform 0.3s; }
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(2px); }
+.card-head { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px dashed var(--border-soft); }
+.card-id { font-family: var(--serif); font-size: 42px; font-weight: 500; line-height: 0.95; color: var(--copper); font-style: normal; }
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag { display: inline-block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border: 1px solid var(--copper); border-radius: 999px; color: var(--copper); margin-bottom: 10px; }
+.card-title h3 { font-family: var(--serif); font-size: 20px; font-weight: 500; color: var(--ivory); line-height: 1.3; }
+
+.prose { margin-bottom: 40px; }
+.prose p { font-size: 16px; color: var(--pearl); margin-bottom: 14px; line-height: 1.75; }
+.prose p:first-of-type { color: var(--cream); }
+.prose strong { color: var(--ivory); font-weight: 600; }
+.prose em { font-style: normal; color: var(--copper-bright); font-weight: 700; }
+.prose code { font-family: var(--mono); font-size: 14px; background: var(--bg-sub); color: var(--copper-bright); padding: 2px 7px; border: 1px solid var(--border-soft); border-radius: 4px; }
+.prose ul, .prose ol { margin: 14px 0 16px 26px; }
+.prose li { font-size: 16px; color: var(--pearl); margin-bottom: 6px; line-height: 1.65; }
+.prose li strong { color: var(--ivory); }
+
+.code-block { font-family: var(--mono); font-size: 12.5px; background: var(--shadow); color: var(--ivory); padding: 22px 24px; border-left: 2px solid var(--copper); border-radius: 0 10px 10px 0; overflow-x: auto; margin: 22px 0; line-height: 1.75; white-space: pre; }
+.code-block .dir { color: var(--copper-bright); font-weight: 600; }
+.code-block .arrow { color: var(--moss); }
+.code-block .com { color: var(--gray-400); }
+.code-block .gone { color: var(--rust); }
+.code-block .tree { color: var(--gray-600); }
+
+.pull-quote { font-family: var(--serif); font-style: normal; font-size: 22px; line-height: 1.45; color: var(--ivory); border-left: 3px solid var(--copper); padding: 14px 0 14px 26px; margin: 40px 0; max-width: 720px; }
+.pull-quote cite { display: block; font-family: var(--mono); font-style: normal; font-size: 11px; color: var(--gray-400); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 14px; }
+
+.closing { margin-top: 80px; padding-top: 36px; border-top: 1.5px solid var(--border-soft); text-align: center; }
+.closing .quote { font-family: var(--serif); font-style: normal; font-size: 20px; line-height: 1.55; color: var(--cream); max-width: 600px; margin: 0 auto 22px; }
+.closing .quote::before, .closing .quote::after { content: '〝'; color: var(--copper); }
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta { font-family: var(--mono); font-size: 10.5px; color: var(--gray-400); letter-spacing: 0.12em; text-transform: uppercase; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal { opacity: 0; transform: translateY(16px); animation: reveal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  @keyframes reveal { to { opacity: 1; transform: translateY(0); } }
+}
+:focus-visible { outline: 2px solid var(--copper); outline-offset: 3px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; } }
+
+.scroll-progress { position: fixed; top: 0; left: 0; right: 0; height: 1px; background: var(--copper); transform: scaleX(0); transform-origin: left; z-index: 100; transition: transform 0.05s linear; pointer-events: none; }
+
+.severity-badge { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 11px; border-radius: 999px; border: 1px solid; font-weight: 500; }
+.severity-badge.info { background: rgba(106, 140, 175, 0.18); color: #9FB3CA; border-color: #4A6B8F; }
+.severity-badge.pass { background: rgba(217, 160, 91, 0.22); color: var(--moss); border-color: var(--moss); }
+.severity-badge.harmless { background: rgba(179, 168, 150, 0.15); color: var(--pearl); border-color: var(--accent-line); }
+
+.filter-table { margin: 28px 0; }
+.filter-table-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; align-items: center; }
+.filter-input { flex: 1; min-width: 220px; background: var(--bg-sub); border: 1.5px solid var(--border-soft); border-radius: 8px; padding: 10px 14px; font-family: var(--sans); font-size: 14px; color: var(--ivory); transition: border-color 0.2s; }
+.filter-input:focus { outline: none; border-color: var(--copper); }
+.filter-input::placeholder { color: var(--gray-400); }
+.filter-chip { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gray-400); background: transparent; border: 1.5px solid var(--border-soft); border-radius: 999px; padding: 5px 13px; cursor: pointer; transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s; user-select: none; }
+.filter-chip:hover { background: rgba(217, 160, 91, 0.10); color: var(--ivory); }
+.filter-chip:active { transform: scale(0.98); }
+.filter-chip.active { background: rgba(217, 160, 91, 0.22); color: var(--moss); border-color: var(--moss); }
+.filter-table table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--bg-card); border: 1.5px solid var(--border-soft); border-radius: 12px; overflow: hidden; }
+.filter-table th { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gray-400); text-align: left; padding: 12px 16px; border-bottom: 1.5px solid var(--copper); background: var(--bg-sub); cursor: pointer; user-select: none; font-weight: 500; }
+.filter-table th[data-sort-by]:hover { color: var(--copper-bright); }
+.filter-table .sort-indicator::before { content: ' ⇅'; color: var(--gray-400); opacity: 0.5; }
+.filter-table th[data-sort-dir="asc"] .sort-indicator::before { content: ' ↑'; color: var(--copper-bright); opacity: 1; }
+.filter-table th[data-sort-dir="desc"] .sort-indicator::before { content: ' ↓'; color: var(--copper-bright); opacity: 1; }
+.filter-table td { color: var(--pearl); padding: 13px 16px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+.filter-table td:first-child { color: var(--ivory); }
+.filter-table td code { font-family: var(--mono); font-size: 11.5px; color: var(--copper-bright); }
+.filter-table tr:last-child td { border-bottom: none; }
+.filter-table tr:hover td { background: rgba(230, 57, 70, 0.05); }
+.pj-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.03em; color: var(--moss); white-space: nowrap; }
+.pj-badge.home { color: var(--copper-bright); }
+
+.copy-prompt-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-sub); border-top: 1.5px solid var(--border-soft); padding: 14px 24px; text-align: center; font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--copper); cursor: pointer; z-index: 80; transition: background 0.2s, color 0.2s; }
+.copy-prompt-bar:hover { background: rgba(230, 57, 70, 0.1); color: var(--copper-bright); }
+.copy-prompt-bar::before { content: '⌘ '; margin-right: 6px; }
+.copy-prompt-bar.copied { background: rgba(217, 160, 91, 0.15); color: var(--moss); }
+.copy-prompt-bar.copied::after { content: ' ✓'; }
+
+.cover-page { display: none; }
+@media print {
+  body { background: var(--ivory); color: var(--bg-deep); padding: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .copy-prompt-bar, .scroll-progress { display: none; }
+  .cover-page { display: block; page-break-after: always; padding: 32mm 18mm; }
+  .cover-page h1 { font-family: var(--serif); font-size: 38px; font-weight: 500; color: var(--bg-deep); margin-bottom: 22px; }
+  .cover-page .meta { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; color: var(--rust); text-transform: uppercase; }
+  .card, .stat, .filter-table table, .code-block { background: var(--ivory); color: var(--bg-deep); border: 1px solid var(--gray-600); page-break-inside: avoid; }
+  .card-title h3, .prose p, .prose li, .lede, .stat .num, .stat .label { color: var(--bg-deep); }
+  .lede strong, .prose strong { color: var(--rust); }
+  .card-id, h1.title em, .stat.featured .num { color: var(--rust); }
+  h1.title, .closing .quote { color: var(--bg-deep); }
+  .prose em { color: var(--rust); font-weight: 700; font-style: normal; }
+  @page { margin: 18mm; size: A4; }
+}
+</style>
+</head>
+<body>
+<div class="scroll-progress" role="progressbar" aria-label="読了率"></div>
+
+<div class="cover-page">
+  <h1>整理後の memory 配置地図 — 6PJ・12項目のパスと構造</h1>
+  <p class="meta">2026.06.09 10:47 JST — explain-in-html v6 Thariq Dark Editorial (red accent)</p>
+</div>
+
+<main class="wrap">
+
+  <div class="eyebrow">Auto-Memory · Layout Map · 2026.06.09 JST</div>
+  <h1 class="title">大掃除のあと、<br>memory は <em>どこに</em><br>どう置かれているか</h1>
+  <p class="lede">
+    auto-memory はすべて <code>~/.claude/projects/&lt;PJスラッグ&gt;/memory/</code> の下に住む。
+    整理後に生き残ったのは <strong>6プロジェクト・12項目</strong>。本文ファイル10本と、
+    本文を持たず索引に直書きした <strong>2本</strong>。それぞれの<strong>正確なパス・場所・配置の型</strong>を地図にする。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat featured"><span class="num">6</span><span class="label">残存PJ / Projects</span><span class="desc">memory フォルダが残る</span></div>
+    <div class="stat"><span class="num">10</span><span class="label">本文ファイル / Body</span><span class="desc">個別 .md として配置</span></div>
+    <div class="stat zero"><span class="num">2</span><span class="label">索引直書き / Inline</span><span class="desc">toybox / ninmu の MEMORY.md</span></div>
+    <div class="stat"><span class="num">4</span><span class="label">消滅PJ / Removed</span><span class="desc">memory フォルダごと削除</span></div>
+  </div>
+
+  <div class="prose">
+    <p>まず大原則 ── auto-memory は <strong>プロジェクトごとに隔離</strong>されておる。保存場所は必ず:</p>
+    <ul>
+      <li><code>~/.claude/projects/</code> の下に、<strong>プロジェクト1つにつき1ディレクトリ</strong></li>
+      <li>そのディレクトリ名(スラッグ)は、元の絶対パスの <code>/</code> を <code>-</code> に置換したもの。例: <code>/Users/camone/.claude</code> → <code>-Users-camone--claude</code></li>
+      <li>各ディレクトリの中に <code>memory/</code> があり、その中に <code>MEMORY.md</code>(索引)と本文 <code>.md</code> が並ぶ</li>
+    </ul>
+    <p>だから「どのPJの memory か」はディレクトリ名から逆算できる。下が整理後の全体ツリーじゃ。</p>
+  </div>
+
+  <div class="code-block"><span class="dir">~/.claude/projects/</span>
+<span class="tree">│</span>
+<span class="tree">├</span> <span class="dir">-Users-camone--claude/memory/</span>                  <span class="arrow">→</span> <span class="com">/Users/camone/.claude (グローバルハーネス)</span>
+<span class="tree">│  ├</span> MEMORY.md                                  <span class="com"># 索引4本</span>
+<span class="tree">│  ├</span> feedback-grep-before-delete.md
+<span class="tree">│  ├</span> feedback-prefer-skill-over-rules-injection.md
+<span class="tree">│  ├</span> feedback-verify-source-via-pdf.md
+<span class="tree">│  └</span> reference-claude-code-permission-path-semantics.md
+<span class="tree">│</span>
+<span class="tree">├</span> <span class="dir">-Users-camone-dev-claude-code-claude-code-learn/memory/</span>  <span class="arrow">→</span> <span class="com">学習PJ(本リポジトリ)</span>
+<span class="tree">│  ├</span> MEMORY.md                                  <span class="com"># 索引3本</span>
+<span class="tree">│  ├</span> feedback_rules-always-loaded-not-progressive-disclosure.md
+<span class="tree">│  ├</span> feedback_reference-resolvable-path.md
+<span class="tree">│  └</span> feedback_public-repo-pre-publish-scan.md
+<span class="tree">│</span>
+<span class="tree">├</span> <span class="dir">-Users-camone-dev-projects-ios-app-memopo/memory/</span>  <span class="arrow">→</span> <span class="com">memopoアプリ(実装)</span>
+<span class="tree">│  ├</span> MEMORY.md                                  <span class="com"># 索引2本</span>
+<span class="tree">│  ├</span> template-repo-construction-deferred-yagni.md
+<span class="tree">│  └</span> memopo-unified-editor-no-type-split.md
+<span class="tree">│</span>
+<span class="tree">├</span> <span class="dir">-Users-camone-dev-ios-app-ideas/memory/</span>       <span class="arrow">→</span> <span class="com">memopo企画(前身)</span>
+<span class="tree">│  ├</span> MEMORY.md                                  <span class="com"># 索引1本</span>
+<span class="tree">│  └</span> project-memopo-capture-memo-app.md
+<span class="tree">│</span>
+<span class="tree">├</span> <span class="dir">-Users-camone-dev-projects-toybox/memory/</span>     <span class="arrow">→</span> <span class="com">toybox(休止PWAメモ)</span>
+<span class="tree">│  └</span> MEMORY.md                                  <span class="com"># 本文を直書き(本文ファイルなし)</span>
+<span class="tree">│</span>
+<span class="tree">└</span> <span class="dir">-Users-camone-dev-projects-260218-ninmu-ninmu/memory/</span>  <span class="arrow">→</span> <span class="com">ninmu(休止KANBAN)</span>
+<span class="tree">   └</span> MEMORY.md                                  <span class="com"># 本文を直書き(本文ファイルなし)</span>
+
+<span class="gone">✗ 消滅: pixel-leap / roi-fourre / portfolio-site / cc-changelog の memory/ はフォルダごと削除</span></div>
+
+  <div class="section-head" id="sec-table">
+    <div class="num">// PATHS · 01</div>
+    <h2>12項目の正確なパス一覧</h2>
+  </div>
+
+  <div class="prose">
+    <p>検索で絞り込める。<code>~/.claude/projects/</code> は全項目共通ゆえ、表ではそれ以降を示す。chip で「索引型(本文は個別ファイル)」「直書き型(MEMORY.mdに直接)」を切り替えられる。</p>
+  </div>
+
+  <div class="filter-table">
+    <div class="filter-table-controls">
+      <input class="filter-input" placeholder="検索 (memory名・PJで絞り込み)">
+      <span class="filter-chip" data-value="indexed">索引型(個別.md)</span>
+      <span class="filter-chip" data-value="inline">直書き型(MEMORY.md)</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th data-sort-by="name">memory 名 <span class="sort-indicator"></span></th>
+          <th>パス (~/.claude/projects/ 以降)</th>
+          <th>元PJ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-tags="indexed"><td>grep-before-delete<span class="pj-badge home">~/.claude</span></td><td><code>-Users-camone--claude/memory/feedback-grep-before-delete.md</code></td><td>グローバルハーネス</td></tr>
+        <tr data-tags="indexed"><td>prefer-skill-over-rules-injection<span class="pj-badge home">~/.claude</span></td><td><code>-Users-camone--claude/memory/feedback-prefer-skill-over-rules-injection.md</code></td><td>グローバルハーネス</td></tr>
+        <tr data-tags="indexed"><td>verify-source-via-pdf<span class="pj-badge home">~/.claude</span></td><td><code>-Users-camone--claude/memory/feedback-verify-source-via-pdf.md</code></td><td>グローバルハーネス</td></tr>
+        <tr data-tags="indexed"><td>permission-path-semantics<span class="pj-badge home">~/.claude</span></td><td><code>-Users-camone--claude/memory/reference-claude-code-permission-path-semantics.md</code></td><td>グローバルハーネス</td></tr>
+        <tr data-tags="indexed"><td>rules-always-loaded<span class="pj-badge">learn</span></td><td><code>...-claude-code-learn/memory/feedback_rules-always-loaded-not-progressive-disclosure.md</code></td><td>学習PJ(本リポジトリ)</td></tr>
+        <tr data-tags="indexed"><td>reference-resolvable-path<span class="pj-badge">learn</span></td><td><code>...-claude-code-learn/memory/feedback_reference-resolvable-path.md</code></td><td>学習PJ(本リポジトリ)</td></tr>
+        <tr data-tags="indexed"><td>public-repo-pre-publish-scan<span class="pj-badge">learn</span></td><td><code>...-claude-code-learn/memory/feedback_public-repo-pre-publish-scan.md</code></td><td>学習PJ(本リポジトリ)</td></tr>
+        <tr data-tags="indexed"><td>template-repo-deferred-yagni<span class="pj-badge">ios-memopo</span></td><td><code>...-ios-app-memopo/memory/template-repo-construction-deferred-yagni.md</code></td><td>memopoアプリ(実装)</td></tr>
+        <tr data-tags="indexed"><td>memopo-unified-editor<span class="pj-badge">ios-memopo</span></td><td><code>...-ios-app-memopo/memory/memopo-unified-editor-no-type-split.md</code></td><td>memopoアプリ(実装)</td></tr>
+        <tr data-tags="indexed"><td>project-memopo-capture<span class="pj-badge">ios-ideas</span></td><td><code>...-ios-app-ideas/memory/project-memopo-capture-memo-app.md</code></td><td>memopo企画(前身)</td></tr>
+        <tr data-tags="inline"><td>MEMORY.md (直書き)<span class="pj-badge">toybox</span></td><td><code>...-projects-toybox/memory/MEMORY.md</code></td><td>toybox(休止PWA)</td></tr>
+        <tr data-tags="inline"><td>MEMORY.md (直書き)<span class="pj-badge">ninmu</span></td><td><code>...-projects-260218-ninmu-ninmu/memory/MEMORY.md</code></td><td>ninmu(休止KANBAN)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-head" id="sec-patterns">
+    <div class="num">// PATTERNS · 02</div>
+    <h2>配置の3つの型</h2>
+  </div>
+
+  <section class="cards">
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">A</div>
+        <div class="card-title">
+          <span class="tag">索引型 · 4PJ・10本</span>
+          <h3>MEMORY.md(索引) + 個別 .md(本文)</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>標準の形。<code>MEMORY.md</code> が <code>- [タイトル](ファイル名.md) — 要約</code> の行で各本文を**索引**し、本文は個別 <code>.md</code> として並ぶ。~/.claude(4)・learn(3)・ios-memopo(2)・ios-ideas(1)がこれ。MEMORY.md の<strong>先頭が常時ロード</strong>されるので、索引は軽く保つ。</p>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">B</div>
+        <div class="card-title">
+          <span class="tag">直書き型 · 2PJ・2本</span>
+          <h3>MEMORY.md に本文を直接書く</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>toybox と ninmu は本文ファイルを持たず、<code>MEMORY.md</code> 自体に技術スタックや gotcha を**直書き**しておる。本文1ファイルで完結する小規模・休止中PJの形。索引と本文が一体化した姿じゃ。</p>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">C</div>
+        <div class="card-title">
+          <span class="tag">スラッグの読み方</span>
+          <h3>ディレクトリ名から元PJを逆算</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>ディレクトリ名は元の絶対パスの <code>/</code> を <code>-</code> に変えたもの:</p>
+        <ul>
+          <li><code>-Users-camone--claude</code> → <code>/Users/camone/.claude</code>(<code>/.claude</code> が <code>--claude</code> と二重ハイフンになる)</li>
+          <li><code>-Users-camone-dev-projects-toybox</code> → <code>/Users/camone/dev/projects/toybox</code></li>
+        </ul>
+        <p>逆に辿れば、memory が**どのプロジェクトの記憶か**が一目で分かる。</p>
+      </div>
+    </article>
+  </section>
+
+  <blockquote class="pull-quote">
+    記憶はプロジェクトごとに隔離され、<br>スラッグがその出身地を指し示す。<br>12項目それぞれに、確かな住所がある。
+    <cite>— 整理後の配置地図より</cite>
+  </blockquote>
+
+  <div class="closing">
+    <p class="quote">どこに何が住むかが分かれば、<br>記憶は迷子にならぬ。<br>6つの棚に、12の記憶が整然と並ぶ。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.06.09 10:47 JST · 残存6PJ / 12項目</p>
+  </div>
+
+</main>
+
+<div class="copy-prompt-bar" aria-label="ページ全体をプロンプトとしてコピー">
+  この配置地図を LLM 用 prompt として clipboard へコピー
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initCopyPromptBar();
+  initFilterTables();
+  initScrollProgress();
+});
+
+function initCopyPromptBar() {
+  const bar = document.querySelector('.copy-prompt-bar');
+  if (!bar) return;
+  bar.addEventListener('click', async () => {
+    const title = document.title;
+    const h1 = document.querySelector('h1.title')?.innerText ?? '';
+    const sections = Array.from(document.querySelectorAll('.section-head + *, .prose, .cards, .code-block'))
+      .map(el => el.innerText.trim())
+      .filter(Boolean)
+      .join('\n\n---\n\n');
+    const prompt = `# ${title}\n\n## ${h1}\n\n${sections}`;
+    try { await navigator.clipboard.writeText(prompt); } catch (e) {}
+    bar.classList.add('copied');
+    setTimeout(() => bar.classList.remove('copied'), 2000);
+  });
+}
+
+function initFilterTables() {
+  document.querySelectorAll('.filter-table').forEach(table => {
+    const input = table.querySelector('.filter-input');
+    const chips = table.querySelectorAll('.filter-chip');
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const q = (input?.value ?? '').toLowerCase();
+      const activeChips = Array.from(chips).filter(c => c.classList.contains('active')).map(c => c.dataset.value);
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const tags = (row.dataset.tags ?? '').split(',').map(t => t.trim());
+        const matchQ = !q || text.includes(q);
+        const matchChip = !activeChips.length || activeChips.some(v => tags.includes(v));
+        row.style.display = (matchQ && matchChip) ? '' : 'none';
+      });
+    }
+
+    input?.addEventListener('input', applyFilters);
+    chips.forEach(c => {
+      c.setAttribute('tabindex', '0');
+      const toggle = () => { c.classList.toggle('active'); applyFilters(); };
+      c.addEventListener('click', toggle);
+      c.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+
+    table.querySelectorAll('th[data-sort-by]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sortBy;
+        const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+        table.querySelectorAll('th[data-sort-by]').forEach(t => delete t.dataset.sortDir);
+        th.dataset.sortDir = dir;
+        rows.sort((a, b) => {
+          const av = a.querySelector(`[data-${key}]`)?.dataset[key] ?? a.querySelector('td')?.innerText ?? '';
+          const bv = b.querySelector(`[data-${key}]`)?.dataset[key] ?? b.querySelector('td')?.innerText ?? '';
+          const cmp = isNaN(Number(av)) || isNaN(Number(bv)) ? String(av).localeCompare(String(bv), 'ja') : Number(av) - Number(bv);
+          return dir === 'asc' ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+}
+
+function initScrollProgress() {
+  const bar = document.querySelector('.scroll-progress');
+  if (!bar) return;
+  let ticking = false;
+  function update() {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = total > 0 ? window.scrollY / total : 0;
+    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, ratio))})`;
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  update();
+}
+</script>
+
+</body>
+</html>

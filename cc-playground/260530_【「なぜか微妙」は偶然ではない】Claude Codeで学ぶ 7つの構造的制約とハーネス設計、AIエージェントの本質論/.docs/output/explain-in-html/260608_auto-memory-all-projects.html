@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全プロジェクトの auto-memory 40本 — 消せる6・規律17・残す17</title>
+<style>
+:root {
+  /* v6 Thariq Dark Editorial — Thariq Shihipar Design System (2026-05) inspired
+     CSS class 名は v3/v4 完全互換、palette だけ書換。Google Fonts 依存解消。 */
+  --bg-deep:     #141413;   /* page bg (warm slate) */
+  --bg-surface:  #1F1E1B;   /* card bg (panel) */
+  --bg-card:     #1F1E1B;   /* card bg (alias) */
+  --bg-sub:      #252420;   /* subtle bg (sub panel) */
+  --border-soft: #3D3D3A;   /* border (warm gray-700) */
+  --shadow:      #0F0E0D;   /* code block bg (deepest) */
+  --accent-line: #3D3D3A;
+
+  --copper:        #E63946;   /* primary accent (vivid red) */
+  --copper-bright: #F26B75;   /* highlight (bright red) */
+  --rust:          #B5202C;   /* warning/danger (deep crimson) */
+  --moss:          #D9A05B;   /* secondary accent (warm amber) */
+  --moss-dark:     #B07C3E;   /* deep amber */
+  --oat:           #E3DACC;   /* highlight bg (warm cream pill) */
+  --oat-tint:      #4A4438;   /* oat dark tinted (sub bg) */
+
+  --ivory:  #FAF9F5;   /* primary text */
+  --cream:  #F0EEE6;   /* warm text fallback */
+  --pearl:  #B8B5AC;   /* body text / secondary */
+  --gray-400: #87867F; /* tertiary text */
+  --gray-600: #5D5C58; /* deepest sub text */
+
+  --serif: ui-serif, Georgia, 'Times New Roman', Times, serif;
+  --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono:  ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--ivory);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.65;
+  min-height: 100vh;
+  padding: 72px 24px 96px;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header trio === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(36px, 5.4vw, 56px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 600; }
+
+/* === Stats / Metrics (Thariq style 4-col) === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 56px;
+}
+@media (max-width: 720px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative;
+}
+.stat.featured { border-left: 3px solid var(--copper); }
+.stat .num {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--gray-400);
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12.5px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section head (Thariq numbered badge pattern) === */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 64px 0 28px;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  background: var(--oat);
+  color: var(--bg-deep);
+  padding: 4px 11px;
+  border-radius: 999px;
+  text-transform: none;
+  white-space: nowrap;
+}
+.section-head h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 24px; margin-bottom: 72px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 28px 32px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(2px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: var(--serif);
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 0.95;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ivory);
+  line-height: 1.3;
+}
+
+.progress-meter { margin-bottom: 20px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 5px; background: var(--bg-deep); position: relative; overflow: hidden; border-radius: 999px; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 18px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 10px;
+}
+.dual h4 {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.6; }
+.dual code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 3px;
+}
+
+.gap-block {
+  margin: 18px 0;
+  padding: 18px 22px;
+  background: rgba(181, 32, 44, 0.12);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 10px 10px 0;
+}
+.gap-block .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 6px;
+  display: block;
+  font-weight: 600;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
+  margin-top: 22px;
+  border-top: 1.5px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.04em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 999px;
+}
+.verdict-row .severity.harmless { background: rgba(217, 160, 91, 0.18); color: var(--moss); border-color: var(--moss-dark); }
+.verdict-row .severity.low      { background: rgba(230, 57, 70, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.verdict-row .severity.medium   { background: rgba(181, 32, 44, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.verdict-row .severity.high     { background: rgba(230, 57, 70, 0.32); color: var(--ivory); border-color: var(--copper); }
+
+/* === Roadmap (Thariq milestone timeline pattern) === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  margin-bottom: 72px;
+}
+.roadmap h2 {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--ivory);
+}
+.roadmap .sub {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--pearl);
+  letter-spacing: 0.08em;
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+
+.timeline { margin: 8px 0; }
+.tl-item {
+  display: grid;
+  grid-template-columns: 110px 28px 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 0;
+  position: relative;
+}
+.tl-item .session {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.04em;
+  padding-top: 6px;
+  text-transform: uppercase;
+}
+.tl-item .dot-line {
+  position: relative;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+.tl-item .dot-line::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+  margin-top: 8px;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.tl-item.current .dot-line::before { background: var(--copper); }
+.tl-item.done .dot-line::before { background: var(--moss); border-color: var(--moss); }
+.tl-item .dot-line::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: -14px;
+  width: 2px;
+  background: var(--border-soft);
+  left: 50%;
+  transform: translateX(-50%);
+}
+.tl-item:last-child .dot-line::after { display: none; }
+.tl-item h4 {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin-bottom: 4px;
+}
+.tl-item p { font-size: 14.5px; color: var(--pearl); line-height: 1.55; }
+.tl-item code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--copper-bright);
+  background: var(--bg-deep);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* === Plain prose === */
+.prose { margin-bottom: 40px; }
+.prose p { font-size: 16px; color: var(--pearl); margin-bottom: 14px; line-height: 1.75; }
+.prose p:first-of-type { color: var(--cream); }
+.prose strong { color: var(--ivory); font-weight: 600; }
+.prose em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--bg-sub);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+.prose ul, .prose ol { margin: 14px 0 16px 26px; }
+.prose li { font-size: 16px; color: var(--pearl); margin-bottom: 6px; line-height: 1.65; }
+.prose li strong { color: var(--ivory); }
+
+/* === Code block === */
+.code-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 22px 0;
+  line-height: 1.6;
+}
+.code-block .kw  { color: var(--copper-bright); font-weight: 600; }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--gray-400); font-style: normal; }
+
+/* === Pull quote (italic 廃止、color + serif + 〝〟 で) === */
+.pull-quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 14px 0 14px 26px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 14px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 22px 0;
+  font-size: 14.5px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.data-table th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  font-weight: 500;
+}
+.data-table td {
+  color: var(--pearl);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table td:first-child { color: var(--ivory); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(230, 57, 70, 0.05); }
+
+/* === Closing === */
+.closing {
+  margin-top: 80px;
+  padding-top: 36px;
+  border-top: 1.5px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1.55;
+  color: var(--cream);
+  max-width: 600px;
+  margin: 0 auto 22px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* === v5 Focus & Accessibility === */
+:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+}
+
+/* === v5 Scroll progress bar === */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--copper);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 100;
+  transition: transform 0.05s linear;
+  pointer-events: none;
+}
+
+/* === v5 TOC === */
+.toc {
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 24px 0 48px;
+}
+.toc .toc-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 14px;
+}
+.toc-list { list-style: none; margin: 0; padding: 0; }
+.toc-list li { font-size: 14.5px; margin-bottom: 6px; }
+.toc-link {
+  color: var(--ivory);
+  text-decoration: none;
+  display: inline-flex;
+  gap: 12px;
+  transition: color 0.15s;
+}
+.toc-link:hover { color: var(--copper-bright); }
+.toc-link.active { color: var(--copper-bright); font-weight: 600; }
+.toc-link .num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gray-400);
+  width: 24px;
+}
+.toc-toggle {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--copper);
+  cursor: pointer;
+  user-select: none;
+  display: inline-block;
+}
+
+/* === v5 Collapsible (details) === */
+details.collapsible {
+  margin: 22px 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+details.collapsible[open] { border-left: 3px solid var(--copper); }
+details.collapsible > summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ivory);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: color 0.2s;
+  font-weight: 500;
+}
+details.collapsible > summary:hover { color: var(--copper-bright); }
+details.collapsible > summary::-webkit-details-marker { display: none; }
+details.collapsible > summary::before {
+  content: '▶';
+  color: var(--copper);
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+details.collapsible[open] > summary::before { transform: rotate(90deg); }
+.collapsible-content {
+  overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+details.collapsible > *:not(summary):not(.collapsible-content) { margin-top: 14px; }
+
+/* === v5 Copy button === */
+.copy-btn {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper);
+  background: transparent;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  margin-left: 8px;
+  font-weight: 500;
+}
+.copy-btn:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: var(--copper-bright);
+  color: var(--copper-bright);
+}
+.copy-btn:active { transform: scale(0.98); }
+.copy-btn.copied {
+  background: rgba(217, 160, 91, 0.15);
+  border-color: var(--moss);
+  color: var(--moss);
+}
+.copy-btn.copied::after { content: ' ✓'; }
+
+/* === v5 Copy-prompt-bar === */
+.copy-prompt-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg-sub);
+  border-top: 1.5px solid var(--border-soft);
+  padding: 14px 24px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  cursor: pointer;
+  z-index: 80;
+  transition: background 0.2s, color 0.2s;
+}
+.copy-prompt-bar:hover { background: rgba(230, 57, 70, 0.1); color: var(--copper-bright); }
+.copy-prompt-bar::before { content: '⌘ '; margin-right: 6px; }
+.copy-prompt-bar.copied { background: rgba(217, 160, 91, 0.15); color: var(--moss); }
+.copy-prompt-bar.copied::after { content: ' ✓'; }
+
+/* === v5 Severity badge (standalone, 7段階) === */
+.severity-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-weight: 500;
+}
+.severity-badge.crit     { background: rgba(181, 32, 44, 0.32); color: var(--ivory);         border-color: var(--rust); }
+.severity-badge.high     { background: rgba(230, 57, 70, 0.32); color: var(--ivory);        border-color: var(--copper); }
+.severity-badge.med      { background: rgba(181, 32, 44, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.severity-badge.low      { background: rgba(230, 57, 70, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.severity-badge.info     { background: rgba(106, 140, 175, 0.18); color: #9FB3CA;            border-color: #4A6B8F; }
+.severity-badge.pass     { background: rgba(217, 160, 91, 0.22); color: var(--moss);        border-color: var(--moss); }
+.severity-badge.harmless { background: rgba(179, 168, 150, 0.15); color: var(--pearl);       border-color: var(--accent-line); }
+
+/* === v5 Annotated code === */
+.anno-code {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 22px;
+  margin: 28px 0;
+  background: var(--shadow);
+  border-left: 2px solid var(--copper);
+  border-radius: 0 12px 12px 0;
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+@media (max-width: 880px) { .anno-code { grid-template-columns: 1fr; } }
+.anno-code-body {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre;
+  color: var(--ivory);
+}
+.anno-line { display: block; padding: 2px 8px; border-left: 2px solid transparent; }
+.anno-line.diff-add { background: rgba(217, 160, 91, 0.10); border-left-color: var(--moss); }
+.anno-line.diff-del { background: rgba(181, 32, 44, 0.10); border-left-color: var(--rust); text-decoration: line-through; opacity: 0.85; }
+.anno-margin {
+  font-size: 12.5px;
+  color: var(--pearl);
+  border-left: 1px dashed var(--border-soft);
+  padding-left: 16px;
+  line-height: 1.6;
+}
+.anno-note { color: var(--copper); margin-bottom: 12px; font-weight: 600; }
+
+/* === v5 Diff block === */
+.diff-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  background: var(--shadow);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 22px 0;
+  overflow-x: auto;
+}
+.diff-line { display: block; padding: 2px 8px; }
+.diff-line.add { background: rgba(217, 160, 91, 0.10); color: var(--moss); }
+.diff-line.del { background: rgba(181, 32, 44, 0.10); color: var(--copper-bright); text-decoration: line-through; opacity: 0.85; }
+.diff-line.ctx { color: var(--gray-400); }
+
+/* === v5 SVG diagram === */
+figure.svg-diagram { margin: 28px auto; max-width: 720px; text-align: center; }
+figure.svg-diagram svg { max-width: 100%; height: auto; }
+.svg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.svg-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.svg-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+
+/* === v5 Filter table === */
+.filter-table { margin: 28px 0; }
+.filter-table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.filter-input {
+  flex: 1;
+  min-width: 220px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ivory);
+  transition: border-color 0.2s;
+}
+.filter-input:focus { outline: none; border-color: var(--copper); }
+.filter-input::placeholder { color: var(--gray-400); }
+.filter-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  background: transparent;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  user-select: none;
+}
+.filter-chip:hover { background: rgba(217, 160, 91, 0.10); color: var(--ivory); }
+.filter-chip:active { transform: scale(0.98); }
+.filter-chip.active { background: rgba(217, 160, 91, 0.22); color: var(--moss); border-color: var(--moss); }
+.filter-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.filter-table th {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+.filter-table th[data-sort-by]:hover { color: var(--copper-bright); }
+.filter-table .sort-indicator::before { content: ' ⇅'; color: var(--gray-400); opacity: 0.5; }
+.filter-table th[data-sort-dir="asc"] .sort-indicator::before { content: ' ↑'; color: var(--copper-bright); opacity: 1; }
+.filter-table th[data-sort-dir="desc"] .sort-indicator::before { content: ' ↓'; color: var(--copper-bright); opacity: 1; }
+.filter-table td { color: var(--pearl); padding: 14px 16px; border-bottom: 1px solid var(--border-soft); }
+.filter-table td:first-child { color: var(--ivory); }
+.filter-table tr:last-child td { border-bottom: none; }
+.filter-table tr:hover td { background: rgba(230, 57, 70, 0.05); }
+.pj-badge {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--moss);
+  white-space: nowrap;
+}
+.pj-badge.home { color: var(--copper-bright); }
+
+/* === v5 Slider control === */
+.slider-control {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin: 22px 0;
+}
+.slider-control label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.slider-control input[type=range] {
+  width: 100%;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  margin: 8px 0;
+}
+.slider-control input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.slider-control input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.slider-control input[type=range]::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+}
+.slider-output {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--copper-bright);
+  margin-top: 12px;
+  line-height: 1;
+}
+.slider-formula { margin-top: 10px; font-size: 13px; color: var(--gray-400); }
+.slider-formula code {
+  font-family: var(--mono);
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+
+/* === v5 Cover page (print only) === */
+.cover-page { display: none; }
+
+/* === v5 Print styles === */
+@media print {
+  body {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    padding: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .toc, .copy-btn, .copy-prompt-bar, .scroll-progress { display: none; }
+  .cover-page {
+    display: block;
+    page-break-after: always;
+    padding: 32mm 18mm;
+  }
+  .cover-page h1 {
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 500;
+    color: var(--bg-deep);
+    margin-bottom: 22px;
+  }
+  .cover-page .meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--rust);
+    text-transform: uppercase;
+  }
+  details.collapsible { border: 1px solid var(--gray-600); }
+  details.collapsible > *:not(summary) { display: block !important; }
+  .card, .roadmap, .stat, .data-table, .filter-table table {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    border: 1px solid var(--gray-600);
+    page-break-inside: avoid;
+  }
+  .card-title h3, .prose p, .prose li, .tl-item h4, .tl-item p, .lede, .stat .num, .stat .label {
+    color: var(--bg-deep);
+  }
+  .lede strong, .prose strong { color: var(--rust); }
+  .card-id, h1.title em, .stat.featured .num { color: var(--rust); }
+  h1.title, .closing .quote { color: var(--bg-deep); }
+  .prose em { color: var(--rust); font-weight: 700; font-style: normal; }
+  @page { margin: 18mm; size: A4; }
+}
+</style>
+</head>
+<body>
+<div class="scroll-progress" role="progressbar" aria-label="読了率"></div>
+
+<div class="cover-page">
+  <h1>全プロジェクトの auto-memory 40本 — 消せる6・規律17・残す17</h1>
+  <p class="meta">2026.06.08 18:31 JST — explain-in-html v6 Thariq Dark Editorial (red accent)</p>
+</div>
+
+<main class="wrap">
+
+  <div class="eyebrow">Auto-Memory Triage · All Projects · 2026.06.08 JST</div>
+  <h1 class="title">全プロジェクトの<br>auto-memory <em>40本</em>を一望。<br>消せるのは <span class="pct">6本</span>だけ</h1>
+  <p class="lede">
+    <strong>~/.claude 本体の24本</strong>に、他9プロジェクトの16本を足した <strong>計40項目</strong>を一枚に統合した。
+    全体を見渡すと、本当に削除してよいのは <strong>6本</strong>。残りは「消すと損な行動規律 17本」と
+    「そのプロジェクトでだけ効く事実 17本」にきれいに二分される。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat"><span class="num">4</span><span class="label">削除 · カバー済 / Covered</span><span class="desc">CLAUDE.md・権限拒否・skill で既に守られている</span></div>
+    <div class="stat"><span class="num">2</span><span class="label">削除 · 完了ログ / Stale</span><span class="desc">skill化済み・検証用ダミーの残骸</span></div>
+    <div class="stat featured"><span class="num">17</span><span class="label">規律 · 未明文 / Rule</span><span class="desc">消すと規律喪失。だが全部 rules 移行は逆効果</span></div>
+    <div class="stat zero"><span class="num">17</span><span class="label">残置 · 固有事実 / Keep</span><span class="desc">そのPJ再開時にだけ効く技術ノート</span></div>
+  </div>
+
+  <div class="prose">
+    <p>自動蓄積はもう <strong>OFF 済み</strong>。10プロジェクト (memory を持つPJ) に散らばった40項目を、全部この一枚に集めた。前半の表で全件を見渡し、後半で「機械処理すると誤る3つの論点」を解剖する。</p>
+    <p>仕分けの黄金律は4つ:</p>
+    <ul>
+      <li><strong>削除 · カバー済 (Covered)</strong> — 同じ内容が既に <code>CLAUDE.md</code> / 権限拒否 (deny) / skill のどこかで効いている。memory に重ねて持つのは冗長。</li>
+      <li><strong>削除 · 完了ログ (Stale)</strong> — 終わった作業の記録や、検証のための使い捨てダミー。残す価値がない。</li>
+      <li><em>規律 · 未明文 (Rule)</em> — どこにも明文化されていない振る舞いの戒め。消すと規律を失う。<strong>ただし全部を「常時読まれる rules」へ移すのは逆効果</strong> ── ここが今回の山場。</li>
+      <li><strong>残置 · 固有事実 (Keep)</strong> — そのプロジェクト特有のバグ・設計判断・休止中アプリの再開メモ。常時持つ必要はなく、関連作業の時だけ呼び出す memory が正しい置き場。</li>
+    </ul>
+    <p>PJ横断で見えた事実が3つある。(1) <strong>~/.claude が40本中24本</strong>と全体の6割を占める最大の置き場。(2) 未明文の規律17本のうち <strong>6本は個別プロジェクトに紛れ込んでいる</strong>が、中身はどのPJでも通じる汎用ルール。(3) <code>fashion</code> プロジェクトの memory は、この調査の最中に消失した (transcript のみ残存)。</p>
+  </div>
+
+  <div class="section-head" id="sec-table">
+    <div class="num">// TABLE · 01</div>
+    <h2>全40項目の振り分け</h2>
+  </div>
+
+  <div class="prose">
+    <p>検索ボックスにプロジェクト名 (例: <code>memopo</code>) を入れれば、そのPJだけに絞れる。上のラベル (chip) で仕分け先を絞り込み、<strong>PJ</strong> や <strong>行</strong> の見出しを押すと並べ替えできる。プロジェクト順 (本数の多い順) に並べてある。</p>
+  </div>
+
+  <div class="filter-table">
+    <div class="filter-table-controls">
+      <input class="filter-input" placeholder="検索 (memory名・要約・PJ名で絞り込み)">
+      <span class="filter-chip" data-value="covered">削除·カバー済</span>
+      <span class="filter-chip" data-value="stale">削除·完了ログ</span>
+      <span class="filter-chip" data-value="rule">規律</span>
+      <span class="filter-chip" data-value="keep">残置</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th data-sort-by="name">memory 名 <span class="sort-indicator"></span></th>
+          <th>要約</th>
+          <th data-sort-by="rows">行 <span class="sort-indicator"></span></th>
+          <th data-sort-by="pj">PJ <span class="sort-indicator"></span></th>
+          <th>判断</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-tags="stale"><td>thariq-implementation-notes</td><td>「skill 化済み」と明記。出典記録が implementation-notes-html skill と重複</td><td data-rows="39">39</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge crit">削除 ◆</span></td></tr>
+        <tr data-tags="covered"><td>handoff-reflects-all-session-work</td><td>handoff はセッション全体のスナップショット。派生成果も反映</td><td data-rows="18">18</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge high">削除</span></td></tr>
+        <tr data-tags="covered"><td>no-raw-internal-labels-in-chat</td><td>会話に内部ラベルを生で出さない。初出定義か平易化</td><td data-rows="19">19</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge high">削除</span></td></tr>
+        <tr data-tags="covered"><td>self-config-edit-denied</td><td>CLAUDE.md・hooks は Edit 拒否で構造ブロック済 (教訓1行は要救出)</td><td data-rows="17">17</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge high">削除</span></td></tr>
+        <tr data-tags="rule"><td>confirm-current-state</td><td>提案・実行の直前に対象を Read で現状再確認。多数本の hub</td><td data-rows="20">20</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>dont-reask-self-established-facts</td><td>セッション内で自分が決めた事項を聞き直さない</td><td data-rows="16">16</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>find-before-create-skill</td><td>新規 skill 作成前に find/ls で同名・空殻の実在確認</td><td data-rows="24">24</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>grep-before-delete</td><td>削除・移動・改名の前に grep -r で参照確認</td><td data-rows="18">18</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>no-fabricating-unread-source-contents</td><td>未読のファイル・課題・出力の中身を想像で補完しない</td><td data-rows="25">25</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>prefer-skill-over-rules-injection</td><td>たまにしか使わぬ知識は rules でなく skill 化。DRY が逆効果になる場面</td><td data-rows="20">20</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律 ★</span></td></tr>
+        <tr data-tags="rule"><td>search-all-projects-before-asserting-absence</td><td>非存在を断定する前に全プロジェクト横断検索</td><td data-rows="20">20</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>stay-on-goal-no-filler-tasks</td><td>完了後に埋め草の次タスクを捏造しない</td><td data-rows="16">16</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>validate-inherited-template-against-harness</td><td>外部由来パターンを踏襲前に本ハーネス思想と照合</td><td data-rows="18">18</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>verify-date-source</td><td>ファイル名に日付を付ける前に意味 (公開日/作成日/DL日) を確認</td><td data-rows="21">21</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>verify-source-via-pdf</td><td>出典の追跡は原典 PDF まで遡る。grep だけで断定しない</td><td data-rows="26">26</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="keep"><td>paths-frontmatter-bug</td><td>paths frontmatter 条件ロードのバグ知見。環境検証済 (最大47行)</td><td data-rows="47">47</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>skill-listing-3-sources</td><td>skill 一覧の3出所 (user/bundled/plugin) 区別。診断時の落とし穴</td><td data-rows="26">26</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>disable-model-invocation-bug</td><td>この frontmatter を付けると skill が一覧から消えるバグ</td><td data-rows="22">22</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>agent-trigger-belongs-in-description</td><td>agent の発火条件と除外は description に co-locate (同居) させる</td><td data-rows="22">22</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>env-ghostty-zellij-ime</td><td>mac環境 (Ghostty+Zellij) の日本語入力候補窓ずれ、0.44.3 で解決済</td><td data-rows="22">22</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>distill-by-domain</td><td>記事の essence 蒸留時、領域 (harness/skill/ui) を先に判定して照合</td><td data-rows="21">21</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>permission-path-semantics</td><td>settings.json の deny/allow のパス解釈4種、実機検証</td><td data-rows="21">21</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>coordination-core-l3-modification</td><td>協調コアは後方互換なら改修可。改修前に依存先 grep、検証で GO</td><td data-rows="18">18</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>plan-output-in-claude-home-non-git</td><td>~/.claude (非git) で Plan 突入時の plan 出力先エッジケース</td><td data-rows="14">14</td><td data-pj="a-home"><span class="pj-badge home">~/.claude</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="rule"><td>mcp-status-vs-execution-diagnose-first</td><td>MCP接続と実行可否は別レイヤー。エラー時に即聞かず自力診断を1ラウンド</td><td data-rows="34">34</td><td data-pj="ios-memopo"><span class="pj-badge">ios-memopo</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="keep"><td>template-repo-construction-deferred-yagni</td><td>scaffold/template 構築を YAGNI で見送り。再提案しないトリガー付き</td><td data-rows="19">19</td><td data-pj="ios-memopo"><span class="pj-badge">ios-memopo</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>memopo-unified-editor-no-type-split</td><td>memopo 設計原則: 入口で分けず1メモ=統合エディタ (Hick's law)</td><td data-rows="16">16</td><td data-pj="ios-memopo"><span class="pj-badge">ios-memopo</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>camone-warm-paper-html-aesthetic</td><td>HTML成果物の美的選好 Warm Paper。※グローバル skill に反映済 (越境)</td><td data-rows="14">14</td><td data-pj="ios-memopo"><span class="pj-badge">ios-memopo</span></td><td><span class="severity-badge pass">残置 ※</span></td></tr>
+        <tr data-tags="keep"><td>rules-always-loaded-not-progressive-disclosure</td><td>rules/ は paths 無しだと常時フルロード。真の遅延化3手段の infra 事実</td><td data-rows="24">24</td><td data-pj="learn"><span class="pj-badge">learn</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="rule"><td>reference-resolvable-path</td><td>出典/参照は番号でなく別セッションでも辿れる glob パスを併記</td><td data-rows="14">14</td><td data-pj="learn"><span class="pj-badge">learn</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>public-repo-pre-publish-scan</td><td>公開前精査は認証情報だけでなく出典・由来も grep。履歴は作り直しで消去</td><td data-rows="14">14</td><td data-pj="learn"><span class="pj-badge">learn</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="keep"><td>project-memopo-capture-memo-app</td><td>memopo の企画本質・技術スタック・市場戦略 (※ios-memopo と二重持ち)</td><td data-rows="18">18</td><td data-pj="ios-ideas"><span class="pj-badge">ios-ideas</span></td><td><span class="severity-badge pass">残置 ※</span></td></tr>
+        <tr data-tags="rule"><td>camone-decision-style-own-vision</td><td>選択肢は叩き台、自分のビジョンで決める。AskUserQuestion は触媒</td><td data-rows="14">14</td><td data-pj="ios-ideas"><span class="pj-badge">ios-ideas</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>camone-edits-settings-json-himself</td><td>settings.json の権限・セキュリティ設定は本人が編集、代行せず diff 提示</td><td data-rows="16">16</td><td data-pj="pixel-leap"><span class="pj-badge">pixel-leap</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="rule"><td>prefer-html-when-text-explanations-loop</td><td>概念説明がテキスト往復2-3回で詰まったら /explain-in-html へ切替</td><td data-rows="14">14</td><td data-pj="pixel-leap"><span class="pj-badge">pixel-leap</span></td><td><span class="severity-badge info">規律</span></td></tr>
+        <tr data-tags="covered"><td>git-write-ops-blocked</td><td>git push/reset/rebase 等は deny 済。構造でカバー、retry はループ</td><td data-rows="14">14</td><td data-pj="roi-fourre"><span class="pj-badge">roi-fourre</span></td><td><span class="severity-badge high">削除</span></td></tr>
+        <tr data-tags="keep"><td>build-requires-resend-key</td><td>RESEND_API_KEY 未設定で build 失敗。re_dummy 注入で回避 (PJ固有 gotcha)</td><td data-rows="12">12</td><td data-pj="portfolio"><span class="pj-badge">portfolio</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="stale"><td>project_memory_timestamp_trial</td><td>Issue #136 検証用の使い捨てダミー。status: archived 明記、完了</td><td data-rows="12">12</td><td data-pj="cc-changelog"><span class="pj-badge">cc-changelog</span></td><td><span class="severity-badge crit">削除 ◆</span></td></tr>
+        <tr data-tags="keep"><td>MEMORY.md (直書き)</td><td>toybox (PWAメモアプリ) の技術スタック確定+設計判断+休止ステータス</td><td data-rows="28">28</td><td data-pj="toybox"><span class="pj-badge">toybox</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+        <tr data-tags="keep"><td>MEMORY.md (直書き)</td><td>ninmu (NARUTO風KANBAN) の技術的学び5項目+休止ステータス</td><td data-rows="24">24</td><td data-pj="ninmu"><span class="pj-badge">ninmu</span></td><td><span class="severity-badge pass">残置</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-head" id="sec-review">
+    <div class="num">// REVIEW · 02</div>
+    <h2>機械処理すると誤る3つの論点</h2>
+  </div>
+
+  <div class="prose">
+    <p>40項目の大半は分類が明快じゃった。だが、ラベルだけ見て一括処理すると誤る論点が3つある。「散らばった規律をどこへ集めるか」「本当に消せる6本」「同じ事実が複数PJに重複する問題」── ここを解剖する。</p>
+  </div>
+
+  <section class="cards">
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">A</div>
+        <div class="card-title">
+          <span class="tag">規律17本の行方</span>
+          <h3>散らばった規律と、移し先の逆説</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>散在している</h4><p>未明文の規律17本のうち、6本は <code>ios-memopo</code> / <code>pixel-leap</code> / <code>ios-ideas</code> / <code>learn</code> に紛れ込んでいる。中身は<strong>どのPJでも通じる汎用ルール</strong>で、特定PJに置く必然がない。</p></div>
+        <div class="b"><h4>だが全部 rules は危険</h4><p>17本すべてを「常時読まれる rules」へ移すと、★ を付けた <code>prefer-skill-over-rules-injection</code> 自身が戒める<strong>常時ロードの肥大</strong>を招く。</p></div>
+      </div>
+      <div class="gap-block">
+        <span class="label">逆説</span>
+        <p>規律を守ろうとして規律を破る形になる。学習PJの方針は既に「振る舞いルールは手動で厳選 (curate)、自動蓄積は OFF」と宣言済み。ゆえに正解は「全件移行」ではなく、<strong>critical-thinking に1-2行で凝縮</strong> + 呼出文脈の明確なものは memory 残置。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">判断: <strong>厳選して手動昇格</strong> + 一部 memory 残置</span>
+        <span class="severity high">設計判断 ◆</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">B</div>
+        <div class="card-title">
+          <span class="tag">本当に消せる6本</span>
+          <h3>削除して情報を失わないもの</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>40本のうち、削除して何も失わないのは6本だけ:</p>
+        <ul>
+          <li><strong>カバー済 (4本)</strong> — <code>handoff-reflects</code> / <code>no-raw-internal-labels</code> / <code>self-config-edit-denied</code> (~/.claude) と <code>git-write-ops-blocked</code> (roi-fourre)。どれも CLAUDE.md か権限拒否で既に効いている</li>
+          <li><strong>完了ログ (2本)</strong> — <code>thariq-implementation-notes</code> (skill 化済み) と <code>project_memory_timestamp_trial</code> (検証用ダミー、archived)</li>
+        </ul>
+      </div>
+      <div class="gap-block">
+        <span class="label">1つだけ条件付き</span>
+        <p><code>self-config-edit-denied</code> は本文末尾に「許可/拒否を読み違えて無駄な編集を試した」教訓がある。これだけは <code>permission-path-semantics</code> へ移してから消すこと。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">判断: <strong>6本削除</strong> (1本は教訓を移してから)</span>
+        <span class="severity medium">明確</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">C</div>
+        <div class="card-title">
+          <span class="tag">重複と越境</span>
+          <h3>同じ事実が二重に住んでいる</h3>
+        </div>
+      </div>
+      <div class="dual">
+        <div class="a"><h4>memopo の二重持ち</h4><p>同じ memopo アプリの記録が <code>ios-memopo</code> (実装フェーズ) と <code>ios-ideas</code> (企画フェーズ) の2PJに分散。<strong>正典がどちらか</strong>を決めて寄せたい。</p></div>
+        <div class="b"><h4>warm-paper の越境</h4><p>HTML美学の選好が <code>ios-memopo</code> にあるが、本文自身が「グローバル skill に反映済み」と書いている。<strong>実体はハーネス側</strong>、memory は経緯ノート。</p></div>
+      </div>
+      <div class="gap-block">
+        <span class="label">休止PJの鮮度</span>
+        <p><code>toybox</code> / <code>ninmu</code> は MEMORY.md に本文直書き。中身は再開時に効く技術メモで残す価値があるが、冒頭の「休止中 (2-3ヶ月前〜)」ステータスは古い。再開時に鮮度確認が要る。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">判断: <strong>正典を一本化</strong>、越境は経緯のみ残す</span>
+        <span class="severity low">要整理</span>
+      </div>
+    </article>
+  </section>
+
+  <blockquote class="pull-quote">
+    40本を一枚に集めて見えた ── 消せるのは6本だけ。<br>規律17は散らばり、固有事実17は各PJに根を張る。<br>掃除の本番は「捨てる」ことではなく「置き場を正す」ことじゃ。
+    <cite>— 本論・全40項目精査より</cite>
+  </blockquote>
+
+  <div class="closing">
+    <p class="quote">memory は各プロジェクトの手記。<br>手記に紛れた「どこでも通じる戒め」を、<br>正しい棚へ戻すのが、真の整頓じゃ。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.06.08 18:31 JST · 全11PJ走査 (fashion は memory 消失)</p>
+  </div>
+
+</main>
+
+<div class="copy-prompt-bar" aria-label="ページ全体をプロンプトとしてコピー">
+  この全PJ仕分け表を LLM 用 prompt として clipboard へコピー
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initCopyButtons();
+  initCopyPromptBar();
+  initTOCScrollSpy();
+  initFilterTables();
+  initSliders();
+  initCollapsibles();
+  initScrollProgress();
+});
+
+function initCopyButtons() {
+  document.querySelectorAll('.copy-btn[data-copy-target]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = document.querySelector(btn.dataset.copyTarget);
+      if (!target) return;
+      const text = target.innerText.trim();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+      }
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 2000);
+    });
+  });
+}
+
+function initCopyPromptBar() {
+  const bar = document.querySelector('.copy-prompt-bar');
+  if (!bar) return;
+  bar.addEventListener('click', async () => {
+    const title = document.title;
+    const h1 = document.querySelector('h1.title')?.innerText ?? '';
+    const sections = Array.from(document.querySelectorAll('.section-head + *, .prose, .cards, .roadmap'))
+      .map(el => el.innerText.trim())
+      .filter(Boolean)
+      .join('\n\n---\n\n');
+    const prompt = `# ${title}\n\n## ${h1}\n\n${sections}`;
+    try { await navigator.clipboard.writeText(prompt); } catch (e) {}
+    bar.classList.add('copied');
+    setTimeout(() => bar.classList.remove('copied'), 2000);
+  });
+}
+
+function initTOCScrollSpy() {
+  const links = document.querySelectorAll('.toc-link[href^="#"]');
+  if (!links.length) return;
+  const headings = Array.from(links)
+    .map(a => document.getElementById(a.getAttribute('href').slice(1)))
+    .filter(Boolean);
+  if (!headings.length) return;
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+  headings.forEach(h => observer.observe(h));
+
+  const toc = document.querySelector('.toc');
+  const toggle = document.querySelector('.toc-toggle');
+  if (toggle && toc) {
+    toggle.addEventListener('click', () => toc.toggleAttribute('data-open'));
+  }
+}
+
+function initFilterTables() {
+  document.querySelectorAll('.filter-table').forEach(table => {
+    const input = table.querySelector('.filter-input');
+    const chips = table.querySelectorAll('.filter-chip');
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const q = (input?.value ?? '').toLowerCase();
+      const activeChips = Array.from(chips).filter(c => c.classList.contains('active')).map(c => c.dataset.value);
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const tags = (row.dataset.tags ?? '').split(',').map(t => t.trim());
+        const matchQ = !q || text.includes(q);
+        const matchChip = !activeChips.length || activeChips.some(v => tags.includes(v));
+        row.style.display = (matchQ && matchChip) ? '' : 'none';
+      });
+    }
+
+    input?.addEventListener('input', applyFilters);
+    chips.forEach(c => {
+      c.setAttribute('tabindex', '0');
+      const toggle = () => { c.classList.toggle('active'); applyFilters(); };
+      c.addEventListener('click', toggle);
+      c.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+
+    table.querySelectorAll('th[data-sort-by]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sortBy;
+        const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+        table.querySelectorAll('th[data-sort-by]').forEach(t => delete t.dataset.sortDir);
+        th.dataset.sortDir = dir;
+        rows.sort((a, b) => {
+          const av = a.querySelector(`[data-${key}]`)?.dataset[key] ?? a.querySelector('td')?.innerText ?? '';
+          const bv = b.querySelector(`[data-${key}]`)?.dataset[key] ?? b.querySelector('td')?.innerText ?? '';
+          const cmp = isNaN(Number(av)) || isNaN(Number(bv))
+            ? String(av).localeCompare(String(bv), 'ja')
+            : Number(av) - Number(bv);
+          return dir === 'asc' ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+}
+
+function initSliders() {
+  const FORMULA_WHITELIST = /^[\d\s+\-*/().x]+$/;
+  document.querySelectorAll('.slider-control').forEach(ctrl => {
+    const input = ctrl.querySelector('input[type=range]');
+    const output = ctrl.querySelector('.slider-output');
+    const formula = ctrl.dataset.formula ?? 'x';
+    if (!input || !output) return;
+    if (!FORMULA_WHITELIST.test(formula)) {
+      output.textContent = 'rejected';
+      return;
+    }
+    let fn;
+    try { fn = new Function('x', `return ${formula};`); }
+    catch (e) { output.textContent = 'rejected'; return; }
+    function update() {
+      const x = Number(input.value);
+      try {
+        const result = fn(x);
+        output.textContent = typeof result === 'number' ? result.toFixed(2) : String(result);
+      } catch (e) { output.textContent = 'error'; }
+    }
+    input.addEventListener('input', update);
+    update();
+  });
+}
+
+function initCollapsibles() {
+  document.querySelectorAll('details.collapsible').forEach(details => {
+    const summary = details.querySelector('summary');
+    if (!summary) return;
+    const content = Array.from(details.children).filter(c => c.tagName !== 'SUMMARY');
+    if (!content.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'collapsible-content';
+    content.forEach(c => wrap.appendChild(c));
+    details.appendChild(wrap);
+
+    summary.addEventListener('click', e => {
+      e.preventDefault();
+      if (details.open) {
+        wrap.style.height = wrap.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+          wrap.style.height = '0';
+          wrap.addEventListener('transitionend', () => {
+            details.open = false;
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      } else {
+        details.open = true;
+        wrap.style.height = '0';
+        requestAnimationFrame(() => {
+          wrap.style.height = wrap.scrollHeight + 'px';
+          wrap.addEventListener('transitionend', () => {
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      }
+    });
+  });
+}
+
+function initScrollProgress() {
+  const bar = document.querySelector('.scroll-progress');
+  if (!bar) return;
+  let ticking = false;
+  function update() {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = total > 0 ? window.scrollY / total : 0;
+    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, ratio))})`;
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  update();
+}
+</script>
+
+</body>
+</html>
