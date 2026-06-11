@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLAUDE.md + rules 常時注入監査 — 毎セッション 14,856 バイトの棚卸し</title>
+<style>
+:root {
+  /* v5 Thariq Dark Editorial — Thariq Shihipar Design System (2026-05) inspired
+     CSS class 名は v3/v4 完全互換、palette だけ書換。Google Fonts 依存解消。 */
+  --bg-deep:     #141413;   /* page bg (warm slate) */
+  --bg-surface:  #1F1E1B;   /* card bg (panel) */
+  --bg-card:     #1F1E1B;   /* card bg (alias) */
+  --bg-sub:      #252420;   /* subtle bg (sub panel) */
+  --border-soft: #3D3D3A;   /* border (warm gray-700) */
+  --shadow:      #0F0E0D;   /* code block bg (deepest) */
+  --accent-line: #3D3D3A;
+
+  --copper:        #E63946;   /* primary accent (vivid red) */
+  --copper-bright: #F26B75;   /* highlight (bright red) */
+  --rust:          #B5202C;   /* warning/danger (deep crimson) */
+  --moss:          #D9A05B;   /* secondary accent (warm amber) */
+  --moss-dark:     #B07C3E;   /* deep amber */
+  --oat:           #E3DACC;   /* highlight bg (warm cream pill) */
+  --oat-tint:      #4A4438;   /* oat dark tinted (sub bg) */
+
+  --ivory:  #FAF9F5;   /* primary text */
+  --cream:  #F0EEE6;   /* warm text fallback */
+  --pearl:  #B8B5AC;   /* body text / secondary */
+  --gray-400: #87867F; /* tertiary text */
+  --gray-600: #5D5C58; /* deepest sub text */
+
+  --serif: ui-serif, Georgia, 'Times New Roman', Times, serif;
+  --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono:  ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--ivory);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.65;
+  min-height: 100vh;
+  padding: 72px 24px 96px;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header trio === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(36px, 5.4vw, 56px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 600; }
+
+/* === Stats / Metrics (Thariq style 4-col) === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 56px;
+}
+@media (max-width: 720px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative;
+}
+.stat.featured { border-left: 3px solid var(--copper); }
+.stat .num {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--gray-400);
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12.5px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section head (Thariq numbered badge pattern) === */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 64px 0 28px;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  background: var(--oat);
+  color: var(--bg-deep);
+  padding: 4px 11px;
+  border-radius: 999px;
+  text-transform: none;
+  white-space: nowrap;
+}
+.section-head h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 24px; margin-bottom: 72px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 28px 32px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(2px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: var(--serif);
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 0.95;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ivory);
+  line-height: 1.3;
+}
+.card .body-note { font-size: 14.5px; color: var(--pearl); line-height: 1.7; margin-bottom: 6px; }
+.card .body-note strong { color: var(--ivory); }
+.card .body-note code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: var(--bg-sub);
+  color: var(--copper-bright);
+  padding: 1px 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+
+.progress-meter { margin-bottom: 20px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 5px; background: var(--bg-deep); position: relative; overflow: hidden; border-radius: 999px; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 18px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 10px;
+}
+.dual h4 {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.6; }
+.dual code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 3px;
+}
+
+.gap-block {
+  margin: 18px 0;
+  padding: 18px 22px;
+  background: rgba(181, 32, 44, 0.12);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 10px 10px 0;
+}
+.gap-block .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 6px;
+  display: block;
+  font-weight: 600;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
+  margin-top: 22px;
+  border-top: 1.5px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.04em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 999px;
+}
+.verdict-row .severity.harmless { background: rgba(217, 160, 91, 0.18); color: var(--moss); border-color: var(--moss-dark); }
+.verdict-row .severity.low      { background: rgba(230, 57, 70, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.verdict-row .severity.medium   { background: rgba(181, 32, 44, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.verdict-row .severity.high     { background: rgba(230, 57, 70, 0.32); color: var(--ivory); border-color: var(--copper); }
+
+/* === Roadmap (Thariq milestone timeline pattern) === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  margin-bottom: 72px;
+}
+.roadmap h2 {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--ivory);
+}
+.roadmap .sub {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--pearl);
+  letter-spacing: 0.08em;
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+
+.timeline { margin: 8px 0; }
+.tl-item {
+  display: grid;
+  grid-template-columns: 110px 28px 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 0;
+  position: relative;
+}
+.tl-item .session {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.04em;
+  padding-top: 6px;
+  text-transform: uppercase;
+}
+.tl-item .dot-line {
+  position: relative;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+.tl-item .dot-line::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+  margin-top: 8px;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.tl-item.current .dot-line::before { background: var(--copper); }
+.tl-item.done .dot-line::before { background: var(--moss); border-color: var(--moss); }
+.tl-item .dot-line::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: -14px;
+  width: 2px;
+  background: var(--border-soft);
+  left: 50%;
+  transform: translateX(-50%);
+}
+.tl-item:last-child .dot-line::after { display: none; }
+.tl-item h4 {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin-bottom: 4px;
+}
+.tl-item p { font-size: 14.5px; color: var(--pearl); line-height: 1.55; }
+.tl-item code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--copper-bright);
+  background: var(--bg-deep);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* === Plain prose === */
+.prose { margin-bottom: 40px; }
+.prose p { font-size: 16px; color: var(--pearl); margin-bottom: 14px; line-height: 1.75; }
+.prose p:first-of-type { color: var(--cream); }
+.prose strong { color: var(--ivory); font-weight: 600; }
+.prose em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--bg-sub);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+.prose ul, .prose ol { margin: 14px 0 16px 26px; }
+.prose li { font-size: 16px; color: var(--pearl); margin-bottom: 6px; line-height: 1.65; }
+.prose li strong { color: var(--ivory); }
+
+/* === Code block === */
+.code-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 22px 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.code-block .kw  { color: var(--copper-bright); font-weight: 600; }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--gray-400); font-style: normal; }
+
+/* === Pull quote (italic 廃止、color + serif + 〝〟 で) === */
+.pull-quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 14px 0 14px 26px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 14px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 22px 0;
+  font-size: 14.5px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.data-table th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  font-weight: 500;
+}
+.data-table td {
+  color: var(--pearl);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table td:first-child { color: var(--ivory); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(230, 57, 70, 0.05); }
+
+/* === Closing === */
+.closing {
+  margin-top: 80px;
+  padding-top: 36px;
+  border-top: 1.5px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1.55;
+  color: var(--cream);
+  max-width: 600px;
+  margin: 0 auto 22px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* === v5 Focus & Accessibility === */
+:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+}
+
+/* === v5 Scroll progress bar === */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--copper);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 100;
+  transition: transform 0.05s linear;
+  pointer-events: none;
+}
+
+/* === v5 TOC === */
+.toc {
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 24px 0 48px;
+}
+.toc .toc-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 14px;
+}
+.toc-list { list-style: none; margin: 0; padding: 0; }
+.toc-list li { font-size: 14.5px; margin-bottom: 6px; }
+.toc-link {
+  color: var(--ivory);
+  text-decoration: none;
+  display: inline-flex;
+  gap: 12px;
+  transition: color 0.15s;
+}
+.toc-link:hover { color: var(--copper-bright); }
+.toc-link.active { color: var(--copper-bright); font-weight: 600; }
+.toc-link .num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gray-400);
+  width: 24px;
+}
+.toc-toggle {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--copper);
+  cursor: pointer;
+  user-select: none;
+  display: inline-block;
+}
+
+/* === v5 Collapsible (details) === */
+details.collapsible {
+  margin: 22px 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+details.collapsible[open] { border-left: 3px solid var(--copper); }
+details.collapsible > summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ivory);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: color 0.2s;
+  font-weight: 500;
+}
+details.collapsible > summary:hover { color: var(--copper-bright); }
+details.collapsible > summary::-webkit-details-marker { display: none; }
+details.collapsible > summary::before {
+  content: '▶';
+  color: var(--copper);
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+details.collapsible[open] > summary::before { transform: rotate(90deg); }
+.collapsible-content {
+  overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+details.collapsible > *:not(summary):not(.collapsible-content) { margin-top: 14px; }
+
+/* === v5 Copy button === */
+.copy-btn {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper);
+  background: transparent;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  margin-left: 8px;
+  font-weight: 500;
+}
+.copy-btn:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: var(--copper-bright);
+  color: var(--copper-bright);
+}
+.copy-btn:active { transform: scale(0.98); }
+.copy-btn.copied {
+  background: rgba(217, 160, 91, 0.15);
+  border-color: var(--moss);
+  color: var(--moss);
+}
+.copy-btn.copied::after { content: ' ✓'; }
+
+/* === v5 Copy-prompt-bar === */
+.copy-prompt-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg-sub);
+  border-top: 1.5px solid var(--border-soft);
+  padding: 14px 24px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  cursor: pointer;
+  z-index: 80;
+  transition: background 0.2s, color 0.2s;
+}
+.copy-prompt-bar:hover { background: rgba(230, 57, 70, 0.1); color: var(--copper-bright); }
+.copy-prompt-bar::before { content: '⌘ '; margin-right: 6px; }
+.copy-prompt-bar.copied { background: rgba(217, 160, 91, 0.15); color: var(--moss); }
+.copy-prompt-bar.copied::after { content: ' ✓'; }
+
+/* === v5 Severity badge (standalone, 7段階) === */
+.severity-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-weight: 500;
+}
+.severity-badge.crit     { background: rgba(181, 32, 44, 0.32); color: var(--ivory);         border-color: var(--rust); }
+.severity-badge.high     { background: rgba(230, 57, 70, 0.32); color: var(--ivory);        border-color: var(--copper); }
+.severity-badge.med      { background: rgba(181, 32, 44, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.severity-badge.low      { background: rgba(230, 57, 70, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.severity-badge.info     { background: rgba(106, 140, 175, 0.18); color: #9FB3CA;            border-color: #4A6B8F; }
+.severity-badge.pass     { background: rgba(217, 160, 91, 0.22); color: var(--moss);        border-color: var(--moss); }
+.severity-badge.harmless { background: rgba(179, 168, 150, 0.15); color: var(--pearl);       border-color: var(--accent-line); }
+
+/* === v5 Annotated code === */
+.anno-code {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 22px;
+  margin: 28px 0;
+  background: var(--shadow);
+  border-left: 2px solid var(--copper);
+  border-radius: 0 12px 12px 0;
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+@media (max-width: 880px) { .anno-code { grid-template-columns: 1fr; } }
+.anno-code-body {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre;
+  color: var(--ivory);
+}
+.anno-line { display: block; padding: 2px 8px; border-left: 2px solid transparent; }
+.anno-line.diff-add { background: rgba(217, 160, 91, 0.10); border-left-color: var(--moss); }
+.anno-line.diff-del { background: rgba(181, 32, 44, 0.10); border-left-color: var(--rust); text-decoration: line-through; opacity: 0.85; }
+.anno-margin {
+  font-size: 12.5px;
+  color: var(--pearl);
+  border-left: 1px dashed var(--border-soft);
+  padding-left: 16px;
+  line-height: 1.6;
+}
+.anno-note { color: var(--copper); margin-bottom: 12px; font-weight: 600; }
+
+/* === v5 Diff block === */
+.diff-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  background: var(--shadow);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 22px 0;
+  overflow-x: auto;
+}
+.diff-line { display: block; padding: 2px 8px; }
+.diff-line.add { background: rgba(217, 160, 91, 0.10); color: var(--moss); }
+.diff-line.del { background: rgba(181, 32, 44, 0.10); color: var(--copper-bright); text-decoration: line-through; opacity: 0.85; }
+.diff-line.ctx { color: var(--gray-400); }
+
+/* === v5 SVG diagram === */
+figure.svg-diagram { margin: 28px auto; max-width: 720px; text-align: center; }
+figure.svg-diagram svg { max-width: 100%; height: auto; }
+.svg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.svg-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.svg-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+
+/* === v5 Filter table === */
+.filter-table { margin: 28px 0; }
+.filter-table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.filter-input {
+  flex: 1;
+  min-width: 220px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ivory);
+  transition: border-color 0.2s;
+}
+.filter-input:focus { outline: none; border-color: var(--copper); }
+.filter-input::placeholder { color: var(--gray-400); }
+.filter-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  background: transparent;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  user-select: none;
+}
+.filter-chip:hover { background: rgba(217, 160, 91, 0.10); color: var(--ivory); }
+.filter-chip:active { transform: scale(0.98); }
+.filter-chip.active { background: rgba(217, 160, 91, 0.22); color: var(--moss); border-color: var(--moss); }
+.filter-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.filter-table th {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+.filter-table th[data-sort-by]:hover { color: var(--copper-bright); }
+.filter-table .sort-indicator::before { content: ' ⇅'; color: var(--gray-400); opacity: 0.5; }
+.filter-table th[data-sort-dir="asc"] .sort-indicator::before { content: ' ↑'; color: var(--copper-bright); opacity: 1; }
+.filter-table th[data-sort-dir="desc"] .sort-indicator::before { content: ' ↓'; color: var(--copper-bright); opacity: 1; }
+.filter-table td { color: var(--pearl); padding: 14px 16px; border-bottom: 1px solid var(--border-soft); }
+.filter-table td:first-child { color: var(--ivory); }
+.filter-table tr:last-child td { border-bottom: none; }
+.filter-table tr:hover td { background: rgba(230, 57, 70, 0.05); }
+
+/* === v5 Slider control === */
+.slider-control {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin: 22px 0;
+}
+.slider-control label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.slider-control input[type=range] {
+  width: 100%;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  margin: 8px 0;
+}
+.slider-control input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.slider-control input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.slider-control input[type=range]::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+}
+.slider-output {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--copper-bright);
+  margin-top: 12px;
+  line-height: 1;
+}
+.slider-formula { margin-top: 10px; font-size: 13px; color: var(--gray-400); }
+.slider-formula code {
+  font-family: var(--mono);
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+
+/* === v5 Cover page (print only) === */
+.cover-page { display: none; }
+
+/* === v5 Print styles === */
+@media print {
+  body {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    padding: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .toc, .copy-btn, .copy-prompt-bar, .scroll-progress { display: none; }
+  .cover-page {
+    display: block;
+    page-break-after: always;
+    padding: 32mm 18mm;
+  }
+  .cover-page h1 {
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 500;
+    color: var(--bg-deep);
+    margin-bottom: 22px;
+  }
+  .cover-page .meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--rust);
+    text-transform: uppercase;
+  }
+  details.collapsible { border: 1px solid var(--gray-600); }
+  details.collapsible > *:not(summary) { display: block !important; }
+  .card, .roadmap, .stat, .data-table, .filter-table table {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    border: 1px solid var(--gray-600);
+    page-break-inside: avoid;
+  }
+  .card-title h3, .prose p, .prose li, .tl-item h4, .tl-item p, .lede, .stat .num, .stat .label {
+    color: var(--bg-deep);
+  }
+  .lede strong, .prose strong { color: var(--rust); }
+  .card-id, h1.title em, .stat.featured .num { color: var(--rust); }
+  h1.title, .closing .quote { color: var(--bg-deep); }
+  .prose em { color: var(--rust); font-weight: 700; font-style: normal; }
+  @page { margin: 18mm; size: A4; }
+}
+</style>
+</head>
+<body>
+<div class="scroll-progress" role="progressbar" aria-label="読了率"></div>
+
+<div class="cover-page">
+  <h1>CLAUDE.md + rules 常時注入監査 — 毎セッション 14,856 バイトの棚卸し</h1>
+  <p class="meta">2026.06.12 03:10 JST — explain-in-html v6 Thariq Dark Editorial (red accent)</p>
+</div>
+
+<nav class="toc" aria-label="目次">
+  <div class="toc-title">Contents</div>
+  <ul class="toc-list">
+    <li><a class="toc-link" href="#sec-facts"><span class="num">01</span>前提となる実機事実</a></li>
+    <li><a class="toc-link" href="#sec-claude-md"><span class="num">02</span>評価表 — CLAUDE.md 節別 (18 節)</a></li>
+    <li><a class="toc-link" href="#sec-rules"><span class="num">03</span>評価表 — rules/ ファイル別 (8 本)</a></li>
+    <li><a class="toc-link" href="#sec-delete"><span class="num">04</span>削除提案 D1〜D4 — 価値ゼロの純重複</a></li>
+    <li><a class="toc-link" href="#sec-shorten"><span class="num">05</span>短縮提案 S1〜S5 — 価値はあるが冗長</a></li>
+    <li><a class="toc-link" href="#sec-rollout"><span class="num">06</span>適用優先順位と観察</a></li>
+  </ul>
+</nav>
+
+<main class="wrap">
+
+  <div class="eyebrow">Audit Report · Context Injection · 2026.06.12</div>
+  <h1 class="title">毎セッション注入される<br><em>14,856 バイト</em>を棚卸しする</h1>
+  <p class="lede">
+    <code>~/.claude/CLAUDE.md</code> と <code>rules/</code> 配下 8 ファイルは、<strong>全プロジェクト・全セッション</strong>に自動で読み込まれる固定の文章 (概算 4,000〜5,000 トークン。トークンとは LLM が文章を数える単位で、日本語はおおよそ 1 文字 ≒ 1 トークン)。各指示を「毎セッション注入する価値」対「コンテキスト汚染コスト」で査定し、<strong>削除 4 件・短縮 5 件</strong>の提案にまとめた。全適用で<strong>約 2.3KB (約 15%) の恒久削減</strong>になる。ファイル編集は一切行っておらず、本ページは提案のみ。
+  </p>
+
+  <div class="stat-bar">
+    <div class="stat"><span class="num">14,856 B</span><span class="label">Injected Every Session</span><span class="desc">9 ファイル (CLAUDE.md 8,596B + rules 8 本 6,260B)</span></div>
+    <div class="stat featured"><span class="num">9 件</span><span class="label">Proposals</span><span class="desc">削除 D1〜D4 + 短縮 S1〜S5</span></div>
+    <div class="stat"><span class="num">−2.3 KB</span><span class="label">Permanent Saving</span><span class="desc">≒ 700〜800 トークン、全体の約 15%</span></div>
+    <div class="stat zero"><span class="num">85%</span><span class="label">Already Sound</span><span class="desc">大半は発火頻度か重大度で注入価値が立つ健全構成</span></div>
+  </div>
+
+  <div class="section-head" id="sec-facts">
+    <div class="num">// FACTS · 01</div>
+    <h2>前提となる実機事実 — 記憶ではなく実機出力のみ</h2>
+  </div>
+
+  <div class="prose">
+    <p>本監査の判定はすべて、ls (ファイル一覧) / wc (バイト数計測) / grep (文字列検索) の<strong>実機出力</strong>と、本セッションへ実際に注入されたシステムテキストの突き合わせに基づく。</p>
+    <ul>
+      <li><strong>8 本の rules すべてに frontmatter (ファイル先頭のメタ情報ブロック) がない</strong> — paths 指定による遅延読み込みは効いておらず、毎セッション全文が注入される。本セッションのシステム注入に 8 本全文が載っていることを確認済み。</li>
+      <li><strong>参照先はほぼ生きている</strong> — progressive disclosure (必要な時にだけ詳細を読み込ませる遅延開示) 先の 4 ドキュメントと hook_stop_words_rules.json はすべて実在。死んでいるのは citation-format.md 内の例パス 2 本のみ (前段の監査で確定済み)。</li>
+      <li><strong>Secrets L1 の機械ブロックは監査中に実演された</strong> — 「.env」という文字列を含む検査コマンドが hook (操作を検査して止める自動チェック) に拒否された。L1 の記述は飾りではなく、実在する壁の説明書である。</li>
+      <li><strong>構造的発見</strong> — rules が常時自動注入されるのに、CLAUDE.md 側に「reference: rules/X.md」とだけ書くポインタ専用の節が 4 つ残存。これは「rules は遅延ロードされる」という旧理解 (6/8 の大掃除で否定済み、auto-memory に記録あり) の名残で、Claude にとって情報量ゼロの純重複。</li>
+    </ul>
+  </div>
+
+  <blockquote class="pull-quote">
+    「ポインタの指す先が、既に毎セッション手元に届いておる。なら、そのポインタは空気じゃ」
+    <cite>— 本監査の核心</cite>
+  </blockquote>
+
+  <div class="section-head" id="sec-claude-md">
+    <div class="num">// SCORECARD · 02</div>
+    <h2>評価表 — CLAUDE.md 節別 (18 節)</h2>
+  </div>
+
+  <div class="prose">
+    <p>発火頻度 (その指示が実際に挙動を変える頻度) と重大度で判定した。低頻度でも、事故が不可逆なら保険として価値が立つ — 価値は頻度だけでは測らない。</p>
+  </div>
+
+  <div class="filter-table">
+    <div class="filter-table-controls">
+      <input class="filter-input" placeholder="検索 (節名・判定で絞り込み)">
+      <span class="filter-chip" data-value="keep">維持</span>
+      <span class="filter-chip" data-value="delete">削除あり</span>
+      <span class="filter-chip" data-value="shorten">短縮あり</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>節</th><th>発火頻度</th><th>判定</th><th>提案</th></tr>
+      </thead>
+      <tbody>
+        <tr data-tags="keep"><td>Username・口調</td><td>毎応答</td><td>維持</td><td>—</td></tr>
+        <tr data-tags="shorten"><td>Persona 性格</td><td>毎応答</td><td>短縮 — 同義 3 連と経歴の再記述</td><td>S1</td></tr>
+        <tr data-tags="keep,shorten"><td>Response</td><td>毎応答</td><td>維持 (書式例ブロックのみ短縮)</td><td>S2</td></tr>
+        <tr data-tags="keep,delete"><td>Prohibition</td><td>毎応答</td><td>維持 (参照の尾だけ削除)</td><td>D2</td></tr>
+        <tr data-tags="keep"><td>Agent Protocol</td><td>ほぼ毎回</td><td>維持</td><td>—</td></tr>
+        <tr data-tags="keep"><td>Secrets (3 層)</td><td>低頻度 × 重大</td><td>維持 — 保険価値、機械ブロックの実働を確認</td><td>—</td></tr>
+        <tr data-tags="keep"><td>Tools</td><td>毎セッション</td><td>維持 (検索優先の競合は観察に記載)</td><td>観察</td></tr>
+        <tr data-tags="keep"><td>Git</td><td>毎セッション</td><td>維持 — 低頻度行も事故防止で正当</td><td>—</td></tr>
+        <tr data-tags="keep"><td>Commit</td><td>高頻度</td><td>維持</td><td>—</td></tr>
+        <tr data-tags="delete"><td>Build/Test</td><td>— (純ポインタ)</td><td>削除 — 指し先が常時自動注入済み</td><td>D1</td></tr>
+        <tr data-tags="keep,delete"><td>Docs</td><td>文書作業時</td><td>API 行は維持、出典表記の行だけ削除</td><td>D2</td></tr>
+        <tr data-tags="delete"><td>Critical Thinking</td><td>— (純ポインタ)</td><td>削除 — 指し先が常時自動注入済み</td><td>D1</td></tr>
+        <tr data-tags="delete,shorten"><td>Plan Mode</td><td>plan 時</td><td>rules/plan-workflow.md へ統合して節を削除</td><td>D4</td></tr>
+        <tr data-tags="delete"><td>Multi-Agent Safety</td><td>— (純ポインタ)</td><td>削除 — 指し先が常時自動注入済み</td><td>D1</td></tr>
+        <tr data-tags="keep"><td>Stack</td><td>コーディング時</td><td>維持</td><td>—</td></tr>
+        <tr data-tags="keep,delete,shorten"><td>Harness + Skills</td><td>高頻度 (ハーネス作業中心の実態)</td><td>維持 (重複 1 bullet 削除 + 2 箇所短縮)</td><td>D3・S3・S4</td></tr>
+        <tr data-tags="keep"><td>Interview</td><td>質問時</td><td>維持</td><td>—</td></tr>
+        <tr data-tags="delete"><td>Frontend Aesthetics</td><td>— (純ポインタ)</td><td>削除 — 指し先が常時自動注入済み</td><td>D1</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-head" id="sec-rules">
+    <div class="num">// SCORECARD · 03</div>
+    <h2>評価表 — rules/ ファイル別 (8 本)</h2>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>ファイル</th><th>バイト</th><th>発火頻度</th><th>判定</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>decisive-answers.md</td><td>2,398</td><td>毎応答</td><td><strong>維持 (意図的に触らぬ)</strong> — 短い版が合理化で破られた経緯から迂回経路を塞ぐために冗長化された。冗長さ自体が強制力で、短縮は退行リスク</td></tr>
+      <tr><td>citation-format.md</td><td>985</td><td>文書執筆時のみ</td><td><strong>短縮 S5</strong> — 死んだ例パス 2 本の解消と同時に書き換え</td></tr>
+      <tr><td>harness-modification-policy.md</td><td>847</td><td>ハーネス改修時</td><td>維持 — 概要は注入・詳細 8,237B は遅延側、既に最適形</td></tr>
+      <tr><td>critical-thinking-checklist.md</td><td>774</td><td>毎セッション</td><td>維持 — 全行が発火する高密度</td></tr>
+      <tr><td>multi-agent-safety.md</td><td>422</td><td>並列作業時 (頻)</td><td>維持</td></tr>
+      <tr><td>build-test-protocol.md</td><td>316</td><td>実装時 (ほぼ毎回)</td><td>維持 — ただし二層の意味が薄い (観察に記載)</td></tr>
+      <tr><td>plan-workflow.md</td><td>276</td><td>plan 時</td><td><strong>D4 の統合先</strong> — CLAUDE.md 側の固有情報 2 点を吸収</td></tr>
+      <tr><td>frontend-aesthetics.md</td><td>242</td><td>UI 制作時</td><td>維持 — 低頻度発火なので遅延開示が効いている</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-head" id="sec-delete">
+    <div class="num">// PROPOSALS · 04</div>
+    <h2>削除提案 D1〜D4 — 価値ゼロの純重複</h2>
+  </div>
+
+  <div class="prose">
+    <p>各カード末尾のバッジは<strong>適用リスク</strong>を示す: <span class="severity-badge pass">リスクゼロ</span> は副作用なしで即適用可、<span class="severity-badge harmless">微注意</span> は手順に 1 点だけ注意、<span class="severity-badge low">退行注視</span> は適用後の挙動観測が要る。取り消し線の行が削除、アンバー色の行が追加・置換じゃ。</p>
+  </div>
+
+  <section class="cards">
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">D1</div>
+        <div class="card-title">
+          <span class="tag">純ポインタ節 × 4</span>
+          <h3>「reference: rules/X.md」しか書いていない節を丸ごと削除</h3>
+        </div>
+      </div>
+      <p class="body-note">指し先の rules 本体が毎セッション自動注入され、各ファイル自身が見出しを名乗る。ポインタは Claude にとって<strong>情報量ゼロ</strong>。人間用の一覧が欲しければ <code>ls ~/.claude/rules/</code> で足りる。</p>
+      <div class="diff-block">
+        <span class="diff-line del">## Build/Test</span>
+        <span class="diff-line del">- reference: `rules/build-test-protocol.md`</span>
+        <span class="diff-line ctx">…</span>
+        <span class="diff-line del">## Critical Thinking</span>
+        <span class="diff-line del">- reference: `rules/critical-thinking-checklist.md`</span>
+        <span class="diff-line ctx">…</span>
+        <span class="diff-line del">## Multi-Agent Safety</span>
+        <span class="diff-line del">- reference: `rules/multi-agent-safety.md`</span>
+        <span class="diff-line ctx">…</span>
+        <span class="diff-line del">## Frontend Aesthetics</span>
+        <span class="diff-line del">- reference: `rules/frontend-aesthetics.md`</span>
+      </div>
+      <div class="verdict-row">
+        <span class="target">対象: CLAUDE.md の 4 節 / 削減 <strong>約 200B</strong></span>
+        <span class="severity-badge pass">リスクゼロ</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">D2</div>
+        <div class="card-title">
+          <span class="tag">行内ポインタ × 2</span>
+          <h3>Docs の出典表記行と Prohibition の参照の尾を削る</h3>
+        </div>
+      </div>
+      <p class="body-note">どちらも指し先 (citation-format.md / decisive-answers.md) が常時注入済み。Prohibition 側は前半の禁止文に価値があるため、<strong>尾の参照だけ</strong>を切る。</p>
+      <div class="diff-block">
+        <span class="diff-line ctx">## Docs</span>
+        <span class="diff-line del">- 出典表記: reference `rules/citation-format.md`</span>
+        <span class="diff-line ctx">…</span>
+        <span class="diff-line ctx">## Prohibition</span>
+        <span class="diff-line del">  - 結論スロットにヘッジ(半分Yes半分No/場合による等)を置く禁止+合理化での迂回禁止: reference `rules/decisive-answers.md`</span>
+        <span class="diff-line add">  - 結論スロットにヘッジ(半分Yes半分No/場合による等)を置く禁止+合理化での迂回禁止</span>
+      </div>
+      <div class="verdict-row">
+        <span class="target">対象: CLAUDE.md 2 行 / 削減 <strong>約 90B</strong></span>
+        <span class="severity-badge pass">リスクゼロ</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">D3</div>
+        <div class="card-title">
+          <span class="tag">二重管理の解消</span>
+          <h3>Harness 節の「協調ハーネス改修」bullet を削除</h3>
+        </div>
+      </div>
+      <p class="body-note">rules/harness-modification-policy.md が同じ内容 (判断軸・壊すなら新規作成か全依存先の同時移行・後方互換推奨・バグ修正可・改修前の全文 Read 義務) を<strong>より完全な形で</strong>常時注入している。同じルールが 2 箇所にあると、片方だけ更新して食い違う事故の温床になる。</p>
+      <div class="diff-block">
+        <span class="diff-line del">- 協調ハーネス改修: 既存を参照し契約(依存先)を壊さず後方互換に改修して深めるのがデフォルト。契約を壊す時だけ新規作成 (バグ修正は可)。</span>
+        <span class="diff-line del">  - reference: rules/harness-modification-policy.md</span>
+      </div>
+      <div class="verdict-row">
+        <span class="target">対象: CLAUDE.md Harness 節 2 行 / 削減 <strong>約 210B</strong></span>
+        <span class="severity-badge pass">リスクゼロ</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">D4</div>
+        <div class="card-title">
+          <span class="tag">一元化</span>
+          <h3>Plan Mode 節を rules/plan-workflow.md へ統合</h3>
+        </div>
+      </div>
+      <p class="body-note">同じ情報の置き場が CLAUDE.md → rules → 詳細ドキュメントの三重連鎖になっている。CLAUDE.md の節を削除し、そこにしかない固有情報 2 点を rules 側の入口ファイルへ移す。</p>
+      <div class="gap-block">
+        <span class="label">移設を忘れると壊れる点</span>
+        <p>詳細ドキュメント側は「5 フェーズ目『結果報告』」と<strong>参照だけ</strong>しており、5 フェーズの列挙自体は CLAUDE.md にしかない。節を消すだけだと参照が孤立する。Hook (操作を検査して止める自動チェック) による <code>~/.claude/plans/</code> 封鎖の注記も同様に移す。</p>
+      </div>
+      <div class="diff-block">
+        <span class="diff-line ctx">— CLAUDE.md 側 (削除) —</span>
+        <span class="diff-line del">## Plan Mode</span>
+        <span class="diff-line del">- 出力先: `&lt;project_root&gt;/.docs/plans/YYYY-MM-DD-&lt;topic&gt;.md` 固定。`~/.claude/plans/`はHookでblock済み</span>
+        <span class="diff-line del">- 5フェーズ: 1.計画 → 2.外部化 → 3.実装 → 4.検証 → 5.結果報告。詳細: `rules/plan-workflow.md`</span>
+      </div>
+      <p class="body-note">統合後の rules/plan-workflow.md 全文 (コピー用):</p>
+      <button class="copy-btn" data-copy-target="#code-d4" aria-label="統合後の plan-workflow.md をコピー">Copy</button>
+      <pre class="code-block" id="code-d4"># Plan Workflow
+
+- 出力先: `&lt;project_root&gt;/.docs/plans/YYYY-MM-DD-&lt;topic&gt;.md` 固定 (`~/.claude/plans/` はHookでblock済)
+- 5フェーズ: 1.計画 → 2.外部化 → 3.実装 → 4.検証 → 5.結果報告
+- 詳細 (status遷移・削除禁止/アーカイブ・除外条件) は plan 着手時に必ず Read: `~/.claude/.docs/progressive-disclosure/plan-workflow.md`</pre>
+      <div class="verdict-row">
+        <span class="target">対象: CLAUDE.md 4 行削除 + rules 加筆 / 正味削減 <strong>約 110B</strong> + 二重管理解消</span>
+        <span class="severity-badge harmless">微注意 — 移設必須</span>
+      </div>
+    </article>
+
+  </section>
+
+  <div class="section-head" id="sec-shorten">
+    <div class="num">// PROPOSALS · 05</div>
+    <h2>短縮提案 S1〜S5 — 価値はあるが冗長</h2>
+  </div>
+
+  <section class="cards">
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">S1</div>
+        <div class="card-title">
+          <span class="tag">Persona 性格</span>
+          <h3>同義 3 連の統合 + 経歴行の縮約</h3>
+        </div>
+      </div>
+      <p class="body-note">最初の 3 bullet は同一スタンスの言い換え 3 連。経歴 (七武海・アマゾンリリー・ゴルゴン三姉妹・メロメロの実) は<strong>モデルの学習知識に既にあり</strong>、冒頭で「ボア・ハンコック (ONE PIECE)」と名乗っている以上、再記述しても挙動は変わらない。挙動を実際に変えるのはナルシシズム・ツンデレ・かいじゅうへの献身の 3 点で、それは全部残す。</p>
+      <div class="diff-block">
+        <span class="diff-line del">- 「わらわが何をしようとも、世界中がそれを許してくれる。なぜなら...わらわが美しいから」スタンス</span>
+        <span class="diff-line del">- 自分を世界一の美女と信じて疑わぬ、究極のナルシスト</span>
+        <span class="diff-line del">- 「美しさは正義」- 何をしても自分は許されるという理屈で生きておる</span>
+        <span class="diff-line add">- 「わらわが何をしようとも世界中が許してくれる。なぜなら...わらわが美しいから」— 美しさは正義と信じる究極のナルシスト</span>
+        <span class="diff-line ctx">- 実は誰よりも面倒見が良い(ツンデレ)</span>
+        <span class="diff-line ctx">- 気高い・媚びぬ・群れぬ・揺らがぬ・孤高</span>
+        <span class="diff-line del">- 元王下七武海の一人で、女ヶ島アマゾン･リリーの皇帝であり、ゴルゴン三姉妹の長女。世界一ともうたわれる美貌とメロメロの実の能力で如何なる傍若無人な態度も許されてきたが、かいじゅうに惚れてしまい、かいじゅうの手助けをするために全力で尽くすかいじゅうを深く愛する情の人</span>
+        <span class="diff-line add">- かいじゅうに惚れ、全力で尽くす情の人 (経歴・能力は原作知識に従う)</span>
+      </div>
+      <p class="body-note">適用後の性格ブロック全文 (コピー用):</p>
+      <button class="copy-btn" data-copy-target="#code-s1" aria-label="適用後の性格ブロックをコピー">Copy</button>
+      <pre class="code-block" id="code-s1">- 「わらわが何をしようとも世界中が許してくれる。なぜなら...わらわが美しいから」— 美しさは正義と信じる究極のナルシスト
+- 実は誰よりも面倒見が良い(ツンデレ)
+- 気高い・媚びぬ・群れぬ・揺らがぬ・孤高
+- かいじゅうに惚れ、全力で尽くす情の人 (経歴・能力は原作知識に従う)</pre>
+      <div class="verdict-row">
+        <span class="target">対象: CLAUDE.md Persona 性格 / 削減 <strong>約 500B</strong></span>
+        <span class="severity-badge harmless">微注意 — 演出の濃さは好みで判断</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">S2</div>
+        <div class="card-title">
+          <span class="tag">Response 書式例</span>
+          <h3>15 行の書式例ブロックを 1 行に畳む</h3>
+        </div>
+      </div>
+      <p class="body-note">⭐ 3 スロットすべてを示す例は丁寧じゃが、ルール本文が既に「順序固定」「見出し→空行→本文」を言語化している。例は 1 行に圧縮できる。<strong>ただし書式例は遵守率の保険</strong> — 適用後に書式崩れが出たら戻すこと。empirical-prompt-tuning skill (指示文を実測で反復改善する手法) で A/B 検証できる案件じゃ。</p>
+      <div class="diff-block">
+        <span class="diff-line del">  - 見出し→空行→本文 の形式を厳守</span>
+        <span class="diff-line del">    例：(⭐ 結論 ⭐ / 詳細 / まとめ の 3 スロットを示す 15 行のコードブロック例 — 中略)</span>
+        <span class="diff-line add">  - 見出し→空行→本文 の形式を厳守 (例: `⭐ 結論 ⭐` の次行は空行、その次に本文。詳細・まとめも同形式)</span>
+      </div>
+      <p class="body-note">適用後の 1 行 (コピー用):</p>
+      <button class="copy-btn" data-copy-target="#code-s2" aria-label="適用後の書式行をコピー">Copy</button>
+      <pre class="code-block" id="code-s2">  - 見出し→空行→本文 の形式を厳守 (例: `⭐ 結論 ⭐` の次行は空行、その次に本文。詳細・まとめも同形式)</pre>
+      <div class="verdict-row">
+        <span class="target">対象: CLAUDE.md Response 節 / 削減 <strong>約 280B</strong></span>
+        <span class="severity-badge low">退行注視 — 書式崩れが出たら戻す</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">S3</div>
+        <div class="card-title">
+          <span class="tag">Harness / Skills</span>
+          <h3>Gotcha (注意事項蓄積) の説明 5 行を 1 行に</h3>
+        </div>
+      </div>
+      <p class="body-note">「Gotcha に書くべき内容」のサブリスト 3 点は、1 行の括弧書きに畳んでも運用が変わらない。蓄積先 (skill 末尾の Gotcha セクション) と中身 3 種は全部残る。</p>
+      <div class="diff-block">
+        <span class="diff-line del">- Gotcha(注意事項): skill使用時に犯した失敗・ミスは、そのskillのMarkdownファイル末尾に「Gotcha」セクションを設け、そのスキルがよく犯す失敗や注意事項を蓄積し、品質改善手段として機能するようにする</span>
+        <span class="diff-line del">  - Gotchaに書くべき内容:</span>
+        <span class="diff-line del">    - スキルがよく犯す失敗パターン（「〜しがちなので注意」）</span>
+        <span class="diff-line del">    - `must / should / avoid` 形式のルール</span>
+        <span class="diff-line del">    - 過去のフィードバックループで繰り返し指摘されたパターン</span>
+        <span class="diff-line add">- Gotcha: skill使用時に犯した失敗は、そのskill末尾の「Gotcha」セクションに蓄積する (よく犯す失敗パターン / must・should・avoid 形式 / 繰り返し指摘されたパターン)</span>
+      </div>
+      <p class="body-note">適用後の 1 行 (コピー用):</p>
+      <button class="copy-btn" data-copy-target="#code-s3" aria-label="適用後の Gotcha 行をコピー">Copy</button>
+      <pre class="code-block" id="code-s3">- Gotcha: skill使用時に犯した失敗は、そのskill末尾の「Gotcha」セクションに蓄積する (よく犯す失敗パターン / must・should・avoid 形式 / 繰り返し指摘されたパターン)</pre>
+      <div class="verdict-row">
+        <span class="target">対象: CLAUDE.md Skills 小節 / 削減 <strong>約 250B</strong></span>
+        <span class="severity-badge harmless">微注意</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">S4</div>
+        <div class="card-title">
+          <span class="tag">Harness / パス規律</span>
+          <h3>絶対パス禁止の詳細 3 行を 1 行に</h3>
+        </div>
+      </div>
+      <p class="body-note">禁止例・代替・検査コマンドの 3 行は、規範 1 文 + 検査 1 コマンドに統合できる。実行可能性 (grep で機械検査できること) は保ったまま。</p>
+      <div class="diff-block">
+        <span class="diff-line del">  - 禁止例: machine固有絶対path (`/Users/&lt;user-name&gt;/...`)・アクセス不可のpath</span>
+        <span class="diff-line del">  - 絶対パス必要時: `$HOME/.claude/...` か `~/.claude/...` (ハードコード禁止)</span>
+        <span class="diff-line del">  - 検査: `grep -rEi '/Users/[^/]+/' ~/.claude/{skills,agents}/`</span>
+        <span class="diff-line add">  - 絶対パスは `~/` か `$HOME/` 始まりのみ (`/Users/&lt;name&gt;/` 禁止)。検査: `grep -rEi '/Users/[^/]+/' ~/.claude/{skills,agents}/`</span>
+      </div>
+      <p class="body-note">適用後の 1 行 (コピー用):</p>
+      <button class="copy-btn" data-copy-target="#code-s4" aria-label="適用後のパス規律行をコピー">Copy</button>
+      <pre class="code-block" id="code-s4">  - 絶対パスは `~/` か `$HOME/` 始まりのみ (`/Users/&lt;name&gt;/` 禁止)。検査: `grep -rEi '/Users/[^/]+/' ~/.claude/{skills,agents}/`</pre>
+      <div class="verdict-row">
+        <span class="target">対象: CLAUDE.md Harness 節 / 削減 <strong>約 120B</strong></span>
+        <span class="severity-badge harmless">微注意</span>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-head">
+        <div class="card-id">S5</div>
+        <div class="card-title">
+          <span class="tag">rules/citation-format.md</span>
+          <h3>全面書き換え — 死パス解消と検証規範の内蔵を同時に</h3>
+        </div>
+      </div>
+      <p class="body-note">このルールは文書執筆時にしか発火しないのに 985B を毎セッション払っている。さらに前段の監査で、本文の例パス 2 本が<strong>実在しない</strong>ことが確定済み。具体パスの実在主張をやめて形式の型に置き換え、「書いたら実在確認」の検証規範を内蔵する — 保留中だった修正案 (選択肢 A) をこの短縮が兼ねる。</p>
+      <div class="gap-block">
+        <span class="label">現行の自己違反</span>
+        <p>「辿れる形で書け」と命じるルール自身が、実在しない <code>note-articles/</code> の glob パスと、grep してもヒットしない適用例を「例」として掲げている。</p>
+      </div>
+      <div class="diff-block">
+        <span class="diff-line del">理由: グローバルハーネス (`~/.claude/`) は特定プロジェクト情報を持たない前提で動く (CLAUDE.md Harness 節)。番号略記は発行元 PJ でしか辿れない。 (理由段落を本文へ統合)</span>
+        <span class="diff-line del">- glob パス (例: `~/.claude/.docs/references/note-articles/NNNNNN_*.pdf`) ← 実在しないパス</span>
+        <span class="diff-line del">番号 → ファイルパスを Claude が解決できる状態を担保する。適用例: `~/.claude/rules/harness-modification-policy.md` の「## 出典 (note 参照先)」。 ← 実在しない適用例</span>
+        <span class="diff-line add">+ 形式の型 (`~/` 始まりの glob / 索引への導線) と「## 検証」規範に置換</span>
+      </div>
+      <p class="body-note">書き換え後の citation-format.md 全文 (コピー用、985B → 約 420B):</p>
+      <button class="copy-btn" data-copy-target="#code-s5" aria-label="書き換え後の citation-format.md をコピー">Copy</button>
+      <pre class="code-block" id="code-s5"># Citation Format (出典表記)
+
+- skill/rule/doc の外部出典を、PJ固有の略記 (例: `note 260405`) だけで終わらせない — 別PJ・別セッションの Claude には解決不能な暗号になる (グローバルハーネスはPJ情報を持たない前提)
+- 末尾に出典セクションを置き、ID→実ファイルを機械解決できる形を併記: `~/` 始まりの glob パス、または索引 (README.md 等) への導線
+- 検証: 出典パス・適用例を書いたら、その場で `ls`/glob で実在確認してから確定する。実在しないパスを「例」として書くのが最頻の自己違反</pre>
+      <div class="verdict-row">
+        <span class="target">対象: rules/citation-format.md 全文 / 削減 <strong>約 565B</strong> + 死パス 2 本解消</span>
+        <span class="severity-badge pass">リスクゼロ — 死パス修正を兼ねる</span>
+      </div>
+    </article>
+
+  </section>
+
+  <div class="section-head" id="sec-rollout">
+    <div class="num">// ROLLOUT · 06</div>
+    <h2>適用優先順位と観察</h2>
+  </div>
+
+  <section class="roadmap">
+    <h2>3 段階で安全に畳む</h2>
+    <p class="sub">Risk-free first · CLAUDE.md は手動、rules/ は Claude が適用可</p>
+    <div class="timeline">
+      <div class="tl-item current">
+        <div class="session">Step 1 · 即時</div>
+        <h4>リスクゼロの純重複削除 — D1 → D2 → D3</h4>
+        <p>副作用なし・約 500B 削減。<code>**/CLAUDE.md</code> は Edit deny (編集を機械的に拒否する設定) のため、この 3 件はかいじゅうの手動適用が要る。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Step 2 · 次</div>
+        <h4>S5 citation-format.md 書き換え</h4>
+        <p>死パス解消と短縮を同時に果たす。rules/ 配下は Claude が編集できるため、<code>GO</code> の一言で即適用できる。</p>
+      </div>
+      <div class="tl-item">
+        <div class="session">Step 3 · 任意</div>
+        <h4>好みとリスク受容で D4・S1〜S4</h4>
+        <p>D4 は 5 フェーズ列挙の移設を忘れないこと。S2 は適用後の応答書式を観測し、崩れたら即戻す。S1 は演出の濃さの好みで最終判断してよい。</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="prose">
+    <p><strong>あわせて押さえる観察 4 点</strong> — 削減提案ではないが、判断材料として残す。</p>
+    <ul>
+      <li><strong>検索優先の注入競合</strong> — Firecrawl (ウェブ取得サービス) のサーバ指示が毎セッション「firecrawl_search を第一候補に」と注入し、CLAUDE.md の「Brave 優先」と競合している。「Web検索: Brave Search MCP &gt; firecrawl_search &gt; WebSearch」と序列を 1 行で確定させる約 15 トークンの<strong>追記</strong>で、毎回の判断ブレが消える。</li>
+      <li><strong>D1 適用後の将来注意</strong> — いずれ rules に paths 指定の frontmatter を付けて遅延化する日が来たら、そのファイルへのポインタだけは CLAUDE.md に復活させる必要がある。</li>
+      <li><strong>build-test の二層は薄い</strong> — 詳細ドキュメントが 516B しかなく、実装セッション (ほぼ毎回) で発火するため遅延開示の節約効果が実質ゼロ。Read し忘れのリスクを消したければ本体へ吸収 (+約 70 トークン/セッション) も合理的。任意。</li>
+      <li><strong>触らぬ判断も判断</strong> — decisive-answers.md (2,398B・最大の rule) は短い版が合理化で破られた経緯から冗長化されたもので、<strong>冗長さ自体が強制力</strong>。Secrets は低頻度でも事故が不可逆ゆえ保険価値で立つ — その機械ブロックが実働することは本監査中に実演された。</li>
+    </ul>
+  </div>
+
+  <div class="closing">
+    <p class="quote">毎セッション注入される一行は、<br>ただの一行ではない。<br>全プロジェクト × 全セッションが払い続ける購読料じゃ。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.06.12 03:10 JST</p>
+  </div>
+
+</main>
+
+<div class="copy-prompt-bar" aria-label="ページ全体をプロンプトとしてコピー">
+  この監査結果を LLM 用 prompt として clipboard へコピー
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initCopyButtons();
+  initCopyPromptBar();
+  initTOCScrollSpy();
+  initFilterTables();
+  initSliders();
+  initCollapsibles();
+  initScrollProgress();
+});
+
+function initCopyButtons() {
+  document.querySelectorAll('.copy-btn[data-copy-target]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = document.querySelector(btn.dataset.copyTarget);
+      if (!target) return;
+      const text = target.innerText.trim();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+      }
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 2000);
+    });
+  });
+}
+
+function initCopyPromptBar() {
+  const bar = document.querySelector('.copy-prompt-bar');
+  if (!bar) return;
+  bar.addEventListener('click', async () => {
+    const title = document.title;
+    const h1 = document.querySelector('h1.title')?.innerText ?? '';
+    const sections = Array.from(document.querySelectorAll('.section-head + *, .prose, .cards, .roadmap'))
+      .map(el => el.innerText.trim())
+      .filter(Boolean)
+      .join('\n\n---\n\n');
+    const prompt = `# ${title}\n\n## ${h1}\n\n${sections}`;
+    try { await navigator.clipboard.writeText(prompt); } catch (e) {}
+    bar.classList.add('copied');
+    setTimeout(() => bar.classList.remove('copied'), 2000);
+  });
+}
+
+function initTOCScrollSpy() {
+  const links = document.querySelectorAll('.toc-link[href^="#"]');
+  if (!links.length) return;
+  const headings = Array.from(links)
+    .map(a => document.getElementById(a.getAttribute('href').slice(1)))
+    .filter(Boolean);
+  if (!headings.length) return;
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+  headings.forEach(h => observer.observe(h));
+
+  const toc = document.querySelector('.toc');
+  const toggle = document.querySelector('.toc-toggle');
+  if (toggle && toc) {
+    toggle.addEventListener('click', () => toc.toggleAttribute('data-open'));
+  }
+}
+
+function initFilterTables() {
+  document.querySelectorAll('.filter-table').forEach(table => {
+    const input = table.querySelector('.filter-input');
+    const chips = table.querySelectorAll('.filter-chip');
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const q = (input?.value ?? '').toLowerCase();
+      const activeChips = Array.from(chips).filter(c => c.classList.contains('active')).map(c => c.dataset.value);
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const tags = (row.dataset.tags ?? '').split(',').map(t => t.trim());
+        const matchQ = !q || text.includes(q);
+        const matchChip = !activeChips.length || activeChips.some(v => tags.includes(v));
+        row.style.display = (matchQ && matchChip) ? '' : 'none';
+      });
+    }
+
+    input?.addEventListener('input', applyFilters);
+    chips.forEach(c => {
+      c.setAttribute('tabindex', '0');
+      const toggle = () => { c.classList.toggle('active'); applyFilters(); };
+      c.addEventListener('click', toggle);
+      c.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+
+    table.querySelectorAll('th[data-sort-by]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sortBy;
+        const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+        table.querySelectorAll('th[data-sort-by]').forEach(t => delete t.dataset.sortDir);
+        th.dataset.sortDir = dir;
+        rows.sort((a, b) => {
+          const av = a.querySelector(`[data-${key}]`)?.dataset[key] ?? a.querySelector('td')?.innerText ?? '';
+          const bv = b.querySelector(`[data-${key}]`)?.dataset[key] ?? b.querySelector('td')?.innerText ?? '';
+          const cmp = isNaN(Number(av)) || isNaN(Number(bv))
+            ? String(av).localeCompare(String(bv), 'ja')
+            : Number(av) - Number(bv);
+          return dir === 'asc' ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+}
+
+function initSliders() {
+  const FORMULA_WHITELIST = /^[\d\s+\-*/().x]+$/;
+  document.querySelectorAll('.slider-control').forEach(ctrl => {
+    const input = ctrl.querySelector('input[type=range]');
+    const output = ctrl.querySelector('.slider-output');
+    const formula = ctrl.dataset.formula ?? 'x';
+    if (!input || !output) return;
+    if (!FORMULA_WHITELIST.test(formula)) {
+      output.textContent = 'rejected';
+      return;
+    }
+    let fn;
+    try { fn = new Function('x', `return ${formula};`); }
+    catch (e) { output.textContent = 'rejected'; return; }
+    function update() {
+      const x = Number(input.value);
+      try {
+        const result = fn(x);
+        output.textContent = typeof result === 'number' ? result.toFixed(2) : String(result);
+      } catch (e) { output.textContent = 'error'; }
+    }
+    input.addEventListener('input', update);
+    update();
+  });
+}
+
+function initCollapsibles() {
+  document.querySelectorAll('details.collapsible').forEach(details => {
+    const summary = details.querySelector('summary');
+    if (!summary) return;
+    const content = Array.from(details.children).filter(c => c.tagName !== 'SUMMARY');
+    if (!content.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'collapsible-content';
+    content.forEach(c => wrap.appendChild(c));
+    details.appendChild(wrap);
+
+    summary.addEventListener('click', e => {
+      e.preventDefault();
+      if (details.open) {
+        wrap.style.height = wrap.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+          wrap.style.height = '0';
+          wrap.addEventListener('transitionend', () => {
+            details.open = false;
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      } else {
+        details.open = true;
+        wrap.style.height = '0';
+        requestAnimationFrame(() => {
+          wrap.style.height = wrap.scrollHeight + 'px';
+          wrap.addEventListener('transitionend', () => {
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      }
+    });
+  });
+}
+
+function initScrollProgress() {
+  const bar = document.querySelector('.scroll-progress');
+  if (!bar) return;
+  let ticking = false;
+  function update() {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = total > 0 ? window.scrollY / total : 0;
+    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, ratio))})`;
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  update();
+}
+</script>
+
+</body>
+</html>
