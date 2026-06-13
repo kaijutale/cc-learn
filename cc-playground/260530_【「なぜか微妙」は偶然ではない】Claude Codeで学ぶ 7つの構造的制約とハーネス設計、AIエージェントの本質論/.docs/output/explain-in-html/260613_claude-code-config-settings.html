@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code /config で設定できる全項目 — カテゴリ別リスト解説</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">EXPLAINER · CLAUDE CODE · 2026.06.13</div>
+  <h1>Claude Code <code>/config</code> で<br>設定できる<em>全項目</em></h1>
+  <div class="meta"><span>2026.06.13</span><span>カテゴリ: ハーネス設定</span><span>対象: /config 対話メニュー + settings.json 棲み分け</span></div>
+
+  <div class="hero grade-a">
+    <div class="grade-box grade-a">
+      <div class="grade-letter">2</div>
+      <div class="grade-pct">層構造</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">要旨</div>
+      <p>Claude Code の設定は <strong>2 つの入り口</strong>に分かれる。<code>/config</code> は端末上で「見て切り替える」対話メニュー (約 30 項目)。もう一方の <strong>settings.json</strong> は権限ルールや自動処理など、構造が複雑で文字で書くしかない設定 (約 50 項目以上) を受け持つ。本ページは前者 <code>/config</code> をカテゴリ別に網羅し、後者との境界も示す。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span><code>/config</code> とは何か</h2>
+  <p><code>/config</code> は、Claude Code の入力欄に打ち込むと開く<strong>対話式の設定画面</strong>じゃ。タブ (Tab キー / 左右矢印) で「Status (状態)」と「Config (設定)」を行き来し、文字を打てばその場で項目を絞り込める。終了は Esc キー。</p>
+  <p>ここで触れるのは、主に<strong>セッション単位で切り替えたい設定</strong>や、<strong>すぐ画面に反映される表示まわりの設定</strong>じゃ。逆に、権限ルール (どのコマンドを自動許可するか) や自動処理 (hooks)、外部ツール接続 (MCP) のような複雑なものは <code>/config</code> には出てこず、後述の <code>settings.json</code> ファイルに書く。</p>
+
+  <div class="stats">
+    <div class="stat"><div class="k">/CONFIG UI 項目</div><div class="v">約 30</div></div>
+    <div class="stat"><div class="k">JSON 固有設定</div><div class="v">約 50+</div></div>
+    <div class="stat"><div class="k">環境変数</div><div class="v">約 13</div></div>
+    <div class="stat"><div class="k">設定ファイル階層</div><div class="v">5 層</div></div>
+  </div>
+
+  <h2><span class="no">02</span>モデルと推論・コンテキスト管理</h2>
+  <p>「どのモデルでどう考えさせるか」と「会話の記憶 (コンテキスト) をどう保つか」のカテゴリじゃ。</p>
+  <table>
+    <thead><tr><th>設定名</th><th>何をするか</th><th>値の例</th><th>初期値</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">Model</td><td>このセッションで使う既定モデルを選ぶ</td><td class="score-cell">Opus / Sonnet / Haiku</td><td class="score-cell">指定なし</td></tr>
+      <tr><td class="cat-name">Thinking Mode</td><td>拡張思考 (回答前に内部で考えを巡らせる挙動) のオン/オフ</td><td class="score-cell">On / Off</td><td class="score-cell">On</td></tr>
+      <tr><td class="cat-name">Fast Mode</td><td>同じモデルのまま出力を高速化する (小型モデルへの格下げではない)</td><td class="score-cell">On / Off</td><td class="score-cell">指定なし</td></tr>
+      <tr><td class="cat-name">Auto-compact</td><td>コンテキストが上限に近づくと自動で会話を圧縮 (要約) する</td><td class="score-cell">On / Off</td><td class="score-cell">On</td></tr>
+      <tr><td class="cat-name">Rewind / Checkpoints</td><td>ファイル変更の直前に復元用チェックポイント (巻き戻し点) を自動作成</td><td class="score-cell">On / Off</td><td class="score-cell">On</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>表示・エディタ・言語</h2>
+  <p><code>/config</code> 項目で最も数が多いのがこのカテゴリ。端末の見た目・入力操作・通知音などを整える。</p>
+  <table>
+    <thead><tr><th>設定名</th><th>何をするか</th><th>値の例</th><th>初期値</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">Theme</td><td>端末の配色テーマ</td><td class="score-cell">Dark / Light / 色覚配慮版 / ANSI 版</td><td class="score-cell">端末準拠</td></tr>
+      <tr><td class="cat-name">Output Style</td><td>応答の文体スタイル</td><td class="score-cell">Concise (簡潔) など</td><td class="score-cell">指定なし</td></tr>
+      <tr><td class="cat-name">Editor Mode</td><td>入力欄のキー操作方式</td><td class="score-cell">normal / vim</td><td class="score-cell">normal</td></tr>
+      <tr><td class="cat-name">Language</td><td>Claude Code の画面表示と応答の言語</td><td class="score-cell">English / Japanese など</td><td class="score-cell">English</td></tr>
+      <tr><td class="cat-name">Verbose Output</td><td>ツール呼び出しや通信の詳細 (デバッグ情報) を細かく表示</td><td class="score-cell">On / Off</td><td class="score-cell">Off</td></tr>
+      <tr><td class="cat-name">Show Turn Duration</td><td>各回答にかかった時間を表示</td><td class="score-cell">On / Off</td><td class="score-cell">On</td></tr>
+      <tr><td class="cat-name">Show Tips</td><td>読み込み中・思考中にヒントを表示</td><td class="score-cell">On / Off</td><td class="score-cell">On</td></tr>
+      <tr><td class="cat-name">Reduce Motion</td><td>端末アニメーションを減らす (アクセシビリティ配慮)</td><td class="score-cell">On / Off</td><td class="score-cell">指定なし</td></tr>
+      <tr><td class="cat-name">Terminal Progress Bar</td><td>端末のタイトルバー/タブに進捗を表示</td><td class="score-cell">On / Off</td><td class="score-cell">On</td></tr>
+      <tr><td class="cat-name">Show PR Status Footer</td><td>現在の PR (プルリクエスト) の状態をフッターに表示</td><td class="score-cell">On / Off</td><td class="score-cell">On</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">04</span>権限・ファイル・通知・更新・連携</h2>
+  <p>承認ポリシー、ファイルの扱い、完了通知、自動更新、外部読み込みのカテゴリ。権限は <code>/config</code> では「既定モード」だけを切り替え、個別の許可/拒否ルールは <code>settings.json</code> 側で書く。</p>
+  <table>
+    <thead><tr><th>設定名</th><th>何をするか</th><th>値の例</th><th>初期値</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">Default Permission Mode</td><td>起動時の既定承認ポリシー (どこまで自動で進めてよいか)</td><td class="score-cell">default / acceptEdits / plan</td><td class="score-cell">default</td></tr>
+      <tr><td class="cat-name">Respect .gitignore<br>in File Picker</td><td>ファイル選択時に <code>.gitignore</code> (Git 追跡除外設定) を尊重する</td><td class="score-cell">On / Off</td><td class="score-cell">On</td></tr>
+      <tr><td class="cat-name">Always Copy<br>Full Response</td><td><code>/copy</code> コマンドで選択メニューを出さず常に全文コピー</td><td class="score-cell">On / Off</td><td class="score-cell">Off</td></tr>
+      <tr><td class="cat-name">Notifications</td><td>タスク完了後の通知方法</td><td class="score-cell">auto / terminal_bell / iterm2 / kitty / ghostty / 無効</td><td class="score-cell">auto</td></tr>
+      <tr><td class="cat-name">Auto-update Channel</td><td>自動更新で受け取るリリースの種類</td><td class="score-cell">latest / beta</td><td class="score-cell">latest</td></tr>
+      <tr><td class="cat-name">External Includes</td><td><code>CLAUDE.md</code> 内の <code>@import</code> 記法 (外部ファイル取り込み) を読み込む</td><td class="score-cell">On / Off</td><td class="score-cell">指定なし</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">05</span><code>/config</code> と <code>settings.json</code> の棲み分け</h2>
+  <p>同じ「設定」でも、<strong>簡単なトグル (切り替え) は <code>/config</code></strong>、<strong>構造が複雑で繰り返し使うものは <code>settings.json</code></strong> という役割分担になっておる。下表は代表例の対応。</p>
+  <table>
+    <thead><tr><th>設定対象</th><th>/config UI</th><th>settings.json</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">モデル選択</td><td><span class="mark mark-pass">可</span></td><td><span class="mark mark-pass">可</span></td><td>/config はセッション単位、JSON は永続化</td></tr>
+      <tr><td class="cat-name">思考モード</td><td><span class="mark mark-pass">可</span></td><td><span class="mark mark-na">UI 向け</span></td><td>セッション画面用のトグル</td></tr>
+      <tr><td class="cat-name">権限ルール<br>(allow / deny / ask)</td><td><span class="mark mark-fail">不可</span></td><td><span class="mark mark-pass">可</span></td><td>パターン指定が複雑で JSON 構造が必須</td></tr>
+      <tr><td class="cat-name">Hooks (自動処理)</td><td><span class="mark mark-fail">不可</span></td><td><span class="mark mark-pass">可</span></td><td>イベント連動の設定は JSON のみ</td></tr>
+      <tr><td class="cat-name">MCP サーバー<br>(外部ツール接続)</td><td><span class="mark mark-fail">不可</span></td><td><span class="mark mark-pass">可</span></td><td>接続情報は JSON のみ</td></tr>
+      <tr><td class="cat-name">環境変数 (env)</td><td><span class="mark mark-fail">不可</span></td><td><span class="mark mark-pass">可</span></td><td><code>env</code> ブロックは JSON のみ</td></tr>
+      <tr><td class="cat-name">テーマ / 言語 / 通知</td><td><span class="mark mark-pass">可</span></td><td><span class="mark mark-pass">可</span></td><td>UI で変えた内容は JSON に書き戻される</td></tr>
+    </tbody>
+  </table>
+  <p>つまり <code>/config</code> で操作した設定の多くは、裏で <code>settings.json</code> に保存される。<code>/config</code> は「JSON を直接書かずに済ませるための入り口」とも言えるのじゃ。</p>
+
+  <h2><span class="no">06</span>設定ファイルの 5 層と優先順位</h2>
+  <p>設定は複数の場所に分かれ、衝突したときは<strong>上の層が下を上書きする</strong>。同じ項目が複数の層にあると、より優先度の高い層の値が勝つ。</p>
+  <table>
+    <thead><tr><th>優先度</th><th>場所</th><th>適用範囲</th><th>編集者</th></tr></thead>
+    <tbody>
+      <tr><td class="score-cell"><span class="mark mark-fail">5 最高</span></td><td class="cat-name">管理ポリシー (企業)</td><td>組織全体</td><td>IT 管理者</td></tr>
+      <tr><td class="score-cell"><span class="mark mark-warn">4</span></td><td class="cat-name">CLI フラグ (起動時引数)</td><td>その 1 回の実行のみ</td><td>ユーザー</td></tr>
+      <tr><td class="score-cell"><span class="mark mark-warn">3</span></td><td class="cat-name">.claude/settings.local.json</td><td>個人 × このリポジトリのみ</td><td>ユーザー (Git 追跡外)</td></tr>
+      <tr><td class="score-cell"><span class="mark mark-pass">2</span></td><td class="cat-name">.claude/settings.json</td><td>プロジェクト全体 (チーム共有)</td><td>ユーザー (Git 追跡)</td></tr>
+      <tr><td class="score-cell"><span class="mark mark-na">1 最低</span></td><td class="cat-name">~/.claude/settings.json</td><td>ユーザーの全プロジェクト</td><td>ユーザー</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">07</span>反映タイミングの注意</h2>
+  <p>ほとんどの設定はファイル保存後すぐ反映されるが、一部は<strong>セッションを開き直すまで反映されない</strong>。次の項目を変えたら <code>/clear</code> か再起動が要るぞ。</p>
+  <ul class="plain">
+    <li><b>model (モデル)</b> — その場では切り替わらない。<code>/clear</code> またはセッション再開が必要。</li>
+    <li><b>outputStyle (文体)</b> — 同上。再読み込み不可。</li>
+    <li><b>env (環境変数)</b> — 起動時に読まれるため、変更後はセッション再開が必要。</li>
+    <li><b>permissions / hooks</b> — こちらは保存後、次のコマンドやイベントから反映される (再起動不要)。</li>
+  </ul>
+
+  <h2><span class="no">08</span>総評</h2>
+  <div class="quote">「全ての設定」を一望したいなら、<code>/config</code> だけを見ても半分しか見えぬ。<code>/config</code> は<strong>セッション単位の切り替えと表示まわり (約 30 項目)</strong> を担う入り口にすぎず、権限・自動処理・外部接続といったハーネスの根幹は <code>settings.json</code> に書く。両者は対立せず、簡単な切り替えは画面で、複雑で永続的な制御は JSON で、と役割を分けておる。本ページのカテゴリ表を起点に、必要な項目だけ深掘りするのが近道じゃ。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.13 19:46 JST
+  </footer>
+
+</div>
+</body>
+</html>
