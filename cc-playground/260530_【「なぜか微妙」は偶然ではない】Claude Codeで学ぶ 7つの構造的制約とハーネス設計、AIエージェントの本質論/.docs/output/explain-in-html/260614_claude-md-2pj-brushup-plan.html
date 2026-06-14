@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLAUDE.md ブラッシュアップ計画 — portfolio-site / outputquest 2案件レビュー</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · CLAUDE.md REVIEW · 2026.06.14</div>
+  <h1>CLAUDE.md ブラッシュアップ計画 <em>2案件レビュー</em></h1>
+  <div class="meta"><span>2026.06.14</span><span>authoring-claude-md / Review Mode</span><span>portfolio-site · outputquest</span></div>
+
+  
+
+  
+  <!-- 01 サマリ -->
+  <h2><span class="no">01</span>このレポートの要旨</h2>
+  <p><strong>authoring-claude-md</strong> という「CLAUDE.md を設計・改善するための支援ツール (skill)」の Review &amp; Optimize モードを使い、2 つの Web アプリ案件の CLAUDE.md (AI への常時指示書) を <strong>5 つの設計原則</strong>で採点した。結論だけ先に言うと、両方とも骨格は良好。ただし片方には「リンク先のファイルが消えている」という見過ごせない欠陥が 1 つあった。</p>
+  <p>5 つの原則とは <code>(1) ステートレス前提のオンボーディング</code> <code>(2) WHAT / WHY / HOW の三要素</code> <code>(3) Less is More (短いほど守られる)</code> <code>(4) 段階的開示 (詳細は別ファイルへ逃がす)</code> <code>(5) エージェント ≠ リンター (整形規則は書かない)</code> の 5 つ。各原則を 1.0 / 0.5 / 0 点で採点し、合計 5.0 点満点で評価する。</p>
+
+  <div class="stats">
+    <div class="stat"><div class="k">対象プロジェクト</div><div class="v">2 件</div></div>
+    <div class="stat"><div class="k">評価モード</div><div class="v">Review &amp; Optimize</div></div>
+    <div class="stat"><div class="k">スコア</div><div class="v">3.5 &amp; 4.5 / 5.0</div></div>
+    <div class="stat"><div class="k">CLAUDE.md 本体</div><div class="v">未編集 (計画のみ)</div></div>
+  </div>
+
+  <!-- 02 portfolio-site -->
+  <h2><span class="no">02</span>portfolio-site の評価</h2>
+  <div class="hero grade-c">
+    <div class="grade-box grade-c">
+      <div class="grade-letter">C</div>
+      <div class="grade-pct">70% (3.5/5.0)</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT</div>
+      <p>46 行・電報スタイルで骨格は良好。だが <strong>「詳細規約への参照リンクが切れている」</strong>のが致命的 (Critical)。リンク先の <code>.docs/conventions.md</code> が実ファイルとして存在しない。これさえ直せば一気に高評価へ届く。</p>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>原則</th><th>判定</th><th>スコア</th><th>所見</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">1 オンボーディング</td><td><span class="mark mark-pass">OK</span></td><td class="score-cell">1.0<div class="bar high"><i style="width:100%"></i></div></td><td>目的・境界・構造が揃い初見で把握可。型チェックのコマンドだけ未記載</td></tr>
+      <tr><td class="cat-name">2 WHAT/WHY/HOW</td><td><span class="mark mark-warn">部分的</span></td><td class="score-cell">0.5<div class="bar"><i style="width:50%"></i></div></td><td>ルールの理由 (WHY) が不揃い。<code>typecheck</code> コマンドも検証手順から漏れ</td></tr>
+      <tr><td class="cat-name">3 Less is More</td><td><span class="mark mark-pass">OK</span></td><td class="score-cell">1.0<div class="bar high"><i style="width:100%"></i></div></td><td>46 行。電報スタイル (名詞句・命令形主体) を維持</td></tr>
+      <tr><td class="cat-name">4 段階的開示</td><td><span class="mark mark-warn">部分的</span></td><td class="score-cell">0.5<div class="bar"><i style="width:50%"></i></div></td><td><em>Critical</em>: <code>.docs/conventions.md</code> への参照が切れている (リンク先ファイルが消失)</td></tr>
+      <tr><td class="cat-name">5 ≠リンター</td><td><span class="mark mark-warn">部分的</span></td><td class="score-cell">0.5<div class="bar"><i style="width:50%"></i></div></td><td><code>any 禁止</code> / <code>関数宣言で書く</code> は機械 (ESLint) が担保すべき領域</td></tr>
+    </tbody>
+  </table>
+
+  <div class="card">
+    <h3><span class="sev sev-fail">CRITICAL</span>参照切れ — conventions.md が存在しない</h3>
+    <div class="kv"><b>場所</b>CLAUDE.md 46 行目のポインタが、実体のないファイルを指している</div>
+    <div class="kv"><b>影響</b>段階的開示は「リンク先が存在する」前提で成立する。リンクが切れると AI は迷子になり、外部化したはずのスタイリング/アニメーション/コンテンツ規約 (22 行) そのものが失われている</div>
+    <div class="kv"><b>根本原因 (git 履歴で特定済み)</b>規約を正しく外部ファイルへ移したが、その後 <code>.docs/</code> を Git の追跡対象から外した際に、作業フォルダから実ファイルが消えた</div>
+    <pre>f9bfcd3  chore(gitignore): exclude .docs/ from tracking  ← ここで消失
+af59d4d  refactor(context): 詳細規約を .docs/ に外部化      ← ここに22行が残る
+
+# 復元コマンド (git 履歴から完全に取り戻せる)
+git show af59d4d:.docs/conventions.md > .docs/conventions.md</pre>
+  </div>
+
+  <p><strong>改善提案 (優先順):</strong></p>
+  <ul class="plain">
+    <li><b>1. [Critical] conventions.md を git 復元</b> — 上記コマンドで 22 行を取り戻し、切れたリンクを実体化する。<code>.docs/</code> は Git 追跡外なのでリポジトリは汚れない</li>
+    <li><b>2. [Medium] ルールに理由を補完 + 型チェックコマンド追加</b> — 理由のない禁止は AI が「合理的に見える言い訳」で無視しやすい。検証手順に <code>typecheck: pnpm typecheck</code> を足す</li>
+    <li><b>3. [Low] 整形ルールを ESLint / Hooks に委譲</b> — <code>any 禁止</code> 等は機械担保へ移す。ただし「先に担保を作ってから CLAUDE.md を削る」順序を厳守 (消すだけだと守りが消える)</li>
+  </ul>
+  <p>適用後の想定スコア: <strong>3.5 &rarr; 4.5〜5.0</strong></p>
+
+  <!-- 03 outputquest -->
+  <h2><span class="no">03</span>outputquest の評価</h2>
+  <div class="hero grade-a">
+    <div class="grade-box grade-a">
+      <div class="grade-letter">A</div>
+      <div class="grade-pct">90% (4.5/5.0)</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT</div>
+      <p>47 行・<strong>全ルールに理由付き</strong>で完成度が高い。skill の「近道ルール (high スコアなら大改修しない)」に該当。穴は <strong>検証コマンドの抜けが 1 つだけ</strong>。最小修正で満点を狙える。</p>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>原則</th><th>判定</th><th>スコア</th><th>所見</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">1 オンボーディング</td><td><span class="mark mark-pass">OK</span></td><td class="score-cell">1.0<div class="bar high"><i style="width:100%"></i></div></td><td>目的・境界・構造・コマンド・Git 方針が揃う</td></tr>
+      <tr><td class="cat-name">2 WHAT/WHY/HOW</td><td><span class="mark mark-warn">部分的</span></td><td class="score-cell">0.5<div class="bar"><i style="width:50%"></i></div></td><td><em>唯一の穴</em>: テストツール Vitest 導入済みなのに <code>test</code> コマンドが検証手順に無い</td></tr>
+      <tr><td class="cat-name">3 Less is More</td><td><span class="mark mark-pass">OK</span></td><td class="score-cell">1.0<div class="bar high"><i style="width:100%"></i></div></td><td>47 行。全ルールに理由が付いていて優秀</td></tr>
+      <tr><td class="cat-name">4 段階的開示</td><td><span class="mark mark-pass">OK</span></td><td class="score-cell">1.0<div class="bar high"><i style="width:100%"></i></div></td><td><code>index.md</code> と <code>.claude/rules/</code> への 2 段リンク。参照先すべて実在 (確認済み)</td></tr>
+      <tr><td class="cat-name">5 ≠リンター</td><td><span class="mark mark-pass">OK</span></td><td class="score-cell">1.0<div class="bar high"><i style="width:100%"></i></div></td><td>整形規則は <code>rules/styling.md</code> に外部化済み。本体は判断ガイドのみ</td></tr>
+    </tbody>
+  </table>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span>検証コマンドに test が欠落</h3>
+    <div class="kv"><b>内容</b>Vitest (テスト実行ツール) と設定・テストフォルダが揃っているのに、CLAUDE.md の Commands 欄に test が無く、AI が検証手段を見落とす</div>
+    <pre># Commands に追加するだけ
+test:  pnpm test (監視モード) / pnpm test:run (CI 用)</pre>
+  </div>
+
+  <p><strong>改善提案:</strong> 上記 1 点のみ。<code>anti-anchor</code> (AI が主流ライブラリを勝手に選ぶ偏りを打ち消す注記。例: <code>Clerk</code> や <code>Supabase + Prisma</code> に「主流の対抗馬ではない」と明示) は任意検討として保留。原則 3 (短く保つ) と衝突しうるため適用フェーズで判断する。</p>
+  <p>適用後の想定スコア: <strong>4.5 &rarr; 5.0</strong></p>
+  <p>なお、この案件が <code>Gemini</code> を使うのは<strong>製品の機能</strong>であって、グローバル方針の「ハーネス (AI 制御層) は Claude のみ」とは別レイヤーの話。混同しないよう注記した。</p>
+
+  <!-- 04 次のステップ -->
+  <h2><span class="no">04</span>適用ロードマップ</h2>
+  <p>現時点で CLAUDE.md 本体は<strong>一切編集していない</strong>。計画ファイルを各案件の <code>.docs/plans/2026-06-14-claude-md-brushup.md</code> に書き出した段階。承認後の適用は以下の順序を想定する。</p>
+  <ul class="plain">
+    <li><b>portfolio-site (先行推奨)</b> — Critical の参照切れを抱えるため優先。git 復元 &rarr; 理由補完 &rarr; (任意) 整形ルール委譲</li>
+    <li><b>outputquest</b> — test コマンド 1 行追加のみ。低リスク</li>
+    <li><b>共通の締め</b> — 機械検証 (<code>validate-claude-md.sh</code> で行数・禁止パターンを自動判定) &rarr; 主観 6 項目を accept/revise で確認 &rarr; commit (committer 経由、明示依頼時のみ)</li>
+  </ul>
+
+  <!-- 05 総評 -->
+  <h2><span class="no">05</span>総評</h2>
+  <div class="quote">両案件とも「短く・骨格だけ・詳細は外部化」という設計思想は既に身についている。差が出たのは <em>外部化したあとの保守</em> だ。outputquest はリンク先を実在させ続け、ルールに理由を残したことで 4.5 点。portfolio-site は外部化は正しかったが、Git 設定変更の副作用でリンク先を失い 3.5 点に留まった。教訓は明確 — 段階的開示は「リンクを張る」ことではなく「リンク先を生かし続ける」ことで完成する。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.14 14:52 JST
+  </footer>
+
+</div>
+</body>
+</html>
