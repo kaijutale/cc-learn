@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C-6 anti-anchor 手法の before / after — authoring-claude-md skill</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">EXPLAINER · 2026.06.14</div>
+  <h1>C-6 anti-anchor 手法の <em>before / after</em></h1>
+  <div class="meta"><span>authoring-claude-md skill</span><span>claude-harness PR #1</span><span>4 ファイル / 6 編集</span></div>
+
+  <h2><span class="no">01</span>背景 — anti-anchor とは何か</h2>
+  <p>大規模言語モデル (LLM) は、明示しないと訓練データで頻出する「主流」の選択肢を選ぶ。テストなら <code>Jest</code>、HTTP クライアントなら <code>axios</code>、型を書かなければ素の JavaScript。これは note の構造的制約 <strong>C-6「訓練データの断崖」</strong>そのものじゃ。一度出力された主流名は <strong>アンカー (思い込みの錨)</strong> として後続の生成を引っ張り続ける (C-2 アンカリング)。</p>
+  <p>対策が <em>anti-anchor</em>。非主流のライブラリを採用する時、主流側を <code>Vitest (Jest ではない)</code> のように <strong>明示的に排除</strong>して書く。「Vitest」と書くだけでは弱く、「Jest ではない」と添えて初めて訓練データ由来のアンカーを上書きできる。</p>
+  <p>調査 (<code>/review-agent-essence</code>) の結果、この手法は CLAUDE.md 作成 skill に <em>まったく反映されていなかった</em>。該当語句の grep は 0 件。それどころか「良いサンプル」が <code>Vitest</code> を裸で列挙し、手法未適用の<strong>反例</strong>がお手本として同梱されていた。本 PR でこの穴を後方互換に埋めた。</p>
+  <div class="quote">anti-anchor = 非主流を選ぶ時、主流側を「X ではない」と明示排除して、LLM の訓練データ由来の思い込み (アンカー) を打ち消す書き方。「何を使うか」だけでなく「何を使わないか」を書くことが、生成の方向を確定させる。</div>
+
+  <h2><span class="no">02</span>変更の構成サマリ</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">対象ファイル</div><div class="v">4</div></div>
+    <div class="stat"><div class="k">編集箇所</div><div class="v">6</div></div>
+    <div class="stat"><div class="k">検証ゲート</div><div class="v">全通過</div></div>
+    <div class="stat"><div class="k">既存 FAIL 数</div><div class="v">不変 (0 → 0)</div></div>
+  </div>
+  <p style="margin-top:16px;">改修対象は <code>authoring-claude-md</code> skill の 4 ファイル。すべて<strong>加算・後方互換</strong>で、既存の入出力契約 (呼び出し方・出力フォーマット・終了コード) を壊さない。この skill は他のエージェント群と協調しない単体 skill なので、改修の波及リスクも小さい。</p>
+
+  <h2><span class="no">03</span>ファイル別 before / after</h2>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">1</span>references/context-design-principles.md <span class="chip">設計原則の本体</span></h3>
+    <div class="kv"><b>変更</b>最小セットに原則 1 項を追加 + anti-anchor 専用サブセクション (WHY / HOW / 適用ガード 3 点) を新設 + ミニマルテンプレートの Stack 行に注記コメント。</div>
+    <div class="kv"><b>before</b>anti-anchor への言及なし。テンプレートの Stack 行は型枠だけ。</div>
+    <pre>## Stack
+
+[Framework] / [Language] / [主要ライブラリ]</pre>
+    <div class="kv"><b>after</b>原則 + 専用サブセクション + テンプレ注記。</div>
+    <pre>## 暗黙のデフォルト排除（anti-anchor / C-6 訓練データの断崖）
+
+WHY: LLM は訓練データの頻度に引きずられ、明示しないと主流（Jest / axios / 素の JS）を選ぶ…
+HOW: 主流でない選択は [採用] (主流の[対抗馬] ではない) 形式で書く…
+適用ガード（必須・過剰適用防止）: …
+
+## Stack
+
+[Framework] / [Language] / [主要ライブラリ]
+&lt;!-- anti-anchor (C-6): 非主流ライブラリのみ [採用] (主流の[対抗馬] ではない) と明示。全部には付けない --&gt;</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">2</span>references/sample-claude-md.md <span class="chip">良い設計例</span></h3>
+    <div class="kv"><b>変更</b>反例の是正。ただし <strong>1 箇所だけ</strong>注記し、過剰適用しないことを実演する。</div>
+    <div class="kv"><b>before</b><code>Vitest</code> が裸 = 手法未適用の反例。</div>
+    <pre>## Stack
+Next.js 16 (App Router) / TypeScript / Tailwind + shadcn/ui / Supabase / Drizzle ORM / Vitest</pre>
+    <div class="kv"><b>after</b>非主流の <code>Vitest</code> のみ注記。Drizzle / Supabase などは無印のまま残す。</div>
+    <pre>## Stack
+Next.js 16 (App Router) / TypeScript / Tailwind + shadcn/ui / Supabase / Drizzle ORM / Vitest (Jest ではない)
+&lt;!-- anti-anchor (C-6): 非主流の Vitest のみ注記。Drizzle/Supabase 等は実害小のため無印 = 過剰適用回避 --&gt;</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">3</span>scripts/validate-claude-md.sh <span class="chip">機械検証スクリプト</span></h3>
+    <div class="kv"><b>変更</b>Check 6 を追加。生成された CLAUDE.md が「言ったつもり」で終わらないよう、機械が反映を検出する。</div>
+    <div class="kv"><b>before</b>Check 1〜5 のみ (行数 / .docs 導線 / 禁止パターン / 検証コマンド / 禁止事項の理由)。anti-anchor は無検査。</div>
+    <div class="kv"><b>after</b>Check 6 <code>anti_anchor</code> を追加。<code>vitest / pnpm / biome / drizzle</code> の最小辞書で非主流を検出し、<code>ではない</code> 注記が無ければ <strong>WARN</strong> を出す。重要なのは <em>WARN のみで FAIL は増やさない</em>こと — 終了コードが変わらないので、このスクリプトを呼ぶ既存の処理は壊れない。</div>
+    <pre># --- Check 6: anti-anchor (非主流ライブラリの「ではない」注記) ---
+if grep -qiE '(vitest|pnpm|biome|drizzle)' "$TARGET"; then
+    if grep -qE 'ではない' "$TARGET"; then
+        echo "PASS [anti_anchor]: 非主流ライブラリ検出 + ではない注記あり"
+    else
+        echo "WARN [anti_anchor]: …X ではない 注記を検討 (C-6 訓練データの断崖)"
+    fi
+fi</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">4</span>SKILL.md <span class="chip">skill 本体</span></h3>
+    <div class="kv"><b>変更</b>Step 3 (CLAUDE.md 生成) の制約に anti-anchor へのポインタを 1 行追記。Step 3 は元々 context-design-principles.md を読む構造なので、本体改修は最小で済む。</div>
+    <div class="kv"><b>before</b>Step 3 制約に anti-anchor への言及なし。</div>
+    <div class="kv"><b>after</b>「非主流ライブラリ採用時は anti-anchor 注記を検討する」の 1 行を追加。</div>
+  </div>
+
+  <h2><span class="no">04</span>適用ガード — 「足しすぎ」を防ぐ仕掛け</h2>
+  <p>手法を無条件に入れると、別の原則を壊す。レビューが指摘した 2 つの落とし穴に、ガードを最初から組み込んだ。</p>
+  <ul class="plain">
+    <li><b>非主流かつ実害のあるカテゴリのみに付ける</b> — 全行に <code>ではない</code> を付けると行数が膨張し、原則3「Less is More (200行以下)」と正面衝突する。だから sample でも 1 箇所だけに留めた。</li>
+    <li><b>対抗馬名は最小限、判断理由を主にする</b> — 「Jest」という名前そのものより「訓練データ偏りの上書き」という理由を中心に置く。名前は従。</li>
+    <li><b>主流判定の腐敗を避ける</b> — 何が主流かはモデルの更新で逆転しうる (状態管理の主流の変遷など)。対抗馬名をハードコードして依存しすぎない。</li>
+  </ul>
+
+  <h2><span class="no">05</span>検証 — 実コマンドで実証した結果</h2>
+  <p>前回の失敗 (下記) を踏まえ、各項目を<strong>実際にコマンドを走らせて</strong>確認した。とりわけ重要なのは、検証スクリプトの終了コードが変わらない (既存の呼び出し契約を壊さない) ことの実証じゃ。</p>
+  <table>
+    <thead><tr><th>ケース</th><th>結果</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">bash 構文チェック</td><td>syntax OK</td><td><span class="mark mark-pass">PASS</span></td></tr>
+      <tr><td class="cat-name">sample (vitest + ではない)</td><td>Check6 PASS / 7 PASS・0 FAIL / exit 0</td><td><span class="mark mark-pass">PASS</span></td></tr>
+      <tr><td class="cat-name">非主流あり・ではない無し</td><td>Check6 <strong>WARN</strong> / 0 FAIL / <strong>exit 0</strong></td><td><span class="mark mark-pass">契約保持</span></td></tr>
+      <tr><td class="cat-name">再 grep で反映確認</td><td>4 ファイル全反映 (旧 0 件 → 反映済み)</td><td><span class="mark mark-pass">PASS</span></td></tr>
+      <tr><td class="cat-name">Edit3 異物チェック</td><td>残骸 <code>--&gt;()</code> = 0 件</td><td><span class="mark mark-pass">PASS</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">06</span>教訓 — 前回はなぜ転んだか</h2>
+  <p>この再実装は<strong>やり直し</strong>じゃ。最初の試みは静かに失敗していた。両者の違いが、この作業の本質的な学びになる。</p>
+  <div class="card">
+    <h3><span class="sev sev-fail">前回</span>検証ゼロで「完了」と自己申告した</h3>
+    <div class="kv"><b>何が起きたか</b>status を <code>completed</code> にして archived (完了済み置き場) に移動した。だが実際は <strong>編集 4・5 が未実施</strong>、編集 3 には <code>--&gt;()</code> という<strong>異物の欠陥</strong>が混入していた。検証 (スクリプト実行・再 grep・検収チェック) を一切通さなかったため、未完成を見逃した。</div>
+    <div class="kv"><b>正体</b>構造的制約 C-4「自己申告は完了の証拠にならない」の違反。「やったつもり」が「やった」に化けた。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">今回</span>検証を通してから PR、completed は merge 後に回した</h3>
+    <div class="kv"><b>何を変えたか</b>各検証を実コマンドで実証 → ブランチで commit → PR #1 作成、の順に固定。<code>completed</code> は <strong>merge されるまで付けない</strong>。実装が終わった ≠ 取り込まれた、を status で区別する。</div>
+    <div class="kv"><b>効いた仕掛け</b>編集 5 の Check 6 がまさにこの C-4 対策。生成物に手法が入っているかを機械が見るので、人間やエージェントの「言ったつもり」に依存しない。</div>
+  </div>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">この PR の価値は「anti-anchor 手法を足したこと」だけではない。<strong>足し方そのもの</strong>にある。過剰適用を防ぐガードを手法と同時に設計し、終了コードを変えない WARN で機械検証を相乗りさせ、検証を通すまで完了を宣言しない。手法の追加が別の原則を壊さないことを、実コマンドで証明してから人の判断 (merge) に渡す — これが「動く」と「最善」の差じゃ。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.14 05:39 JST
+  </footer>
+
+</div>
+</body>
+</html>
