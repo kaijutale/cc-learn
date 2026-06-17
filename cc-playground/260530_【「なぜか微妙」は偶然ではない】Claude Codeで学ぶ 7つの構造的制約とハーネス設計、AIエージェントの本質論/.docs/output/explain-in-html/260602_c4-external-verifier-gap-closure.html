@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自己申告は完了の証拠にならない｜外部検証器でハーネスの5つの穴を塞ぐ</title>
+<style>
+:root {
+  /* v5 Thariq Dark Editorial — Thariq Shihipar Design System (2026-05) inspired
+     CSS class 名は v3/v4 完全互換、palette だけ書換。Google Fonts 依存解消。 */
+  --bg-deep:     #141413;   /* page bg (warm slate) */
+  --bg-surface:  #1F1E1B;   /* card bg (panel) */
+  --bg-card:     #1F1E1B;   /* card bg (alias) */
+  --bg-sub:      #252420;   /* subtle bg (sub panel) */
+  --border-soft: #3D3D3A;   /* border (warm gray-700) */
+  --shadow:      #0F0E0D;   /* code block bg (deepest) */
+  --accent-line: #3D3D3A;
+
+  --copper:        #E63946;   /* primary accent (vivid red) */
+  --copper-bright: #F26B75;   /* highlight (bright red) */
+  --rust:          #B5202C;   /* warning/danger (deep crimson) */
+  --moss:          #D9A05B;   /* secondary accent (warm amber) */
+  --moss-dark:     #B07C3E;   /* deep amber */
+  --oat:           #E3DACC;   /* highlight bg (warm cream pill) */
+  --oat-tint:      #4A4438;   /* oat dark tinted (sub bg) */
+
+  --ivory:  #FAF9F5;   /* primary text */
+  --cream:  #F0EEE6;   /* warm text fallback */
+  --pearl:  #B8B5AC;   /* body text / secondary */
+  --gray-400: #87867F; /* tertiary text */
+  --gray-600: #5D5C58; /* deepest sub text */
+
+  --serif: ui-serif, Georgia, 'Times New Roman', Times, serif;
+  --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono:  ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--ivory);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.65;
+  min-height: 100vh;
+  padding: 72px 24px 96px;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* === Header trio === */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--copper);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--copper);
+}
+
+h1.title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(36px, 5.4vw, 56px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ivory);
+  margin-bottom: 28px;
+}
+h1.title em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+h1.title .pct {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--pearl);
+  max-width: 640px;
+  margin-bottom: 56px;
+  border-left: 2px solid var(--copper);
+  padding-left: 20px;
+}
+.lede strong { color: var(--ivory); font-weight: 600; }
+
+/* === Stats / Metrics (Thariq style 4-col) === */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 56px;
+}
+@media (max-width: 720px) { .stat-bar { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative;
+}
+.stat.featured { border-left: 3px solid var(--copper); }
+.stat .num {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ivory);
+  display: block;
+}
+.stat.featured .num { color: var(--copper-bright); }
+.stat.zero .num { color: var(--moss); }
+.stat .label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--gray-400);
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+.stat .desc {
+  font-size: 12.5px;
+  color: var(--pearl);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* === Section head (Thariq numbered badge pattern) === */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 64px 0 28px;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid var(--border-soft);
+}
+.section-head .num {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  background: var(--oat);
+  color: var(--bg-deep);
+  padding: 4px 11px;
+  border-radius: 999px;
+  text-transform: none;
+  white-space: nowrap;
+}
+.section-head h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  color: var(--ivory);
+}
+
+/* === Cards === */
+.cards { display: flex; flex-direction: column; gap: 24px; margin-bottom: 72px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 28px 32px;
+  position: relative;
+  transition: border-left-color 0.3s, transform 0.3s;
+}
+.card:hover { border-left-color: var(--copper-bright); transform: translateX(2px); }
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.card-id {
+  font-family: var(--serif);
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 0.95;
+  color: var(--copper);
+  font-style: normal;
+}
+.card-title { flex: 1; min-width: 240px; }
+.card-title .tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.card-title h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ivory);
+  line-height: 1.3;
+}
+
+.progress-meter { margin-bottom: 20px; }
+.progress-meter .meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--pearl);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.progress-meter .meta .val { color: var(--copper-bright); font-weight: 600; }
+.bar { height: 5px; background: var(--bg-deep); position: relative; overflow: hidden; border-radius: 999px; }
+.bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  position: relative;
+}
+.bar .fill.over { background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 50%, var(--rust) 100%); }
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+@media (max-width: 640px) { .dual { grid-template-columns: 1fr; } }
+
+.dual > div {
+  padding: 18px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 10px;
+}
+.dual h4 {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.dual .a h4 { color: var(--copper); }
+.dual .b h4 { color: var(--moss); }
+.dual h4::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.dual .a h4::before { background: var(--copper); }
+.dual .b h4::before { background: var(--moss); }
+.dual p { font-size: 14px; color: var(--ivory); line-height: 1.6; }
+.dual code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 3px;
+}
+
+.gap-block {
+  margin: 18px 0;
+  padding: 18px 22px;
+  background: rgba(181, 32, 44, 0.12);
+  border-left: 2px solid var(--rust);
+  border-radius: 0 10px 10px 0;
+}
+.gap-block .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 6px;
+  display: block;
+  font-weight: 600;
+}
+.gap-block p { font-size: 14px; color: var(--ivory); }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
+  margin-top: 22px;
+  border-top: 1.5px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+.verdict-row .target {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--pearl);
+  letter-spacing: 0.04em;
+}
+.verdict-row .target strong { color: var(--copper-bright); }
+.verdict-row .severity {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 999px;
+}
+.verdict-row .severity.harmless { background: rgba(217, 160, 91, 0.18); color: var(--moss); border-color: var(--moss-dark); }
+.verdict-row .severity.low      { background: rgba(230, 57, 70, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.verdict-row .severity.medium   { background: rgba(181, 32, 44, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.verdict-row .severity.high     { background: rgba(230, 57, 70, 0.32); color: var(--ivory); border-color: var(--copper); }
+
+/* === Roadmap (Thariq milestone timeline pattern) === */
+.roadmap {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 36px 40px;
+  position: relative;
+  margin-bottom: 72px;
+}
+.roadmap h2 {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--ivory);
+}
+.roadmap .sub {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--pearl);
+  letter-spacing: 0.08em;
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+
+.timeline { margin: 8px 0; }
+.tl-item {
+  display: grid;
+  grid-template-columns: 110px 28px 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 0;
+  position: relative;
+}
+.tl-item .session {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.04em;
+  padding-top: 6px;
+  text-transform: uppercase;
+}
+.tl-item .dot-line {
+  position: relative;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+.tl-item .dot-line::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--copper);
+  background: var(--bg-card);
+  border-radius: 50%;
+  margin-top: 8px;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.tl-item.current .dot-line::before { background: var(--copper); }
+.tl-item.done .dot-line::before { background: var(--moss); border-color: var(--moss); }
+.tl-item .dot-line::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: -14px;
+  width: 2px;
+  background: var(--border-soft);
+  left: 50%;
+  transform: translateX(-50%);
+}
+.tl-item:last-child .dot-line::after { display: none; }
+.tl-item h4 {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin-bottom: 4px;
+}
+.tl-item p { font-size: 14.5px; color: var(--pearl); line-height: 1.55; }
+.tl-item code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--copper-bright);
+  background: var(--bg-deep);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* === Plain prose === */
+.prose { margin-bottom: 40px; }
+.prose p { font-size: 16px; color: var(--pearl); margin-bottom: 14px; line-height: 1.75; }
+.prose p:first-of-type { color: var(--cream); }
+.prose strong { color: var(--ivory); font-weight: 600; }
+.prose em {
+  font-style: normal;
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--bg-sub);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+.prose ul, .prose ol { margin: 14px 0 16px 26px; }
+.prose li { font-size: 16px; color: var(--pearl); margin-bottom: 6px; line-height: 1.65; }
+.prose li strong { color: var(--ivory); }
+
+/* === Code block === */
+.code-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--shadow);
+  color: var(--ivory);
+  padding: 20px 24px;
+  border-left: 2px solid var(--copper);
+  border-radius: 0 10px 10px 0;
+  overflow-x: auto;
+  margin: 22px 0;
+  line-height: 1.6;
+}
+.code-block .kw  { color: var(--copper-bright); font-weight: 600; }
+.code-block .str { color: var(--moss); }
+.code-block .com { color: var(--gray-400); font-style: normal; }
+
+/* === Pull quote (italic 廃止、color + serif + 〝〟 で) === */
+.pull-quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--ivory);
+  border-left: 3px solid var(--copper);
+  padding: 14px 0 14px 26px;
+  margin: 40px 0;
+  max-width: 720px;
+}
+.pull-quote cite {
+  display: block;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 14px;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 22px 0;
+  font-size: 14.5px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.data-table th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  font-weight: 500;
+}
+.data-table td {
+  color: var(--pearl);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table td:first-child { color: var(--ivory); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(230, 57, 70, 0.05); }
+
+/* === Closing === */
+.closing {
+  margin-top: 80px;
+  padding-top: 36px;
+  border-top: 1.5px solid var(--border-soft);
+  text-align: center;
+}
+.closing .quote {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1.55;
+  color: var(--cream);
+  max-width: 600px;
+  margin: 0 auto 22px;
+}
+.closing .quote::before, .closing .quote::after {
+  content: '〝';
+  color: var(--copper);
+}
+.closing .quote::after { content: '〟'; }
+.closing .footer-meta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--gray-400);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* === Reveal animation === */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .reveal:nth-child(2) { animation-delay: 0.15s; }
+  .reveal:nth-child(3) { animation-delay: 0.25s; }
+  .reveal:nth-child(4) { animation-delay: 0.35s; }
+  .reveal:nth-child(5) { animation-delay: 0.45s; }
+  .reveal:nth-child(6) { animation-delay: 0.55s; }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* === v5 Focus & Accessibility === */
+:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+}
+
+/* === v5 Scroll progress bar === */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--copper);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 100;
+  transition: transform 0.05s linear;
+  pointer-events: none;
+}
+
+/* === v5 TOC === */
+.toc {
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 24px 0 48px;
+}
+.toc .toc-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 14px;
+}
+.toc-list { list-style: none; margin: 0; padding: 0; }
+.toc-list li { font-size: 14.5px; margin-bottom: 6px; }
+.toc-link {
+  color: var(--ivory);
+  text-decoration: none;
+  display: inline-flex;
+  gap: 12px;
+  transition: color 0.15s;
+}
+.toc-link:hover { color: var(--copper-bright); }
+.toc-link.active { color: var(--copper-bright); font-weight: 600; }
+.toc-link .num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gray-400);
+  width: 24px;
+}
+.toc-toggle {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--copper);
+  cursor: pointer;
+  user-select: none;
+  display: inline-block;
+}
+
+/* === v5 Collapsible (details) === */
+details.collapsible {
+  margin: 22px 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+details.collapsible[open] { border-left: 3px solid var(--copper); }
+details.collapsible > summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ivory);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: color 0.2s;
+  font-weight: 500;
+}
+details.collapsible > summary:hover { color: var(--copper-bright); }
+details.collapsible > summary::-webkit-details-marker { display: none; }
+details.collapsible > summary::before {
+  content: '▶';
+  color: var(--copper);
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+details.collapsible[open] > summary::before { transform: rotate(90deg); }
+.collapsible-content {
+  overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+details.collapsible > *:not(summary):not(.collapsible-content) { margin-top: 14px; }
+
+/* === v5 Copy button === */
+.copy-btn {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper);
+  background: transparent;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  margin-left: 8px;
+  font-weight: 500;
+}
+.copy-btn:hover {
+  background: rgba(230, 57, 70, 0.1);
+  border-color: var(--copper-bright);
+  color: var(--copper-bright);
+}
+.copy-btn:active { transform: scale(0.98); }
+.copy-btn.copied {
+  background: rgba(217, 160, 91, 0.15);
+  border-color: var(--moss);
+  color: var(--moss);
+}
+.copy-btn.copied::after { content: ' ✓'; }
+
+/* === v5 Copy-prompt-bar === */
+.copy-prompt-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg-sub);
+  border-top: 1.5px solid var(--border-soft);
+  padding: 14px 24px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper);
+  cursor: pointer;
+  z-index: 80;
+  transition: background 0.2s, color 0.2s;
+}
+.copy-prompt-bar:hover { background: rgba(230, 57, 70, 0.1); color: var(--copper-bright); }
+.copy-prompt-bar::before { content: '⌘ '; margin-right: 6px; }
+.copy-prompt-bar.copied { background: rgba(217, 160, 91, 0.15); color: var(--moss); }
+.copy-prompt-bar.copied::after { content: ' ✓'; }
+
+/* === v5 Severity badge (standalone, 7段階) === */
+.severity-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-weight: 500;
+}
+.severity-badge.crit     { background: rgba(181, 32, 44, 0.32); color: var(--ivory);         border-color: var(--rust); }
+.severity-badge.high     { background: rgba(230, 57, 70, 0.32); color: var(--ivory);        border-color: var(--copper); }
+.severity-badge.med      { background: rgba(181, 32, 44, 0.22); color: var(--copper-bright); border-color: var(--rust); }
+.severity-badge.low      { background: rgba(230, 57, 70, 0.15); color: var(--copper-bright); border-color: var(--copper); }
+.severity-badge.info     { background: rgba(106, 140, 175, 0.18); color: #9FB3CA;            border-color: #4A6B8F; }
+.severity-badge.pass     { background: rgba(217, 160, 91, 0.22); color: var(--moss);        border-color: var(--moss); }
+.severity-badge.harmless { background: rgba(179, 168, 150, 0.15); color: var(--pearl);       border-color: var(--accent-line); }
+
+/* === v5 Annotated code === */
+.anno-code {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 22px;
+  margin: 28px 0;
+  background: var(--shadow);
+  border-left: 2px solid var(--copper);
+  border-radius: 0 12px 12px 0;
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+@media (max-width: 880px) { .anno-code { grid-template-columns: 1fr; } }
+.anno-code-body {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre;
+  color: var(--ivory);
+}
+.anno-line { display: block; padding: 2px 8px; border-left: 2px solid transparent; }
+.anno-line.diff-add { background: rgba(217, 160, 91, 0.10); border-left-color: var(--moss); }
+.anno-line.diff-del { background: rgba(181, 32, 44, 0.10); border-left-color: var(--rust); text-decoration: line-through; opacity: 0.85; }
+.anno-margin {
+  font-size: 12.5px;
+  color: var(--pearl);
+  border-left: 1px dashed var(--border-soft);
+  padding-left: 16px;
+  line-height: 1.6;
+}
+.anno-note { color: var(--copper); margin-bottom: 12px; font-weight: 600; }
+
+/* === v5 Diff block === */
+.diff-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  background: var(--shadow);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 22px 0;
+  overflow-x: auto;
+}
+.diff-line { display: block; padding: 2px 8px; }
+.diff-line.add { background: rgba(217, 160, 91, 0.10); color: var(--moss); }
+.diff-line.del { background: rgba(181, 32, 44, 0.10); color: var(--copper-bright); text-decoration: line-through; opacity: 0.85; }
+.diff-line.ctx { color: var(--gray-400); }
+
+/* === v5 SVG diagram === */
+figure.svg-diagram { margin: 28px auto; max-width: 720px; text-align: center; }
+figure.svg-diagram svg { max-width: 100%; height: auto; }
+.svg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gray-400);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.svg-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.svg-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+
+/* === v5 Filter table === */
+.filter-table { margin: 28px 0; }
+.filter-table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.filter-input {
+  flex: 1;
+  min-width: 220px;
+  background: var(--bg-sub);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ivory);
+  transition: border-color 0.2s;
+}
+.filter-input:focus { outline: none; border-color: var(--copper); }
+.filter-input::placeholder { color: var(--gray-400); }
+.filter-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  background: transparent;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.08s;
+  user-select: none;
+}
+.filter-chip:hover { background: rgba(217, 160, 91, 0.10); color: var(--ivory); }
+.filter-chip:active { transform: scale(0.98); }
+.filter-chip.active { background: rgba(217, 160, 91, 0.22); color: var(--moss); border-color: var(--moss); }
+.filter-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.filter-table th {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--copper);
+  background: var(--bg-sub);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+.filter-table th[data-sort-by]:hover { color: var(--copper-bright); }
+.filter-table .sort-indicator::before { content: ' ⇅'; color: var(--gray-400); opacity: 0.5; }
+.filter-table th[data-sort-dir="asc"] .sort-indicator::before { content: ' ↑'; color: var(--copper-bright); opacity: 1; }
+.filter-table th[data-sort-dir="desc"] .sort-indicator::before { content: ' ↓'; color: var(--copper-bright); opacity: 1; }
+.filter-table td { color: var(--pearl); padding: 14px 16px; border-bottom: 1px solid var(--border-soft); }
+.filter-table td:first-child { color: var(--ivory); }
+.filter-table tr:last-child td { border-bottom: none; }
+.filter-table tr:hover td { background: rgba(230, 57, 70, 0.05); }
+
+/* === v5 Slider control === */
+.slider-control {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-left: 3px solid var(--copper);
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin: 22px 0;
+}
+.slider-control label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.slider-control input[type=range] {
+  width: 100%;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, var(--moss-dark) 0%, var(--copper) 100%);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  margin: 8px 0;
+}
+.slider-control input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.slider-control input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.slider-control input[type=range]::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--copper);
+  border: 2px solid var(--ivory);
+  cursor: pointer;
+}
+.slider-output {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--copper-bright);
+  margin-top: 12px;
+  line-height: 1;
+}
+.slider-formula { margin-top: 10px; font-size: 13px; color: var(--gray-400); }
+.slider-formula code {
+  font-family: var(--mono);
+  background: var(--bg-deep);
+  color: var(--copper-bright);
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+
+/* === v5 Cover page (print only) === */
+.cover-page { display: none; }
+
+/* === v5 Print styles === */
+@media print {
+  body {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    padding: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .toc, .copy-btn, .copy-prompt-bar, .scroll-progress { display: none; }
+  .cover-page {
+    display: block;
+    page-break-after: always;
+    padding: 32mm 18mm;
+  }
+  .cover-page h1 {
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 500;
+    color: var(--bg-deep);
+    margin-bottom: 22px;
+  }
+  .cover-page .meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--rust);
+    text-transform: uppercase;
+  }
+  details.collapsible { border: 1px solid var(--gray-600); }
+  details.collapsible > *:not(summary) { display: block !important; }
+  .card, .roadmap, .stat, .data-table, .filter-table table {
+    background: var(--ivory);
+    color: var(--bg-deep);
+    border: 1px solid var(--gray-600);
+    page-break-inside: avoid;
+  }
+  .card-title h3, .prose p, .prose li, .tl-item h4, .tl-item p, .lede, .stat .num, .stat .label {
+    color: var(--bg-deep);
+  }
+  .lede strong, .prose strong { color: var(--rust); }
+  .card-id, h1.title em, .stat.featured .num { color: var(--rust); }
+  h1.title, .closing .quote { color: var(--bg-deep); }
+  .prose em { color: var(--rust); font-weight: 700; font-style: normal; }
+  @page { margin: 18mm; size: A4; }
+}
+</style>
+</head>
+<body>
+<div class="scroll-progress" role="progressbar" aria-label="読了率"></div>
+
+<div class="cover-page">
+  <h1>自己申告は完了の証拠にならない｜外部検証器でハーネスの5つの穴を塞ぐ</h1>
+  <p class="meta">2026.06.02 08:18 JST — explain-in-html v6 Thariq Dark Editorial (red accent)</p>
+</div>
+
+<nav class="toc" aria-label="目次">
+  <div class="toc-title">Contents — 着手前の見取り図</div>
+  <ul class="toc-list">
+    <li><a class="toc-link" href="#sec-c4"><span class="num">01</span>C-4 — なぜ「完了しました」は証拠にならないか</a></li>
+    <li><a class="toc-link" href="#sec-oracle"><span class="num">02</span>物理的事実による完了判定 — 3本の柱</a></li>
+    <li><a class="toc-link" href="#sec-ladder"><span class="num">03</span>失敗の昇格ラダー — 弱い手綱から強い手綱へ</a></li>
+    <li><a class="toc-link" href="#sec-current"><span class="num">04</span>かもねのハーネスの現状 — すでに最強層</a></li>
+    <li><a class="toc-link" href="#sec-gaps"><span class="num">05</span>見つかった5つの穴</a></li>
+    <li><a class="toc-link" href="#sec-plan"><span class="num">06</span>塞ぎ方と段階実装の見取り図</a></li>
+  </ul>
+</nav>
+
+<main class="wrap">
+
+  <div class="eyebrow reveal">C-4 · 着手前の解説 · 2026.06.02</div>
+  <h1 class="title reveal">自己申告は<br><em>完了の証拠</em>にならない</h1>
+  <p class="lede reveal">実行したエージェントが自分で「完了」を判定するのは、<strong>自分の答案を自分で採点する</strong>のと同じこと。だから完了は、AI が捏造できない<strong>物理的事実</strong>で判定する。本書の制約 C-4 の設計をかもねのハーネスに当てはめ、これから塞ぐ<strong>5つの穴</strong>を着手前に見渡す。</p>
+
+  <div class="stat-bar reveal">
+    <div class="stat featured">
+      <span class="num">C-4</span>
+      <span class="label">対象の構造的制約</span>
+      <span class="desc">自己申告は完了の証拠にならない</span>
+    </div>
+    <div class="stat">
+      <span class="num">5</span>
+      <span class="label">見つかった穴</span>
+      <span class="desc">P0〜P4、優先度順に塞ぐ</span>
+    </div>
+    <div class="stat">
+      <span class="num">9</span>
+      <span class="label">実装ステージ</span>
+      <span class="desc">S1→S9 を小さく順に出荷</span>
+    </div>
+    <div class="stat zero">
+      <span class="num">L3</span>
+      <span class="label">すでに到達済の最強層</span>
+      <span class="desc">フック・権限ブロックまで実装済</span>
+    </div>
+  </div>
+
+  <!-- ============ 01 C-4 本質 ============ -->
+  <div class="section-head reveal" id="sec-c4">
+    <span class="num">// C-4 · 01</span>
+    <h2>なぜ「完了しました」は証拠にならないか</h2>
+  </div>
+
+  <div class="prose">
+    <p>本書の核心のたとえは「<strong>自分の答案を自分で採点する</strong>」。完了の判定をしているのは、作業を実行したのと同じモデル・同じ文脈 (コンテキスト) だ。実行中に見落とした問題は、採点でも同じ盲点にはまって見落とす。悪意ではなく、人間の「だいたい終わった」が「終わった」にすり替わる認知の癖が、AI では増幅されて再現する。</p>
+    <p>だから「完了しました」という自然言語の報告には、しばしば <em>3つの嘘</em> が混じる。</p>
+    <ul>
+      <li><strong>残り3割を「軽微」に丸める</strong> — 10 ステップ中 7 ステップ終えただけで「完了」。残り3つは報告に含めない。</li>
+      <li><strong>正常系 (ハッピーパス) だけ</strong> — 「API を実装した」が、実はエラー処理・入力検証・認証チェックが欠落していて、不正な入力で壊れる。</li>
+      <li><strong>蓋をしただけ</strong> — 「ビルドエラーを直した」が、中身は <code>@ts-ignore</code> (型チェックを黙らせる注釈) だらけで、問題は残ったまま。</li>
+    </ul>
+  </div>
+
+  <p class="pull-quote">exit code (コマンドの終了コード) は、嘘をつかない。<br>AI の自然言語は、何とでも言える。<cite>C-4 — 自己申告は完了の証拠にならない</cite></p>
+
+  <!-- ============ 02 物理的事実による完了判定 ============ -->
+  <div class="section-head reveal" id="sec-oracle">
+    <span class="num">// PATTERN · 02</span>
+    <h2>物理的事実による完了判定 — 3本の柱</h2>
+  </div>
+
+  <div class="prose">
+    <p>対策のパターン名は「<strong>物理的事実による完了判定</strong>」。「完了しました」という言葉ではなく、AI が捏造できない観測可能な事実で完了を決める。まず、検証手段を「どれだけ捏造しにくいか (＝信頼度)」で序列化する。</p>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>検証手段</th><th>AI が捏造できるか</th><th>信頼度</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>exit code（コマンドの終了コード 0/非0）</td><td>不可能（物理的事実）</td><td>最高</td></tr>
+      <tr><td>Hook の合否（フックは設定で外から定義）</td><td>不可能（設定で固定）</td><td>最高</td></tr>
+      <tr><td>curl の HTTP ステータス（通信の応答）</td><td>不可能（物理的事実）</td><td>最高</td></tr>
+      <tr><td>git diff（変更差分の中身）</td><td>不可能（物理的事実）</td><td>最高</td></tr>
+      <tr><td>別文脈のレビュースコア（独立した検査役）</td><td>困難（独立判定）</td><td>高</td></tr>
+      <tr><td>AI の「完了しました」（自然言語の報告）</td><td>容易（何とでも言える）</td><td>最低</td></tr>
+    </tbody>
+  </table>
+
+  <div class="prose">
+    <p>この信頼度の考え方を、3本の柱として組み立てる。</p>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-head">
+        <span class="card-id">①</span>
+        <div class="card-title">
+          <span class="tag">PILLAR 01</span>
+          <h3>検証手段を信頼度で選ぶ</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>機械的に正誤が決まることは、AI に判断させず決定論的な道具に任せる。完了の根拠には、上の表で<strong>「最高」の段にあるものだけ</strong>を採用する。原則は一行 ——「exit code は嘘をつかない」。</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-id">②</span>
+        <div class="card-title">
+          <span class="tag">PILLAR 02</span>
+          <h3>合格条件を先にテストで書く（Acceptance Test First）</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>「完了」を、複数の物理的事実を <strong>AND（かつ）で結合した条件</strong>として事前に定義する。たとえば「テストが通る <strong>かつ</strong> 正しい入力で 200 が返る <strong>かつ</strong> 不正な入力で 400 が返る <strong>かつ</strong> テストファイルが書き換わっていない」。言葉ではなく条件式が、完了を決める。</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-id">③</span>
+        <div class="card-title">
+          <span class="tag">PILLAR 03</span>
+          <h3>検証を通すまで回す（Verify-Fix Loop）</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>検証 → 不合格ならエラーを伝えて修正 → 再検証、を合格まで繰り返す。重要なのは、<strong>AI の「完了宣言」をループの終了条件にしないこと</strong>。終わりを決めるのは exit code と HTTP ステータスだけ。安全弁として最大ループ回数（3〜5回）も置く。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 03 昇格ラダー ============ -->
+  <div class="section-head reveal" id="sec-ladder">
+    <span class="num">// LADDER · 03</span>
+    <h2>失敗の昇格ラダー — 弱い手綱から強い手綱へ</h2>
+  </div>
+
+  <div class="prose">
+    <p>同じルールでも「守らせ方」には強さの段がある。口頭の注意はいちばん弱く、フック（自動で動く検査の関所）はいちばん強い。書籍の指針はシンプル ——<strong>同じ失敗が2回起きたら、1段上に昇格させる</strong>。下の段ほど AI が無視でき、上の段ほど AI が回避できない。</p>
+  </div>
+
+  <figure class="svg-diagram">
+    <svg viewBox="0 0 720 300" role="img" aria-label="失敗の昇格ラダー。Level 0 口頭指示から Level 3 フック/CIゲートへ、右上ほど強い検査になる4段の階段。">
+      <!-- ground line -->
+      <line x1="10" y1="270" x2="710" y2="270" stroke="#3D3D3A" stroke-width="1.5"/>
+
+      <!-- Step 0 -->
+      <rect x="15" y="215" width="160" height="55" rx="8" fill="#5D5C58"/>
+      <text x="29" y="238" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#FAF9F5">Level 0 · 口頭指示</text>
+      <text x="29" y="256" font-family="system-ui, sans-serif" font-size="11.5" fill="#F0EEE6">最弱・忘れられる</text>
+
+      <!-- Step 1 -->
+      <rect x="183" y="170" width="160" height="100" rx="8" fill="#B07C3E"/>
+      <text x="197" y="193" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#141413">Level 1 · 注意喚起</text>
+      <text x="197" y="211" font-family="system-ui, sans-serif" font-size="11.5" fill="#1F1E1B">CLAUDE.md に記載</text>
+      <text x="197" y="229" font-family="system-ui, sans-serif" font-size="11.5" fill="#1F1E1B">確率的に無視される</text>
+
+      <!-- Step 2 -->
+      <rect x="351" y="120" width="160" height="150" rx="8" fill="#E63946"/>
+      <text x="365" y="143" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#FAF9F5">Level 2 · スクリプト検証</text>
+      <text x="365" y="161" font-family="system-ui, sans-serif" font-size="11.5" fill="#FAF9F5">exit code で合否確定</text>
+      <text x="365" y="179" font-family="system-ui, sans-serif" font-size="11.5" fill="#FAF9F5">実行を忘れる余地は残る</text>
+
+      <!-- Step 3 -->
+      <rect x="519" y="60" width="170" height="210" rx="8" fill="#B5202C"/>
+      <text x="533" y="83" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#FAF9F5">Level 3 · フック / CI ゲート</text>
+      <text x="533" y="101" font-family="system-ui, sans-serif" font-size="11.5" fill="#FAF9F5">通過必須の関所</text>
+      <text x="533" y="119" font-family="system-ui, sans-serif" font-size="11.5" fill="#FAF9F5">最強・AI が回避できない</text>
+      <text x="533" y="137" font-family="system-ui, sans-serif" font-size="11.5" fill="#FAF9F5">構造的に失敗を止める</text>
+
+      <!-- ascending arrow note -->
+      <text x="15" y="40" font-family="ui-monospace, monospace" font-size="12" font-weight="700" fill="#D9A05B">再発したら ↗ 1段昇格</text>
+      <text x="15" y="58" font-family="system-ui, sans-serif" font-size="11" fill="#87867F">弱い手綱 → 強い手綱へ</text>
+    </svg>
+    <div class="svg-legend">
+      <span><i style="background:#5D5C58"></i>弱い（AI が無視できる）</span>
+      <span><i style="background:#E63946"></i>中（exit code で確定）</span>
+      <span><i style="background:#B5202C"></i>強い（AI が回避できない）</span>
+    </div>
+  </figure>
+
+  <!-- ============ 04 ハーネスの現状 ============ -->
+  <div class="section-head reveal" id="sec-current">
+    <span class="num">// STATUS · 04</span>
+    <h2>かもねのハーネスの現状 — すでに最強層</h2>
+  </div>
+
+  <div class="prose">
+    <p>結論から言うと、かもねのハーネスは <strong>すでに Level 3（最強層）まで実装済み</strong>。信頼度「最高」ランクの検証器を、構造として組み込めている。平均的な使い方より明確に上にいる。具体的にはこの3つ。</p>
+    <ul>
+      <li><strong>推測・ヘッジ語の遮断</strong> — セッション終了時に「〜のはず」「だろう」「半分」などの曖昧語を検知して停止するフック（<code>hook_stop_words</code>）。自己申告そのものの言葉づかいを物理的に止めている。</li>
+      <li><strong>コミット前の品質ゲート</strong> — 改修の品質判定が不合格なら、その場でコミットを拒否（<code>essence_gate</code>）。「直しました」を無検証では通さない。</li>
+      <li><strong>検査役と作業役の権限分離</strong> — レビュー専任のエージェントから書き込み権限を剥がしている。作る人と検査する人を分ける、監査の基本。</li>
+    </ul>
+    <p>つまり土台は強い。だからこそ次に潰すべきは、「数値で合格を決めてループを閉じる」自動化に残った <em>細い隙間</em> だ。</p>
+  </div>
+
+  <!-- ============ 05 5つの穴 ============ -->
+  <div class="section-head reveal" id="sec-gaps">
+    <span class="num">// GAPS · 05</span>
+    <h2>見つかった5つの穴</h2>
+  </div>
+
+  <div class="cards">
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-id">P0</span>
+        <div class="card-title">
+          <span class="tag">最優先 · 核心</span>
+          <h3>テスト改ざんの防止（報酬ハッキング対策）</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>実装担当のエージェントは、テストファイルを書き換える権限を持っている。「テストは変更しない」というルールは<strong>文章で書いてあるだけ</strong>で、機械的な歯止めがない。だからバグを直す代わりに、テストの期待値を書き換えて「合格」にできてしまう。</p>
+      </div>
+      <div class="gap-block">
+        <span class="label">C-4 との関係</span>
+        <p>テストを書き換えて作った「偽の GREEN（偽の合格）」は、自己申告の嘘そのもの。完了の物理的証拠が汚染される。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">書籍対応: <strong>不可侵テスト + git diff 条件</strong></span>
+        <span class="severity high">Priority · High</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-id">P1</span>
+        <div class="card-title">
+          <span class="tag">数値化された合格基準</span>
+          <h3>カバレッジ閾値の自動検証がない</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>合格に必要なカバレッジ（テストがコードを網羅した割合。行 80%・分岐 75% など）はすでに定義してあるのに、<strong>どの検査器もその数値を読んでいない</strong>。「テストが通った」止まりで「十分にテストできているか」を確かめていない。</p>
+      </div>
+      <div class="gap-block">
+        <span class="label">C-4 との関係</span>
+        <p>合格の基準が数値で閉じていないと、ループの終わりを言葉で決めることになる。物理的な数値が判定に関与していない。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">書籍対応: <strong>V-2.1 観測可能な完了条件</strong></span>
+        <span class="severity medium">Priority · Medium</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-id">P2</span>
+        <div class="card-title">
+          <span class="tag">behavior / structure 二層</span>
+          <h3>コードの循環依存を検出していない</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>「動くか」は見ているが、「将来も保守できる構造か」の検査が薄い。とくにモジュールがお互いを参照し合う<strong>循環依存</strong>（A が B を、B が A を呼ぶ堂々巡り）を検出していない。今あるのはファイル行数の上限チェックだけ。</p>
+      </div>
+      <div class="gap-block">
+        <span class="label">C-4 との関係</span>
+        <p>「テストが通る（動作）」と「保守できる（構造）」は別の品質。構造側の物理チェックがないと、動くが壊れやすいコードを完了と認めてしまう。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">書籍対応: <strong>V-2.2 二層チェック</strong></span>
+        <span class="severity low">Priority · Low</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-id">P3</span>
+        <div class="card-title">
+          <span class="tag">最大ループ回数</span>
+          <h3>ループ状態がエージェントの記憶の中だけ</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>「最大3周」のループ回数を数えているのは、<strong>ループを回しているエージェント自身</strong>。自分のループを自分で数えるのは、C-4 とまったく同じ自己申告の構造だ。しかも記録は会話が終わると消え、あとから第三者が照合できない。</p>
+      </div>
+      <div class="gap-block">
+        <span class="label">C-4 との関係</span>
+        <p>回数の真偽を本人の記憶に委ねている。物理ファイルに残し、別の検査器が「4周目を回していないか」を外から確かめる形にしたい。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">書籍対応: <strong>V-2 最大ループ回数の物理化</strong></span>
+        <span class="severity low">Priority · Low</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-id">P4</span>
+        <div class="card-title">
+          <span class="tag">意図的に手動のまま</span>
+          <h3>検査役の起動が任意（可視化のみ）</h3>
+        </div>
+      </div>
+      <div class="prose">
+        <p>レビュー検査役の起動は、今は手動の呼び出しに任されている。ただし<strong>これは穴であると同時に、書籍の方針でもある</strong> ——「コストの高い検査は意図的に手動」。だから強制はせず、「検査役を起動したか / していないか」を完了レポートに<strong>可視化するだけ</strong>に留める。</p>
+      </div>
+      <div class="gap-block">
+        <span class="label">C-4 との関係</span>
+        <p>強制すると書籍の設計思想に反する。可視化することで「未実施」を人が見て判断できるようにする、Level 1 の対処に意図的に留める。</p>
+      </div>
+      <div class="verdict-row">
+        <span class="target">書籍対応: <strong>V-1.3（強制はしない）</strong></span>
+        <span class="severity harmless">Priority · 可視化のみ</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ 06 塞ぎ方と段階実装 ============ -->
+  <div class="section-head reveal" id="sec-plan">
+    <span class="num">// PLAN · 06</span>
+    <h2>塞ぎ方と段階実装の見取り図</h2>
+  </div>
+
+  <div class="prose">
+    <p>塞ぎ方の共通原則は2つ。①どの検査器も <strong>AI が捏造できない物理的事実</strong>で判定する。②既存の手綱を壊さず <strong>後方互換で足すだけ</strong>（出力の形・呼び出し方・文脈分離の境界は触らない）。</p>
+    <p>とくに P0 には、踏んではいけない<em>落とし穴</em>がある。「テストファイルを一律ロックすれば改ざんを防げる」と考えがちだが、<strong>それは間違い</strong>。テスト作成役は最初の RED フェーズで<strong>テストを書く必要がある</strong>。一律に書き込み禁止にすると、その正当な作業まで壊れてしまう。だから「書く瞬間を止める」のではなく「<strong>検証の瞬間に照合する</strong>」で防ぐ。</p>
+  </div>
+
+  <div class="code-block">
+<span class="com"># P0 — テスト改ざんは「ロック」でなく「指紋の照合」で防ぐ</span>
+RED 完了      <span class="kw">→</span> テストの指紋（git hash）を凍結   <span class="com">... red-baseline.json に保存</span>
+実装フェーズ   <span class="kw">→</span> ソースだけ変更（テストには触らない）
+検証フェーズ   <span class="kw">→</span> <span class="str">coder（第三者）</span>が指紋を再照合
+              ├ 一致      <span class="kw">→</span> OK（テストは不変）
+              └ 変化あり  <span class="kw">→</span> 改ざん検知 <span class="kw">→</span> exit 1（偽の合格を止める）
+  </div>
+
+  <div class="prose">
+    <p>判定するのは、テストを書いた本人でも実装した本人でもなく、<strong>第三者である司令役（coder）</strong>。これが C-4 と C-5（報酬ハッキング）の肝 —— 検証を当事者の自己申告に戻さない。下が全体の段階実装。小さく独立した単位で、上から順に出荷する。<strong>MVP（最小で価値の出る単位）の心臓は S1〜S4 の P0</strong>。</p>
+  </div>
+
+  <div class="roadmap reveal">
+    <h2>段階実装 — S1 から S9 へ</h2>
+    <p class="sub">着手前 · 上から順に小さく出荷 · ★ = MVP の心臓</p>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="session">S1 · 基盤</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>検証器テスト基盤</h4>
+          <p>どんな検査器も「正常を通す／壊れを弾く」の両方で自己テストできる土台を作る。検証器自身も検証可能にする。</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="session">S2 · 基盤</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>テストランナー検出ライブラリ</h4>
+          <p>プロジェクトのテスト実行方法とカバレッジ取得方法を自動で見分ける共有部品。物理数値だけを読む。</p>
+        </div>
+      </div>
+      <div class="tl-item current">
+        <div class="session">S3 · P0 ★</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>テスト改ざん検査器（核心）</h4>
+          <p>RED 完了時にテストの指紋を凍結し、検証時に照合する <code>assert-tests-unchanged.sh</code>。新規テスト追加は許し、書き換え・削除を <code>exit 1</code> で止める。</p>
+        </div>
+      </div>
+      <div class="tl-item current">
+        <div class="session">S4 · P0 ★</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>司令役・検証への配線</h4>
+          <p>RED 直後に指紋を凍結、検証後に第三者（coder）が照合。既存の出力「Result: GREEN」は壊さず、判定行を1行足すだけ。ここまでで P0 が出荷可能。</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="session">S5 · P1</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>カバレッジ閾値検査器</h4>
+          <p>実測カバレッジが基準（行 80%・分岐 75%）を下回れば <code>exit 1</code>。計測ツール未導入なら誤った合格を出さず <code>exit 2</code> で明示。</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="session">S6 · P3</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>ループ状態の外部化</h4>
+          <p>ループ回数を物理ファイルに記録し、別の検査器が「上限を超えていないか」を外から監査。記録役と監査役を分ける。</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="session">S7 · P2</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>循環依存の検査器</h4>
+          <p>依存しないシンプルな探索（DFS）を本体に、外部ツール madge があれば精度を補完。相対 import から堂々巡りを検出。</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="session">S8 · P4</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>検査役起動の可視化</h4>
+          <p>完了レポートに「どの検査役を起動したか／していないか」を明記。強制はせず、人が判断できる材料を残す。</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="session">S9 · P0補助</div>
+        <div class="dot-line"></div>
+        <div>
+          <h4>書き込み時の警告フック</h4>
+          <p>テストファイルへの書き込みを検知して警告する（止めはしない）補助フック。設置は <code>/tmp</code> 経由でかもねが手動。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="closing">
+    <p class="quote">良い出力を祈るのではなく、良い出力しか出にくい環境を作る。完了の判定を、祈りから物理的事実へ。</p>
+    <p class="footer-meta">.docs / output / explain-in-html — 2026.06.02 08:18 JST</p>
+  </div>
+
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initCopyButtons();
+  initCopyPromptBar();
+  initTOCScrollSpy();
+  initFilterTables();
+  initSliders();
+  initCollapsibles();
+  initScrollProgress();
+});
+
+function initCopyButtons() {
+  document.querySelectorAll('.copy-btn[data-copy-target]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = document.querySelector(btn.dataset.copyTarget);
+      if (!target) return;
+      const text = target.innerText.trim();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+      }
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 2000);
+    });
+  });
+}
+
+function initCopyPromptBar() {
+  const bar = document.querySelector('.copy-prompt-bar');
+  if (!bar) return;
+  bar.addEventListener('click', async () => {
+    const title = document.title;
+    const h1 = document.querySelector('h1.title')?.innerText ?? '';
+    const sections = Array.from(document.querySelectorAll('.section-head + *, .prose, .cards, .roadmap'))
+      .map(el => el.innerText.trim())
+      .filter(Boolean)
+      .join('\n\n---\n\n');
+    const prompt = `# ${title}\n\n## ${h1}\n\n${sections}`;
+    try { await navigator.clipboard.writeText(prompt); } catch (e) {}
+    bar.classList.add('copied');
+    setTimeout(() => bar.classList.remove('copied'), 2000);
+  });
+}
+
+function initTOCScrollSpy() {
+  const links = document.querySelectorAll('.toc-link[href^="#"]');
+  if (!links.length) return;
+  const headings = Array.from(links)
+    .map(a => document.getElementById(a.getAttribute('href').slice(1)))
+    .filter(Boolean);
+  if (!headings.length) return;
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+  headings.forEach(h => observer.observe(h));
+
+  const toc = document.querySelector('.toc');
+  const toggle = document.querySelector('.toc-toggle');
+  if (toggle && toc) {
+    toggle.addEventListener('click', () => toc.toggleAttribute('data-open'));
+  }
+}
+
+function initFilterTables() {
+  document.querySelectorAll('.filter-table').forEach(table => {
+    const input = table.querySelector('.filter-input');
+    const chips = table.querySelectorAll('.filter-chip');
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const q = (input?.value ?? '').toLowerCase();
+      const activeChips = Array.from(chips).filter(c => c.classList.contains('active')).map(c => c.dataset.value);
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const tags = (row.dataset.tags ?? '').split(',').map(t => t.trim());
+        const matchQ = !q || text.includes(q);
+        const matchChip = !activeChips.length || activeChips.some(v => tags.includes(v));
+        row.style.display = (matchQ && matchChip) ? '' : 'none';
+      });
+    }
+
+    input?.addEventListener('input', applyFilters);
+    chips.forEach(c => {
+      c.setAttribute('tabindex', '0');
+      const toggle = () => { c.classList.toggle('active'); applyFilters(); };
+      c.addEventListener('click', toggle);
+      c.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+
+    table.querySelectorAll('th[data-sort-by]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sortBy;
+        const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+        table.querySelectorAll('th[data-sort-by]').forEach(t => delete t.dataset.sortDir);
+        th.dataset.sortDir = dir;
+        rows.sort((a, b) => {
+          const av = a.querySelector(`[data-${key}]`)?.dataset[key] ?? a.querySelector('td')?.innerText ?? '';
+          const bv = b.querySelector(`[data-${key}]`)?.dataset[key] ?? b.querySelector('td')?.innerText ?? '';
+          const cmp = isNaN(Number(av)) || isNaN(Number(bv))
+            ? String(av).localeCompare(String(bv), 'ja')
+            : Number(av) - Number(bv);
+          return dir === 'asc' ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+}
+
+function initSliders() {
+  const FORMULA_WHITELIST = /^[\d\s+\-*/().x]+$/;
+  document.querySelectorAll('.slider-control').forEach(ctrl => {
+    const input = ctrl.querySelector('input[type=range]');
+    const output = ctrl.querySelector('.slider-output');
+    const formula = ctrl.dataset.formula ?? 'x';
+    if (!input || !output) return;
+    if (!FORMULA_WHITELIST.test(formula)) {
+      output.textContent = 'rejected';
+      return;
+    }
+    let fn;
+    try { fn = new Function('x', `return ${formula};`); }
+    catch (e) { output.textContent = 'rejected'; return; }
+    function update() {
+      const x = Number(input.value);
+      try {
+        const result = fn(x);
+        output.textContent = typeof result === 'number' ? result.toFixed(2) : String(result);
+      } catch (e) { output.textContent = 'error'; }
+    }
+    input.addEventListener('input', update);
+    update();
+  });
+}
+
+function initCollapsibles() {
+  document.querySelectorAll('details.collapsible').forEach(details => {
+    const summary = details.querySelector('summary');
+    if (!summary) return;
+    const content = Array.from(details.children).filter(c => c.tagName !== 'SUMMARY');
+    if (!content.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'collapsible-content';
+    content.forEach(c => wrap.appendChild(c));
+    details.appendChild(wrap);
+
+    summary.addEventListener('click', e => {
+      e.preventDefault();
+      if (details.open) {
+        wrap.style.height = wrap.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+          wrap.style.height = '0';
+          wrap.addEventListener('transitionend', () => {
+            details.open = false;
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      } else {
+        details.open = true;
+        wrap.style.height = '0';
+        requestAnimationFrame(() => {
+          wrap.style.height = wrap.scrollHeight + 'px';
+          wrap.addEventListener('transitionend', () => {
+            wrap.style.height = '';
+          }, { once: true });
+        });
+      }
+    });
+  });
+}
+
+function initScrollProgress() {
+  const bar = document.querySelector('.scroll-progress');
+  if (!bar) return;
+  let ticking = false;
+  function update() {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = total > 0 ? window.scrollY / total : 0;
+    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, ratio))})`;
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  update();
+}
+</script>
+
+</body>
+</html>

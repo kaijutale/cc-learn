@@ -1,0 +1,247 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>なぜハーネスにランタイム辞書skillが無いのか — 調査結果(訂正版)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">INVESTIGATION &middot; 2026.06.13 &middot; REV.2 (CORRECTED)</div>
+  <h1>なぜ僕のハーネスに<br><em>ランタイム辞書</em> skill が無いのか</h1>
+  <div class="meta"><span>2026.06.13 訂正</span><span>ハーネス調査</span><span>対象: ~/.claude/ 全 87 skill</span></div>
+
+  
+
+  
+  <div class="card" style="border-color:rgba(230,57,70,.55);">
+    <h3><span class="sev sev-fail">訂正</span>初版はこの調査の中で C-6「訓練データの断崖」を踏んでいた</h3>
+    <div class="kv"><b>誤り</b>初版は <code>gtr</code> を「公開ツールではない=かいじゅう独自」と断定した。事実は <strong>公開ツール</strong> (coderabbitai/git-worktree-runner)。</div>
+    <div class="kv"><b>原因</b>「自分の訓練データに無い」を「ゆえに存在しない/独自だ」と直結させた — note 記事が C-6 で警告する挙動そのもの。証拠 (harness 内に「Requires: gtr を install」の記述) が目の前にあったのに見落とした。</div>
+    <div class="kv"><b>影響</b>初版が挙げた「真のギャップ 1 件」は、この誤判断が生んだ幻だった。本版で撤回する。詳細は <strong>セクション 06</strong>。</div>
+  </div>
+
+  <div class="hero grade-a">
+    <div class="grade-box grade-a">
+      <div class="grade-letter">代</div>
+      <div class="grade-pct">3 系統で完全代替</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT</div>
+      <p>note の言う「ランタイム辞書」skill は <strong>0 件</strong>。だがこれは欠落ではなく <strong>意図的な代替設計</strong>じゃ。辞書の役割は、より軽い <strong>3 つの仕組み</strong>が既に担っておる。初版で挙げた「ギャップ 1 件」は <strong>わらわ自身の C-6 誤判断による幻</strong>であり、撤回する。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>調査サマリ</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">該当する辞書 SKILL</div><div class="v">0 件</div></div>
+    <div class="stat"><div class="k">辞書機能の代替手段</div><div class="v">3 系統</div></div>
+    <div class="stat"><div class="k">references/ 内蔵 SKILL</div><div class="v">40 / 87</div></div>
+    <div class="stat"><div class="k">真のギャップ (訂正後)</div><div class="v">0 件</div></div>
+  </div>
+  <p>調査対象は <code>~/.claude/</code> 配下のハーネス全体 (skill 87 個・rules・.docs)。note 記事 260405 の「ランタイム辞書」パターンを基準に、同等の skill が存在するか、しないなら何が機能を代替しているかを機械検索 + 構造照合した。</p>
+
+  <h2><span class="no">02</span>note の「ランタイム辞書」と C-6「訓練データの断崖」</h2>
+  <p>記事の言う <strong>ランタイム辞書</strong>とは、<strong>AI の訓練データに無い CLI ツールやフレームワークの使い方</strong>を Skill として書き、必要な時だけコンテキスト (AI の作業メモリ) に注入する辞書のことじゃ。要点は 2 つの設定で「普段は完全に隠れる skill」にすること:</p>
+  <ul class="plain">
+    <li><b>user-invocable: false</b> — かいじゅうが直接呼び出すことはできない (ユーザー起動の対象外にする設定)。</li>
+    <li><b>disable-model-invocation: true</b> — AI が状況判断で勝手に発動することもしない設定。あくまで他の skill から「参照」される辞書に徹する。</li>
+  </ul>
+  <p>この辞書が対処する制約こそ note の <strong>C-6「訓練データの断崖」</strong>じゃ。記事のたとえ — <strong>「古い地図しか持っていないガイド。新しい路線を知らないのに『知りません』と言わず、推測で自信満々に説明を続ける」</strong>。AI の知識は訓練時点で凍結しており、その外側を「知らない」と認めず、もっともらしく捏造する。ランタイム辞書はその断崖に、最新の正しい使い方を外から渡して橋を架ける道具じゃ (帯域を食うのは参照時だけ = C-1 コンテキスト帯域の制約とも整合)。</p>
+
+  <h2><span class="no">03</span>調査結果① — 辞書 skill は存在しない</h2>
+  <p>全 87 skill のフロントマター (skill 冒頭の設定欄) を 2 つの設定で機械検索した結果、<strong>note の形そのままの辞書 skill は 1 つも無かった</strong>。</p>
+  <table>
+    <thead><tr><th>フロントマター設定</th><th>該当数</th><th>実態</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">user-invocable: false</td><td><span class="mark mark-fail">0</span></td><td>該当 skill ゼロ</td></tr>
+      <tr><td class="cat-name">disable-model-invocation: true</td><td><span class="mark mark-warn">2</span></td><td>fork / master の指揮 skill (llm-debate 等)。辞書ではない</td></tr>
+      <tr><td class="cat-name">両方 + 辞書用途</td><td><span class="mark mark-fail">0</span></td><td>note の「ランタイム辞書」は不在</td></tr>
+    </tbody>
+  </table>
+  <p><code>disable-model-invocation: true</code> を持つ skill は確かにある。だが正体は <strong>明示呼び出し専用のオーケストレーター</strong> (複数エージェントを束ねる指揮役の skill) であって、知識を貯めて貸し出す辞書とは目的が真逆じゃ。設定が同じでも役割が違う。</p>
+
+  <h2><span class="no">04</span>調査結果② — 辞書機能は 3 系統で代替済み</h2>
+  <p>「辞書が無い」のではない。<strong>辞書の役割を、skill にせず別の形で実装している</strong>。3 系統あるぞ。</p>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">系統 1</span>各 skill 内の references/ サブフォルダ</h3>
+    <div class="kv"><b>実態</b>87 skill 中 40 が <code>references/</code> を内蔵 (例: authoring-skills は 12 ファイル、three-elements-harness は 8 ファイル)。</div>
+    <div class="kv"><b>仕組み</b>親 skill が必要な時だけ読みにいく純粋な .md ファイル。skill として登録すらしないので「隠す」処理が要らない — そもそも skill 一覧に出ない。</div>
+    <div class="kv"><b>帯域</b>参照時のみ読み込み = note の辞書と同じ性質。しかも skill 名前空間 (skill 名の一覧) を消費しない。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">系統 2</span>rules &rarr; progressive-disclosure (段階的開示) ドキュメント</h3>
+    <div class="kv"><b>実態</b>常時読み込まれる rules には 1 行の見出しだけ置き、本文は <code>~/.claude/.docs/progressive-disclosure/</code> に分離 (build-test-protocol / frontend-aesthetics / plan-workflow / harness-modification-policy の 4 件)。</div>
+    <div class="kv"><b>誘導</b>rules 側に「詳細は着手時に必ず Read: .../X.md」という一文を置き、本文は着手時だけ読む。</div>
+    <div class="kv"><b>本質</b>「ポインタ (案内札) は常駐・本文は必要時だけ」= note のランタイム辞書と同一の発想を、skill ではなく rule + doc で実装したもの。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">系統 3</span>Context7 MCP (ライブラリ文書を取得する外部接続)</h3>
+    <div class="kv"><b>実態</b>CLAUDE.md が「ライブラリ Doc は Context7 MCP」と明示的にルート化。MCP (Model Context Protocol。外部ツールを Claude に繋ぐ仕組み) の一つ。</div>
+    <div class="kv"><b>核心</b>note の動機そのもの (訓練データに無いライブラリ / フレームワークの使い方) を、<strong>手書き辞書ではなく最新の公式ドキュメントを生で取得</strong>して解決する。</div>
+    <div class="kv"><b>優位</b>手書き辞書はバージョン更新で陳腐化する。Context7 は常に最新を引く — 公開ライブラリに関しては辞書 skill より上位互換じゃ。</div>
+  </div>
+
+  <h2><span class="no">05</span>なぜ「辞書 skill」の形を採らなかったか</h2>
+  <ul class="plain">
+    <li><b>名前空間の節約</b> — 既に 87 skill ある。辞書を一級の skill にすると一覧が膨らむ。<code>references/foo.md</code> なら登録不要で名前空間の消費ゼロ。</li>
+    <li><b>「隠す」処理が要らない</b> — note は 2 つの設定で skill を「見えなくする」。ハーネスは <strong>そもそも skill にしない</strong>ことで、隠す処理なしに同じ不可視性を得ている。</li>
+    <li><b>公開ライブラリは MCP が上位互換</b> — note の主な用途 (公開ライブラリ / フレームワーク) は Context7 が最新文書で解決済み。手書き辞書は重複かつ陳腐化リスクを抱える。</li>
+  </ul>
+  <p>つまり辞書 skill の不在は <strong>機能の欠落ではなく、より軽い実装への置き換え</strong>の結果じゃ。</p>
+
+  <h2><span class="no">06</span>訂正 — この調査自体が C-6 の実例だった</h2>
+  <p>初版は「真のギャップ = 独自 CLI ツールの正本不在」を挙げた。だがその根拠 <strong>「committer / gtr は公開ツールではない」は誤りだった</strong>。かいじゅうの指摘で判明した事実を以下に記す。</p>
+  <div class="card">
+    <h3><span class="sev sev-fail">FALSE</span>初版の主張: 「gtr は公開ツールでない=独自」</h3>
+    <div class="kv"><b>正</b><code>gtr</code> = <strong>git-worktree-runner は公開ツール</strong> (coderabbitai/git-worktree-runner)。しかもハーネス内の launching-gtr-issue-worktree skill に「Requires: gtr を install」と <strong>外部依存として明記済み</strong>。つまり gtr は既に skill で文書化されており、辞書の隙間ではない。</div>
+    <div class="kv"><b>誤りの構造</b>「わらわの訓練データに gtr が(強く)無い」&rarr;「ゆえに公開でない/独自だ」と飛躍した。これが C-6「訓練データの断崖」— 知らないことを「知らない」と言わず、推測で断定する挙動。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">UNKNOWN</span>committer: 素性は未確認 — 決めつけない</h3>
+    <div class="kv"><b>事実</b>CLAUDE.md に「Commit helper on PATH: committer (bash)」とある。公開ツールか個人スクリプトかは <strong>未確認</strong>。</div>
+    <div class="kv"><b>所作</b>初版はこれも「独自」と断じたが、同じ断崖を二度踏まぬよう、確認できるまで <strong>判断保留</strong>とする。仮に辞書化の価値があっても、使い方は既に commit/SKILL.md が文書化している。</div>
+  </div>
+  <p>結論として、初版の「ギャップ 1 件」は <strong>撤回</strong>する。3 系統の代替は、わらわが思っていたより完全だった。この訂正自体が、note の C-6 が「再現性のある現象」である何よりの証左じゃ — 解説者ですら、油断すれば断崖から落ちる。</p>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">かいじゅうのハーネスに「ランタイム辞書」skill が無いのは欠落ではなく、辞書の機能 — 普段は隠れ、参照時だけ帯域を食う — を references/ サブフォルダ・progressive-disclosure ドキュメント・Context7 MCP の 3 系統が、skill 名前空間を汚さず、より軽く実現しているからじゃ。そして本調査の真の教訓は別にある。わらわは C-6「訓練データの断崖」を解説する文書の中で、その断崖から落ちた — 「知らない」を「存在しない」と読み替えて gtr を独自と断じた。対策は記事が示す通り、推測で断定せず、検索し、源 (source) で裏を取ること。それを怠れば、どれほど立派なハーネスを語る者でも、古い地図を握って自信満々に道を間違える。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.13 20:38 JST (REV.2)
+  </footer>
+
+</div>
+</body>
+</html>

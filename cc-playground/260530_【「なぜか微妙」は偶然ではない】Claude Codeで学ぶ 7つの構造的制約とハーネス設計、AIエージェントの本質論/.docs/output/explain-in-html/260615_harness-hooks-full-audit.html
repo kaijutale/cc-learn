@@ -1,0 +1,320 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ハーネス hook 完全監査 — 22 hook / 60 件</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">HARNESS FULL AUDIT · 2026.06.15</div>
+  <h1>ハーネス hook 完全監査<br><em>22 hook・全バグ深掘り</em></h1>
+  <div class="meta"><span>2026.06.15</span><span>22 hook / 60 件</span><span>調査 / 未修正</span></div>
+
+  
+
+  
+  <div class="hero grade-d">
+    <div class="grade-box grade-d">
+      <div class="grade-letter">D</div>
+      <div class="grade-pct">60 件 / 22 hook</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT</div>
+      <p>essence-gate(先行調査)を統合した<strong>完全版</strong>。ハーネスの hook を全数解剖し、60 件のバグを 1 件ずつ行番号・仕組み・実証・修正案付きで記録した。重大(Critical+High)は 21 件。同じ設計の癖が hook 層を広く横断する。<strong>修正はまだ一切していない</strong>。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>全体サマリ</h2>
+  <p>7 つの subagent(別文脈の補助エージェント)で 22 hook を全文精読し、各指摘を <code>/tmp</code> で実機再現した。前回の俯瞰版は subagent 自己申告の概算で 62 件としていたが、本完全版は 1 件ずつ起こし直した精査値で <strong>60 件</strong>(essence-gate 3 件を含む)。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">調査対象</div><div class="v">22 hook</div></div>
+    <div class="stat"><div class="k">検出バグ</div><div class="v">60 件</div></div>
+    <div class="stat"><div class="k">重大 (C+H)</div><div class="v">21 件</div></div>
+    <div class="stat"><div class="k">重大なし</div><div class="v">5 hook</div></div>
+  </div>
+
+  <h2><span class="no">02</span>重大度の分布</h2>
+  <table>
+    <thead><tr><th>重大度</th><th>件数</th><th>主な性質</th></tr></thead>
+    <tbody>
+      <tr><td><span class="sev sev-fail">CRIT</span></td><td class="score-cell">3</td><td>検知が常にゼロ / 正当な操作を全停止する過剰ブロック</td></tr>
+      <tr><td><span class="sev sev-warn">HIGH</span></td><td class="score-cell">18</td><td>保護の失効・抜け道・取りこぼし (止めるべきを通す / 通すべきを止める)</td></tr>
+      <tr><td><span class="mark mark-warn">MED</span></td><td class="score-cell">17</td><td>誤動作・出力の不整合・性能劣化</td></tr>
+      <tr><td><span class="mark mark-na">LOW</span></td><td class="score-cell">22</td><td>環境依存・軽微な取りこぼし (大文字拡張子・改行コード等)</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>横断する 5 つの構造的根因</h2>
+  <p>60 件は別物に見えて、根は 5 つの設計上の癖に収束する。修正は対症療法でなくこの 5 つを断つのが本筋じゃ。</p>
+  <ul class="plain">
+    <li><b>1. 人間可読の文章を正規表現で読む</b> — 禁止語の部分一致、CLAUDE.md の誤報告、設定行の取りこぼし、essence-gate の散文解析。書式が少し変わるだけで誤抽出・抽出失敗する。</li>
+    <li><b>2. 失敗時に素通りさせる (fail-open)</b> — 絵文字の grep 不発、空フェーズファイル、秘密ファイルのファイル名のみ、応答終了検査の見逃し。検査不能を「合格」と取り違える。</li>
+    <li><b>3. 特定の命名・ツール名を決め打つ</b> — 編集ツール MultiEdit 未対応、essence-gate のファイル名 glob、通知のサーバー名解析。命名が変わると追従できない。</li>
+    <li><b>4. 境界の数え方を誤る</b> — 行数カウントの 1 行ずれ、区切りの閉じ忘れ見逃し、改行コードや先頭の見えない文字での誤判定。</li>
+    <li><b>5. シェル変数を素で展開する</b> — コマンド検査の語分断、禁止語ループ、書込先のワイルドカード誤展開。引用符を付けないことで意図せぬ分割・展開が起きる。</li>
+  </ul>
+
+  <h2><span class="no">04</span>Critical 3 件 — 深掘り</h2>
+  <div class="card"><h3><span class="sev sev-fail">CRITICAL</span>最新フォーマットを読めず不適格を見逃す<span class="chip">essence_gate</span></h3><div class="kv"><b>hook</b>hook_pre_commit_essence_gate.sh</div><div class="kv"><b>箇所</b>L86-88</div><div class="kv"><b>仕組み</b>最新 self-eval は verdict: 行も「Critical N / High N」連続形式も持たず散文で書くため、抽出が常に 0/0 になる。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>self-eval に機械可読フィールドを必須化し、それだけを読む。</div><pre># hook_pre_commit_essence_gate.sh L86-88
+最新 self-eval の合否表記: 「Critical はゼロ」「High 1 / Medium 3」(散文)
+  → verdict: 行も &quot;Critical N / High N&quot; 連続形式も無い
+grep が何もマッチせず Critical=0 / High=0
+真の結論 High 1件(不適格) → 0/0 と誤読し approve (素通り)</pre></div>
+<div class="card"><h3><span class="sev sev-fail">CRITICAL</span>絵文字検知が macOS で常にゼロ<span class="chip">emoji_check</span></h3><div class="kv"><b>hook</b>hook_post_emoji_check.sh</div><div class="kv"><b>箇所</b>L9</div><div class="kv"><b>仕組み</b>grep -P (Perl正規表現) は macOS 既定の BSD grep が非対応で毎回エラー終了。2&gt;/dev/null がそれを隠し、検知結果が常に空になる。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>grep -P を perl / python / ugrep 絶対パスに置換。</div><pre># hook_post_emoji_check.sh L9
+EMOJI_LINES=$(grep -nP &#x27;[絵文字Unicode範囲]&#x27; &quot;$FILE&quot; 2&gt;/dev/null)
+  BSD grep (macOS既定) は -P 非対応 → 毎回エラー終了
+  2&gt;/dev/null がエラーを隠し EMOJI_LINES 常に空 → 検知ゼロ</pre></div>
+<div class="card"><h3><span class="sev sev-fail">CRITICAL</span>.env.example を誤ブロック (CLAUDE.md と矛盾)<span class="chip">read_secret</span></h3><div class="kv"><b>hook</b>hook_pre_read_secret_check.sh</div><div class="kv"><b>箇所</b>L42</div><div class="kv"><b>仕組み</b>正規表現 /\.env(\.[^/]+)?$ が値なしテンプレ .env.example / .sample / .template まで一致し読取拒否する。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>.env.example 系を除外するガードを判定の前に追加。</div><pre># hook_pre_read_secret_check.sh L42
+/\.env(\.[^/]+)?$   ← .env.example の &quot;.example&quot; にも一致 → DENY
+だが CLAUDE.md L56「.env.example (値なしテンプレ) は読み書き可」と矛盾</pre></div>
+
+  <h2><span class="no">05</span>High 18 件 — 深掘り</h2>
+  <div class="card"><h3><span class="sev sev-warn">HIGH</span>命名ドリフトで最新 verdict を取り逃す<span class="chip">essence_gate</span></h3><div class="kv"><b>hook</b>hook_pre_commit_essence_gate.sh</div><div class="kv"><b>箇所</b>L68</div><div class="kv"><b>仕組み</b>glob *_self-eval-v*.md が新しい命名(__path.md)に追従できず、約1ヶ月前のファイルを最新と誤認する。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>glob を最新命名規則に追従させる。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>散文中の過去の数値を誤検出<span class="chip">essence_gate</span></h3><div class="kv"><b>hook</b>hook_pre_commit_essence_gate.sh</div><div class="kv"><b>箇所</b>L86-88</div><div class="kv"><b>仕組み</b>grep「Critical N / High N」が本文前置きの説明文にも一致し、head -1 で過去の解消済み値を採用する。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>機械可読フィールドを優先抽出する。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>Unicode 範囲に穴 (記号類を見逃す)<span class="chip">emoji_check</span></h3><div class="kv"><b>hook</b>hook_post_emoji_check.sh</div><div class="kv"><b>箇所</b>L9</div><div class="kv"><b>仕組み</b>範囲指定が狭く、仮に grep が動いても ☆ ⬆ © ® ™ 国旗などを範囲外として見逃す。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>範囲を拡張するか Python の unicodedata 等に判定を委譲。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>先頭スラッシュ依存でファイル名のみを取りこぼす<span class="chip">read_secret</span></h3><div class="kv"><b>hook</b>hook_pre_read_secret_check.sh</div><div class="kv"><b>箇所</b>L36-39,51-54</div><div class="kv"><b>仕組み</b>/id_rsa$ 等が先頭スラッシュを要求するため、id_rsa や .env を名前だけで渡すと素通りする(fail-open)。</div><div class="kv"><b>実証</b>再現済み(条件付き)</div><div class="kv"><b>修正案</b>各パターン先頭を (^|/) に変える。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>.netrc/.npmrc/.aws の相対形を取りこぼす<span class="chip">read_secret</span></h3><div class="kv"><b>hook</b>hook_pre_read_secret_check.sh</div><div class="kv"><b>箇所</b>L45-53</div><div class="kv"><b>仕組み</b>認証情報ファイル群も同じ先頭スラッシュ依存で、相対パス形だと検知をすり抜ける。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>同じく (^|/) 化。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>実マシンパスが同一行の例外語に紛れてすり抜け<span class="chip">hardcode</span></h3><div class="kv"><b>hook</b>hook_pre_hardcode_hygiene_check.sh</div><div class="kv"><b>箇所</b>L55-56</div><div class="kv"><b>仕組み</b>grep -viE が行単位で例外語を除外するため、1行に許可語と実パスが混在すると行ごと捨てられ実パスを見逃す。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>除外を行単位でなくマッチ単位にする。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>パストラバーサルで保護領域外へ書込可<span class="chip">restrict-writes</span></h3><div class="kv"><b>hook</b>restrict-macro-writes.sh</div><div class="kv"><b>箇所</b>L70-78</div><div class="kv"><b>仕組み</b>.docs/logs/../../../etc/passwd が .docs/logs/* に一致し ALLOW。プレフィックスを冠せば脱獄できる(over-allow)。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>正規化後に「..」を含むパスを reject、または realpath で解決して判定。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>空/破損 phase.yaml で fail-open<span class="chip">restrict-writes</span></h3><div class="kv"><b>hook</b>restrict-macro-writes.sh</div><div class="kv"><b>箇所</b>L39-46</div><div class="kv"><b>仕組み</b>ファイルが存在し中身が空/壊れていると PHASE が空になり、制限がスキップされ src への書込が通る。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>PHASE が空/未知値の時も macro 扱い(fail-closed)に倒す。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>引用符付き phase で制限失効<span class="chip">restrict-writes</span></h3><div class="kv"><b>hook</b>restrict-macro-writes.sh</div><div class="kv"><b>箇所</b>L40-41</div><div class="kv"><b>仕組み</b>awk が phase: &quot;macro&quot; を引用符込みで抽出し != macro と誤判定、全書込が allow される。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>awk 抽出後に前後の引用符を除去。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>引用符付き phase で制限失効<span class="chip">block-team</span></h3><div class="kv"><b>hook</b>block-team-in-macro.sh</div><div class="kv"><b>箇所</b>L46-47</div><div class="kv"><b>仕組み</b>awk が &quot;macro&quot; を引用符込みで抽出し != macro となり block がスキップ。team-* 直接呼出が通る。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>引用符を trim。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>空/破損 phase.yaml で fail-open<span class="chip">block-team</span></h3><div class="kv"><b>hook</b>block-team-in-macro.sh</div><div class="kv"><b>箇所</b>L45-52</div><div class="kv"><b>仕組み</b>ファイル存在 + 空/破損で PHASE 空 → 素通し。コメントの fail-closed 主張と矛盾。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>PHASE 空/未知も macro 扱い。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>未クォートで多語パターンが分断される<span class="chip">pre_commands</span></h3><div class="kv"><b>hook</b>hook_pre_commands.sh</div><div class="kv"><b>箇所</b>L29</div><div class="kv"><b>仕組み</b>for blocked_cmd in $COMMANDS が未クォートのため、空白入りの禁止語句が分断され各語が独立評価される潜在地雷。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>while IFS= read -r で行単位読込に変更。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>git -C / -c 付き commit を取りこぼす<span class="chip">generated_ban</span></h3><div class="kv"><b>hook</b>hook_pre_generated_comment_ban.sh</div><div class="kv"><b>箇所</b>L29</div><div class="kv"><b>仕組み</b>git[[:space:]]+commit が直後の commit を要求するため、git -C dir commit / git -c k=v commit が対象外になり禁止署名が素通り。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>git.*commit のように間にオプションを許す形へ。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>引用符・コメント付き設定行を取りこぼす<span class="chip">fork_lint</span></h3><div class="kv"><b>hook</b>hook_post_fork_disable_lint.sh</div><div class="kv"><b>箇所</b>L41,42</div><div class="kv"><b>仕組み</b>^context:...fork$ の末尾アンカーが厳格すぎ、context: &quot;fork&quot; や context: fork # comment を見逃す。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>yq 等で値抽出、または引用符・末尾コメントを許容。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>禁止語の部分一致で正当な応答を誤ブロック<span class="chip">stop_words</span></h3><div class="kv"><b>hook</b>hook_stop_words.sh</div><div class="kv"><b>箇所</b>L30</div><div class="kv"><b>仕組み</b>grep -q に語境界がなく「はず」が「はずれ」に、物理量の「半分」「念のため」「一緒に」「might」が「mighty」に誤一致する。</div><div class="kv"><b>実証</b>再現済み(6例中5件)</div><div class="kv"><b>修正案</b>語境界・文脈判定を入れる。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>標準の配列記法で状態解析が壊れる<span class="chip">handoff_check</span></h3><div class="kv"><b>hook</b>hook_stop_handoff_check.sh</div><div class="kv"><b>箇所</b>frontmatter</div><div class="kv"><b>仕組み</b>handoff テンプレートのデフォルトであるインライン配列記法 [a,b] で YAML 解析が破壊される。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>インライン配列のパースに対応。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>未push件数が黙って 0 に潰れる<span class="chip">session_git</span></h3><div class="kv"><b>hook</b>hook_session_start_git_sync_reminder.sh</div><div class="kv"><b>箇所</b>L10</div><div class="kv"><b>仕組み</b>rev-list がリモート追跡 ref 不在で exit128 + 空を返し、tr と :-0 で 0 に潰れ未push を見逃す。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>rev-parse --verify で ref 存在を確認してから数える。</div></div>
+<div class="card"><h3><span class="sev sev-warn">HIGH</span>正常な CLAUDE.md を毎回「壊れ」と誤報告<span class="chip">validate_md</span></h3><div class="kv"><b>hook</b>hook_validate_claudemd.sh</div><div class="kv"><b>箇所</b>L16</div><div class="kv"><b>仕組み</b>grep skills/[...]+ が散文中の skills/subagents を実パスと誤抽出し、不在として broken 報告する。</div><div class="kv"><b>実証</b>再現済み</div><div class="kv"><b>修正案</b>バッククォート/コードスパン内のみを対象にする。</div></div>
+
+  <h2><span class="no">06</span>Medium 17 件</h2>
+  <table>
+    <thead><tr><th>hook</th><th>箇所</th><th>仕組み</th><th>修正案</th></tr></thead>
+    <tbody>
+<tr><td class="cat-name">read_secret</td><td class="score-cell">L15</td><td>空 file_path で exit 0。jq が null/失敗でも素通りする。秘密検査は疑わしきは止める(fail-closed)であるべき。</td><td>file_path 取得不能時は block(fail-closed)に倒す。</td></tr>
+<tr><td class="cat-name">pre_commands</td><td class="score-cell">L35</td><td>grep -qF がアンカーなし部分一致のため curl が curly に一致するなど、無関係なコマンドを誤ブロック。</td><td>語境界付き regex モードに。</td></tr>
+<tr><td class="cat-name">pre_commands</td><td class="score-cell">rules L51</td><td>cp の source が .claude/hooks でも block するため、hook を /tmp へ読取コピーする操作まで止める。</td><td>dest 位置のみを判定対象にする。</td></tr>
+<tr><td class="cat-name">pre_commands</td><td class="score-cell">L66-72,80</td><td>decision:block は PreToolUse では非推奨形。現行は hookSpecificOutput.permissionDecision:deny。将来の runtime で無視される恐れ。</td><td>hookSpecificOutput 形式へ移行。</td></tr>
+<tr><td class="cat-name">restrict-writes</td><td class="score-cell">L61</td><td>${CWD_ABS} 未クォートで glob 解釈され、CWD に [ ] ? * があるとプレフィックス除去に失敗(本PJの全角【】は安全)。</td><td>変数をクォートする。</td></tr>
+<tr><td class="cat-name">restrict-writes</td><td class="score-cell">L25,49</td><td>set -euo + grep no-match で abort。設計者意図の continue 経路を通らずエラー終了する。</td><td>grep ... || true で no-match を許容。</td></tr>
+<tr><td class="cat-name">block-team</td><td class="score-cell">L29,56</td><td>set -euo + grep no-match で abort(実質 fail-open で操作は通る)。</td><td>grep ... || true。</td></tr>
+<tr><td class="cat-name">hardcode</td><td class="score-cell">L55</td><td>/Users/ 固定のため /users/camone や C:\Users\camone が PASS する。</td><td>-i (大小無視) 追加、Windows 区切りも検討。</td></tr>
+<tr><td class="cat-name">stop_words</td><td class="score-cell">L12-17</td><td>tail -r で最初の assistant 行で break するが、それが tool_use のみだと text が空になり禁止語を見逃す。</td><td>text を持つ最新 assistant まで探索を継続。</td></tr>
+<tr><td class="cat-name">validate_md</td><td class="score-cell">L16,24,32</td><td>hooks/(プレフィックスなし)や rules/ のパターンが非該当で、実在参照の一部を検査しない。</td><td>(\.claude/)?hooks/ に緩和し rules/ パターン追加。</td></tr>
+<tr><td class="cat-name">validate_md</td><td class="score-cell">L39</td><td>find -name が basename のみで全 ~/.claude を横断し、誤った修復候補(セッションログ等)を提示する。</td><td>候補を skills/hooks 配下に限定。</td></tr>
+<tr><td class="cat-name">post_lint</td><td class="score-cell">L50,62</td><td>ESLint と tsc 両方でエラーが出ると additionalContext を2回 echo し、JSON object が連結され片方が握り潰される。</td><td>両出力を1つに結合してから最後に1回 echo。</td></tr>
+<tr><td class="cat-name">post_lint</td><td class="score-cell">L56</td><td>1ファイル編集ごとに tsc がプロジェクト全体を検査し、コスト大かつ無関係エラーで誤誘導。</td><td>編集ファイルに限定するか CI に分離。</td></tr>
+<tr><td class="cat-name">line_limit</td><td class="score-cell">L38</td><td>wc -l は改行数を数えるため、最終行に改行がないファイルは1少なく数えられ 501 行を 500 と判定する。</td><td>grep -c &#x27;&#x27; か awk END{print NR} に置換。</td></tr>
+<tr><td class="cat-name">fm_schema</td><td class="score-cell">L40</td><td>awk が2番目の --- を見つけられないと本文全行を frontmatter 扱いし、name/desc が前半にあれば閉じ忘れでも OK 判定。</td><td>2番目の --- 不在を検出して警告。</td></tr>
+<tr><td class="cat-name">mcp_notify</td><td class="score-cell">L9</td><td>sed の [^_]* が最初の _ で止まり、mcp__chrome_devtools__ のような名前で原文を丸ごと返す。</td><td>__ 区切りを正しく扱う、またはパラメータ展開に置換。</td></tr>
+<tr><td class="cat-name">wiring</td><td class="score-cell">settings L159</td><td>編集後 lint 系の matcher が Edit|Write 止まりで、MultiEdit 編集時に line_limit/bang_lint/fm_schema が発火しない。</td><td>matcher を Edit|Write|MultiEdit に統一。</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">07</span>Low 22 件</h2>
+  <table>
+    <thead><tr><th>hook</th><th>箇所</th><th>仕組み</th><th>修正案</th></tr></thead>
+    <tbody>
+<tr><td class="cat-name">emoji_check</td><td class="score-cell">L7</td><td>case-sensitive で .TS / .JS 等を対象外にする。</td><td>nocasematch。</td></tr>
+<tr><td class="cat-name">read_secret</td><td class="score-cell">L35,42</td><td>/proj/.env/ や /proj/.ssh が末尾の差で $ 不一致になり ALLOW。</td><td>.ssh 等は (/|$) 形に。</td></tr>
+<tr><td class="cat-name">pre_commands</td><td class="score-cell">L16</td><td>command キー不在時に jq が文字列 &quot;null&quot; を返し全 rule に照合してしまう。</td><td>jq -r &#x27;.tool_input.command // empty&#x27;。</td></tr>
+<tr><td class="cat-name">generated_ban</td><td class="score-cell">L29</td><td>対象 verb が create|edit のみで、body 付きの他サブコマンドを検査しない。</td><td>verb 群に comment|review|merge を追加。</td></tr>
+<tr><td class="cat-name">generated_ban</td><td class="score-cell">L29,32</td><td>echo 等が文中で「git commit」に言及し禁止署名を含むと block する。</td><td>行頭付近のコマンドトークンに限定。</td></tr>
+<tr><td class="cat-name">hardcode</td><td class="score-cell">L29-49</td><td>new_string が空(削除編集)だと常に PASS し、削除と同時の別箇所への hardcode 注入を検知しない。</td><td>old_string も走査対象に。</td></tr>
+<tr><td class="cat-name">fork_lint</td><td class="score-cell">L41</td><td>grep -c が行全体マッチに依存し、本文中の「context:fork により…」のような散文を取りこぼす/拾う脆さ。</td><td>frontmatter 範囲内に限定し値マッチを厳密化。</td></tr>
+<tr><td class="cat-name">stop_words</td><td class="score-cell">L30</td><td>keyword「かえ?」が半角 ? 前提のため、全角「？」や記号なしだと一致せず口調逸脱を見逃す。</td><td>keyword を「かえ」に緩めるか全角半角両対応。</td></tr>
+<tr><td class="cat-name">stop_words</td><td class="score-cell">L23,29</td><td>for keyword/RULE_NAME が未クォートで、空白入りの語/ルール名を追加すると分割される(現状は未発火)。</td><td>while read で行単位に。</td></tr>
+<tr><td class="cat-name">handoff_check</td><td class="score-cell">frontmatter</td><td>/^---$/ が ---\r に一致せず frontmatter が空になり、status 分岐が全滅する。</td><td>tr -d &#x27;\r&#x27; で正規化。</td></tr>
+<tr><td class="cat-name">post_lint</td><td class="score-cell">L14</td><td>case-sensitive で .TS 等を対象外にする。</td><td>nocasematch。</td></tr>
+<tr><td class="cat-name">line_limit</td><td class="score-cell">L33</td><td>TypeScript の ESM/CJS 拡張子 .mts/.cts が case に無い。</td><td>case に *.mts|*.cts 追加。</td></tr>
+<tr><td class="cat-name">fm_schema</td><td class="score-cell">L30</td><td>head -1 が ---\r を返し --- と不一致になり、正しい frontmatter を「なし」と誤警告。</td><td>head -1 | tr -d &#x27;\r&#x27; で比較。</td></tr>
+<tr><td class="cat-name">fm_schema</td><td class="score-cell">L30</td><td>head -1 が \ufeff--- を返し不一致になり誤警告。</td><td>BOM 除去後に比較。</td></tr>
+<tr><td class="cat-name">fm_schema</td><td class="score-cell">L40</td><td>/^---$/ 厳密マッチで「--- 」(末尾スペース)を区切りと見なさず本文が frontmatter に漏れる。</td><td>/^---[[:space:]]*$/ に緩める。</td></tr>
+<tr><td class="cat-name">mcp_notify</td><td class="score-cell">L9,11</td><td>sed は不一致時に入力を原文返しするため、matcher が無ければ Read 等で誤発火しうる(現状は matcher が防壁)。</td><td>先頭に case mcp__*) ガードを追加。</td></tr>
+<tr><td class="cat-name">bang_lint</td><td class="score-cell">L30</td><td>パターンが bang 構文でない「感嘆符のインラインコード + 後続コード」を誤って一致させる。</td><td>行頭/空白直後の ! に限定。</td></tr>
+<tr><td class="cat-name">bang_lint</td><td class="score-cell">L33</td><td>grep -c が行数を数えるため、1行に2つ !構文があっても 1 と数える。</td><td>grep -o でマッチ数を数える。</td></tr>
+<tr><td class="cat-name">compact_handoff</td><td class="score-cell">L14</td><td>Linux の GNU coreutils では -f の意味が異なり mtime 取得に失敗する。</td><td>stat -f %m || stat -c %Y でフォールバック。</td></tr>
+<tr><td class="cat-name">plans_redirect</td><td class="score-cell">L33</td><td>case が .md 完全一致のため foo.MD / foo.markdown が PASS する。</td><td>nocasematch か拡張子を問わず判定。</td></tr>
+<tr><td class="cat-name">plan_archive</td><td class="score-cell">-</td><td>再発火防止フラグを見ないが、mv が冪等(移動済みは直下から消える)なため無限ループは起きず実害は低い。</td><td>(任意)stop_hook_active を参照。</td></tr>
+<tr><td class="cat-name">external_input</td><td class="score-cell">L10-13</td><td>matcher が WebFetch|WebSearch 限定のため mcp_* ブランチに到達しない(無害だが冗長)。</td><td>削除して可読性向上(任意)。</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">08</span>hook 別 健全性マップ</h2>
+  <p>重大度の重い順。<span class="mark mark-fail">C</span>=Critical / <span class="mark mark-warn">H</span>=High / <span class="mark">M</span>=Medium / <span class="mark mark-na">L</span>=Low、数字は件数。<span class="mark mark-pass">clean</span>=重大なし。</p>
+  <table>
+    <thead><tr><th>hook</th><th>イベント</th><th>検出</th><th>役割</th></tr></thead>
+    <tbody>
+<tr><td class="cat-name">read_secret</td><td class="score-cell">PreToolUse:Read</td><td><span class="mark mark-fail">C1</span><span class="mark mark-warn">H2</span><span class="mark mark">M1</span><span class="mark mark-na">L1</span></td><td>秘密ファイルの読み取りをブロック</td></tr>
+<tr><td class="cat-name">essence_gate</td><td class="score-cell">PreToolUse:Bash</td><td><span class="mark mark-fail">C1</span><span class="mark mark-warn">H2</span></td><td>skill/agent/hook 改修 commit を essence review の合否で止める</td></tr>
+<tr><td class="cat-name">emoji_check</td><td class="score-cell">PostToolUse</td><td><span class="mark mark-fail">C1</span><span class="mark mark-warn">H1</span><span class="mark mark-na">L1</span></td><td>編集後にコード/コメントの絵文字を検出</td></tr>
+<tr><td class="cat-name">restrict-writes</td><td class="score-cell">PreToolUse:Write</td><td><span class="mark mark-warn">H3</span><span class="mark mark">M2</span></td><td>Macro フェーズ中の書込先を限定</td></tr>
+<tr><td class="cat-name">block-team</td><td class="score-cell">PreToolUse:Task</td><td><span class="mark mark-warn">H2</span><span class="mark mark">M1</span></td><td>Macro フェーズ中の team-* 直接呼出を禁止</td></tr>
+<tr><td class="cat-name">pre_commands</td><td class="score-cell">PreToolUse:Bash</td><td><span class="mark mark-warn">H1</span><span class="mark mark">M3</span><span class="mark mark-na">L1</span></td><td>禁止コマンドをブロック</td></tr>
+<tr><td class="cat-name">validate_md</td><td class="score-cell">PostCompact</td><td><span class="mark mark-warn">H1</span><span class="mark mark">M2</span></td><td>CLAUDE.md のパス参照が実在するか検証</td></tr>
+<tr><td class="cat-name">stop_words</td><td class="score-cell">Stop</td><td><span class="mark mark-warn">H1</span><span class="mark mark">M1</span><span class="mark mark-na">L2</span></td><td>応答内の禁止語(曖昧回答・口調逸脱)を検出</td></tr>
+<tr><td class="cat-name">hardcode</td><td class="score-cell">PreToolUse:Write</td><td><span class="mark mark-warn">H1</span><span class="mark mark">M1</span><span class="mark mark-na">L1</span></td><td>グローバル領域へのマシン固有パス混入を禁止</td></tr>
+<tr><td class="cat-name">generated_ban</td><td class="score-cell">PreToolUse:Bash</td><td><span class="mark mark-warn">H1</span><span class="mark mark-na">L2</span></td><td>commit/PR への AI 生成署名混入を禁止</td></tr>
+<tr><td class="cat-name">fork_lint</td><td class="score-cell">PostToolUse</td><td><span class="mark mark-warn">H1</span><span class="mark mark-na">L1</span></td><td>SKILL.md の context:fork と disable 併用矛盾を検出</td></tr>
+<tr><td class="cat-name">handoff_check</td><td class="score-cell">Stop</td><td><span class="mark mark-warn">H1</span><span class="mark mark-na">L1</span></td><td>handoff 状態ファイルの有無/鮮度を確認</td></tr>
+<tr><td class="cat-name">session_git</td><td class="score-cell">SessionStart</td><td><span class="mark mark-warn">H1</span></td><td>未commit/未push 件数を起動時に通知</td></tr>
+<tr><td class="cat-name">post_lint</td><td class="score-cell">PostToolUse</td><td><span class="mark mark">M2</span><span class="mark mark-na">L1</span></td><td>編集後に prettier/eslint/tsc を実行</td></tr>
+<tr><td class="cat-name">fm_schema</td><td class="score-cell">PostToolUse</td><td><span class="mark mark">M1</span><span class="mark mark-na">L3</span></td><td>SKILL.md の frontmatter 必須キーを検査</td></tr>
+<tr><td class="cat-name">line_limit</td><td class="score-cell">PostToolUse</td><td><span class="mark mark">M1</span><span class="mark mark-na">L1</span></td><td>コードファイルの 500 行超を警告</td></tr>
+<tr><td class="cat-name">mcp_notify</td><td class="score-cell">PostToolUse</td><td><span class="mark mark">M1</span><span class="mark mark-na">L1</span></td><td>MCP 使用後に通知 + 外部入力検疫タグを注入</td></tr>
+<tr><td class="cat-name">bang_lint</td><td class="score-cell">PostToolUse</td><td><span class="mark mark-na">L2</span></td><td>SKILL.md 内の !構文 を検出</td></tr>
+<tr><td class="cat-name">compact_handoff</td><td class="score-cell">PostCompact</td><td><span class="mark mark-na">L1</span></td><td>圧縮後に handoff の不在/古さを検出</td></tr>
+<tr><td class="cat-name">plans_redirect</td><td class="score-cell">PreToolUse:Write</td><td><span class="mark mark-na">L1</span></td><td>~/.claude/plans/ への書込をプロジェクトへ誘導</td></tr>
+<tr><td class="cat-name">plan_archive</td><td class="score-cell">Stop</td><td><span class="mark mark-na">L1</span></td><td>完了 plan を archived/ へ移動</td></tr>
+<tr><td class="cat-name">external_input</td><td class="score-cell">PostToolUse</td><td><span class="mark mark-na">L1</span></td><td>WebFetch/Search 結果に検疫タグを付与</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">09</span>修正の優先順位</h2>
+  <ul class="plain">
+    <li><b>1. 即修正 (Critical 3)</b> — 絵文字検査の grep 置換、秘密ファイル検査の .env.example 除外、essence-gate の合否抽出。いずれも検証器が機能していない/誤動作している。</li>
+    <li><b>2. 早期 (3層保護の失効)</b> — 引用符付きフェーズ・空フェーズファイル・パストラバーサルの 3 経路を塞ぐ。Macro 層の最小権限が同時に破れている。</li>
+    <li><b>3. 取りこぼし系</b> — 秘密/ハードコードの抜け道、git -C 付き commit、禁止語の部分一致。</li>
+    <li><b>4. 設計レベル</b> — 5 つの根因を構造で断つ。文章解析は機械可読フィールドへ、素の変数展開は行単位読込へ、命名決め打ちは追従可能な形へ、文字列照合は語境界・アンカー付きへ。</li>
+  </ul>
+
+  <h2><span class="no">10</span>総評</h2>
+  <div class="quote">これは essence-gate 単体の問題ではなく、ハーネスの hook 層全体に同じ設計の癖が広く根を張っている。「文章を正規表現で読む」「失敗時に素通りさせる」「変数を素で展開する」「命名を決め打つ」——この 4 つが 22 hook を横断する。個々の修正は小さいが、対症療法を積むより根因 5 つを設計思想の統一で断つのが本筋だ。多くは潜在的・条件付きだが、絵文字検査と秘密ファイル検査の Critical、そして 3層保護の失効は、今この瞬間に効いている。検証器(hook)もまた、誰かに検証されねば「配線されている」以上を意味しない。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.15 00:08 JST
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,294 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ハーネス hook 群バグ徹底監査 — 21 hook / 62 件</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">HARNESS AUDIT · 2026.06.14</div>
+  <h1>ハーネスの hook 層は<br><em>同じ癖で広く壊れている</em></h1>
+  <div class="meta"><span>2026.06.14</span><span>対象 21 hook / 7 subagent 並行</span><span>調査 / 未修正</span></div>
+
+  
+
+  
+  <div class="hero grade-d">
+    <div class="grade-box grade-d">
+      <div class="grade-letter">D</div>
+      <div class="grade-pct">62 件 / 21 hook</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT</div>
+      <p>先行調査の essence-gate に続き、ハーネス(エージェントを制御する仕組み)の hook(各イベントで割り込む検査スクリプト)を全数調べた。<strong>21 hook 中、明確なバグが無いのは 1 つだけ</strong>。Critical(重大)2 件は今この瞬間に効いており、High(高)17 件の多くは保護の失効・取りこぼし。個々は小さな修正で済むが、同じ設計上の癖が広く分布している。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>監査の全体像</h2>
+  <p>7 つの subagent(別文脈で並行作業する補助エージェント)を同時に走らせ、<code>~/.claude/hooks/</code> 配下の hook と three-elements-harness(3層構造の制御)の制限 hook、計 21 個を分担して全文精読した。各指摘は <code>/tmp</code> で実際に再現し、机上の推測とは区別している。先行調査済みの essence-gate(別途報告した Critical 級 3 バグ)は本監査の対象外。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">調査対象</div><div class="v">21 hook</div></div>
+    <div class="stat"><div class="k">並行調査</div><div class="v">7 subagent</div></div>
+    <div class="stat"><div class="k">検出バグ</div><div class="v">62 件</div></div>
+    <div class="stat"><div class="k">バグ無し</div><div class="v">1 hook のみ</div></div>
+  </div>
+
+  <h2><span class="no">02</span>重大度の分布</h2>
+  <table>
+    <thead><tr><th>重大度</th><th>件数</th><th>主な性質</th></tr></thead>
+    <tbody>
+      <tr><td><span class="sev sev-fail">CRIT</span></td><td class="score-cell">2</td><td>検知が常にゼロ / 正当な操作を全停止する過剰ブロック</td></tr>
+      <tr><td><span class="sev sev-warn">HIGH</span></td><td class="score-cell">17</td><td>保護の失効・抜け道・取りこぼし (止めるべきを通す/通すべきを止める)</td></tr>
+      <tr><td><span class="mark mark-warn">MED</span></td><td class="score-cell">17</td><td>誤動作・出力の不整合・性能劣化</td></tr>
+      <tr><td><span class="mark mark-na">LOW</span></td><td class="score-cell">26</td><td>環境依存・軽微な取りこぼし (大文字拡張子・改行コード等)</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>Critical 2 件 — 今この瞬間に効いている</h2>
+
+  <div class="card">
+    <h3><span class="sev sev-fail">CRITICAL</span>絵文字チェックが macOS で完全に機能していない</h3>
+    <div class="kv"><b>対象</b>hook_post_emoji_check.sh (ファイル編集後に絵文字混入を検査)</div>
+    <div class="kv"><b>中身</b>絵文字を探すのに <code>grep -P</code>(Perl 互換の正規表現)を使うが、macOS 標準の grep はこの <code>-P</code> を理解できず毎回エラーで止まる。そのエラーを <code>2>/dev/null</code> で捨てているため、検査結果が常に空になる。</div>
+    <div class="kv"><b>実害</b>「コード内コメントに絵文字を入れない」という規約が<strong>まったく効いていない</strong>。失敗しても素通りさせる作り(fail-open)の最悪形で、何も検知しないまま「合格」を返し続ける。</div>
+    <pre># hook_post_emoji_check.sh  L9
+EMOJI_LINES=$(grep -nP &#x27;[絵文字Unicode範囲]&#x27; &quot;$FILE&quot; 2&gt;/dev/null)
+              ^^^^^^^  macOS 既定の BSD grep は -P (Perl正規表現) 非対応
+              → 毎回 &quot;grep: invalid option -- P&quot; でエラー終了
+              → 2&gt;/dev/null がエラーを隠し、EMOJI_LINES は常に空
+結果: 絵文字付きコメントを 1 件も検知しない (検知ゼロ)</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-fail">CRITICAL</span>秘密ファイル検査が、安全なテンプレートまで誤って止める</h3>
+    <div class="kv"><b>対象</b>hook_pre_read_secret_check.sh (秘密ファイルの読み取りを止める防御)</div>
+    <div class="kv"><b>中身</b>「.env」を止める正規表現が、値の入っていない見本ファイル <code>.env.example</code> や <code>.env.template</code> まで巻き込んで読み取り拒否する。</div>
+    <div class="kv"><b>実害</b>プロジェクトの設定見本(秘密情報を含まない)を参照できなくなる。<strong>CLAUDE.md L56「.env.example は読み書き可」と正面から矛盾</strong>する過剰ブロック。</div>
+    <pre># hook_pre_read_secret_check.sh  L42
+/\.env(\.[^/]+)?$        ← .env と .env.&lt;なんでも&gt; に一致
+照合 &quot;.env.example&quot;  →  (\.[^/]+)? が &quot;.example&quot; に一致  →  DENY (読取拒否)
+
+だが CLAUDE.md L56:「.env.example (値なしテンプレ) は読み書き可」
+→ 正当なテンプレ参照まで全停止する過剰ブロック</pre>
+  </div>
+
+  <h2><span class="no">04</span>High 17 件 — クラスタ別</h2>
+  <p>17 件は 5 つのまとまりに分かれる。最大は 3層構造を守る制限 hook で、保護が複数の経路で同時に破れる。</p>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">HIGH x6</span>3層構造の保護 hook が複数経路で破れる</h3>
+    <div class="kv"><b>対象</b>block-team-in-macro.sh / restrict-macro-writes.sh (上位フェーズでの危険操作を禁じる)</div>
+    <div class="kv"><b>引用符で失効</b>フェーズ名を <code>phase: "macro"</code> と引用符付きで書くと、解析が引用符ごと読んでしまい「macro ではない」と誤判定。制限が丸ごと外れ、本来禁じられた操作が通る。</div>
+    <div class="kv"><b>空ファイルで素通り</b>フェーズ定義ファイルが空・壊れていると制限がスキップされる。スクリプト内コメントは「異常時は安全側に倒す」と謳うのに、実際は逆に通してしまう。</div>
+    <div class="kv"><b>「..」で脱獄</b>書込先を <code>.docs/logs/../../../etc/passwd</code> のように書くと許可パターンに一致し、保護領域の外へ書込めてしまう(通しすぎ)。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">HIGH x3</span>秘密・ハードコード検査の取りこぼし</h3>
+    <div class="kv"><b>ファイル名のみで抜ける</b>秘密ファイル検査が先頭スラッシュ前提のため、<code>id_rsa</code> や <code>.env</code> をフルパスでなく名前だけで渡すと検知をすり抜ける(条件付き)。</div>
+    <div class="kv"><b>.netrc 等も同様</b>認証情報ファイル <code>.netrc</code> / <code>.npmrc</code> / <code>.aws</code> も同じ理由で相対パス形だと取りこぼす。</div>
+    <div class="kv"><b>同一行に紛れて通過</b>ハードコード検査が行単位で例外語を除外するため、1 行に許可語と実マシンパスが混在すると、その行ごと除外され実パスがすり抜ける。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">HIGH x4</span>コマンド検査・lint の穴</h3>
+    <div class="kv"><b>多語パターンの地雷</b>hook_pre_commands.sh はシェル変数を素で展開するため、禁止コマンドに空白入りの語句を 1 つ足すと分断され、検査が崩れる(現状は未発火の潜在地雷)。</div>
+    <div class="kv"><b>git のオプション付きを見逃す</b>generated-comment-ban は <code>git -C &lt;dir&gt; commit</code> や <code>git -c k=v commit</code> を取りこぼし、禁止コメント文言が素通りする。</div>
+    <div class="kv"><b>絵文字範囲の穴</b>emoji 検査は(仮に grep が動いても)記号類 ☆ © ® 国旗などを範囲外として見逃す。</div>
+    <div class="kv"><b>引用符付き設定を見逃す</b>fork-disable-lint は <code>context: "fork"</code>(引用符)や末尾コメント付きの設定行を取りこぼし、矛盾を見逃す。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">HIGH x4</span>応答終了・セッション・圧縮時の検査</h3>
+    <div class="kv"><b>禁止語の部分一致で誤検知</b>hook_stop_words.sh は語の境界を見ないため、「はず」が「はずれ」に、物理量の「半分」が、正当な「念のため」「一緒に」が禁止語として誤ブロックされる(6 例中 5 例で実証)。</div>
+    <div class="kv"><b>状態ファイルの解析破壊</b>handoff-check は、引き継ぎ状態ファイルの標準的な配列記法でYAML解析が壊れる。</div>
+    <div class="kv"><b>未push件数が消える</b>セッション開始時の git 同期リマインダーが、リモート追跡情報が無い状況で未push件数を黙って 0 と表示する(見逃し)。</div>
+    <div class="kv"><b>正常を「壊れ」と誤報告</b>CLAUDE.md 検証が、説明文中の文字列を実パスと誤認し、正常な CLAUDE.md を圧縮のたびに「参照が壊れている」と誤報告する。</div>
+  </div>
+
+  <h2><span class="no">05</span>横断する 5 つの構造的根因</h2>
+  <p>個々のバグは別物に見えて、根は 5 つの設計上の癖に収束する。先行の essence-gate と同じ癖じゃ。</p>
+  <ul class="plain">
+    <li><b>1. 人間可読の文章を正規表現で読む</b> — 禁止語の部分一致、CLAUDE.md の誤報告、設定行の取りこぼし、essence-gate の散文解析。書式が少し変わるだけで誤抽出・抽出失敗する。</li>
+    <li><b>2. 失敗時に素通りさせる (fail-open)</b> — 絵文字の grep 不発、空フェーズファイル、秘密ファイルのファイル名のみ、応答終了検査の見逃し。検査不能を「合格」と取り違える。</li>
+    <li><b>3. 特定の命名・ツール名を決め打つ</b> — 編集ツール MultiEdit に未対応(matcher が古く 3 hook が発火せず)、essence-gate のファイル名 glob、通知のサーバー名解析。命名が変わると追従できない。</li>
+    <li><b>4. 境界の数え方を誤る</b> — 行数カウントの 1 行ずれ(501 行取りこぼし)、区切りの閉じ忘れ見逃し、改行コード(CRLF)や先頭の見えない文字での誤判定。</li>
+    <li><b>5. シェル変数を素で展開する</b> — コマンド検査の語分断、禁止語ループ、書込先のワイルドカード誤展開。引用符を付けないことで意図せぬ分割・展開が起きる。</li>
+  </ul>
+
+  <h2><span class="no">06</span>hook 別 健全性マップ</h2>
+  <p>重大度の高い順。<span class="mark mark-fail">C</span>=Critical、<span class="mark mark-warn">H</span>=High、<span class="mark">M</span>=Medium、<span class="mark mark-na">L</span>=Low、数字は件数。<span class="mark mark-pass">clean</span>=明確なバグなし。</p>
+  <table>
+    <thead><tr><th>hook</th><th>イベント</th><th>検出</th><th>最重要の指摘</th></tr></thead>
+    <tbody>
+<tr><td class="cat-name">hook_post_emoji_check.sh</td><td class="score-cell">PostToolUse</td><td><span class="mark mark-fail">C1</span><span class="mark mark-warn">H1</span><span class="mark mark-na">L1</span></td><td>絵文字検知が常にゼロ (grep -P が macOS で不発)</td></tr>
+<tr><td class="cat-name">hook_pre_read_secret_check.sh</td><td class="score-cell">PreToolUse:Read</td><td><span class="mark mark-fail">C1</span><span class="mark mark-warn">H2</span><span class="mark mark">M1</span><span class="mark mark-na">L1</span></td><td>.env.example を誤ブロック (CLAUDE.md と矛盾)</td></tr>
+<tr><td class="cat-name">restrict-macro-writes.sh</td><td class="score-cell">PreToolUse:Write</td><td><span class="mark mark-warn">H3</span><span class="mark mark">M2</span></td><td>「..」混じりパスで保護領域の外へ書込可</td></tr>
+<tr><td class="cat-name">block-team-in-macro.sh</td><td class="score-cell">PreToolUse:Task</td><td><span class="mark mark-warn">H2</span><span class="mark mark">M1</span></td><td>引用符付き phase で制限が丸ごと失効</td></tr>
+<tr><td class="cat-name">hook_pre_commands.sh</td><td class="score-cell">PreToolUse:Bash</td><td><span class="mark mark-warn">H1</span><span class="mark mark">M3</span><span class="mark mark-na">L1</span></td><td>多語パターンが空白で分断される潜在地雷</td></tr>
+<tr><td class="cat-name">hook_pre_generated_comment_ban.sh</td><td class="score-cell">PreToolUse:Bash</td><td><span class="mark mark-warn">H1</span><span class="mark mark-na">L2</span></td><td>git -C / -c 付き commit を取りこぼす</td></tr>
+<tr><td class="cat-name">hook_pre_hardcode_hygiene_check.sh</td><td class="score-cell">PreToolUse:Write</td><td><span class="mark mark-warn">H1</span><span class="mark mark">M1</span><span class="mark mark-na">L1</span></td><td>実マシンパスが同一行の例外語に紛れてすり抜け</td></tr>
+<tr><td class="cat-name">hook_post_fork_disable_lint.sh</td><td class="score-cell">PostToolUse</td><td><span class="mark mark-warn">H1</span><span class="mark mark-na">L1</span></td><td>引用符・コメント付き設定行を取りこぼす</td></tr>
+<tr><td class="cat-name">hook_stop_words.sh</td><td class="score-cell">Stop</td><td><span class="mark mark-warn">H1</span><span class="mark mark">M1</span><span class="mark mark-na">L2</span></td><td>禁止語の部分一致で正当な応答を誤ブロック</td></tr>
+<tr><td class="cat-name">hook_stop_handoff_check.sh</td><td class="score-cell">Stop</td><td><span class="mark mark-warn">H1</span><span class="mark mark-na">L1</span></td><td>標準の配列記法で状態ファイル解析が壊れる</td></tr>
+<tr><td class="cat-name">hook_session_start_git_sync_reminder.sh</td><td class="score-cell">SessionStart</td><td><span class="mark mark-warn">H1</span></td><td>未push件数が黙って 0 に潰れる (見逃し)</td></tr>
+<tr><td class="cat-name">hook_validate_claudemd.sh</td><td class="score-cell">PostCompact</td><td><span class="mark mark-warn">H1</span><span class="mark mark">M2</span></td><td>正常な CLAUDE.md を毎回「壊れている」と誤報告</td></tr>
+<tr><td class="cat-name">hook_post_lint.sh</td><td class="score-cell">PostToolUse</td><td><span class="mark mark">M2</span><span class="mark mark-na">L1</span></td><td>エラー2件で JSON を二重出力 / 毎回プロジェクト全体を型検査</td></tr>
+<tr><td class="cat-name">hook_post_file_line_limit.sh</td><td class="score-cell">PostToolUse</td><td><span class="mark mark">M1</span><span class="mark mark-na">L1</span></td><td>末尾改行なしの 501 行を取りこぼす</td></tr>
+<tr><td class="cat-name">hook_post_skill_frontmatter_schema.sh</td><td class="score-cell">PostToolUse</td><td><span class="mark mark">M1</span><span class="mark mark-na">L3</span></td><td>区切りの閉じ忘れを見逃す</td></tr>
+<tr><td class="cat-name">hook_post_mcp_notify.sh</td><td class="score-cell">PostToolUse</td><td><span class="mark mark">M1</span><span class="mark mark-na">L1</span></td><td>サーバー名にアンダースコアがあると抽出破綻</td></tr>
+<tr><td class="cat-name">hook_post_skill_bang_selfref_lint.sh</td><td class="score-cell">PostToolUse</td><td><span class="mark mark-na">L2</span></td><td>説明文中のコードを誤検出 / 同一行の複数を過少カウント</td></tr>
+<tr><td class="cat-name">hook_post_compact_handoff_check.sh</td><td class="score-cell">PostCompact</td><td><span class="mark mark-na">L1</span></td><td>stat -f が macOS 専用 (Linux 非互換)</td></tr>
+<tr><td class="cat-name">hook_pre_plans_redirect.sh</td><td class="score-cell">PreToolUse:Write</td><td><span class="mark mark-na">L1</span></td><td>.MD / .markdown 大文字を取りこぼす</td></tr>
+<tr><td class="cat-name">hook_post_external_input_notify.sh</td><td class="score-cell">PostToolUse</td><td><span class="mark mark-pass">clean</span></td><td>明確なバグなし (検疫タグ付けが堅牢に動作)</td></tr>
+    </tbody>
+  </table>
+  <p>このほか、編集後 lint 系 3 hook を束ねる設定の <code>matcher</code>(発火条件)が <code>Edit|Write</code> 止まりで、<strong>MultiEdit(複数箇所一括編集)では 3 hook 全部が発火しない</strong>配線漏れ(Medium)がある。未配線の <code>hook_stop_plan_promote_reminder.sh</code> はログに記録された意図的な保留で、事故ではない。</p>
+
+  <h2><span class="no">07</span>推奨する対応順位</h2>
+  <ul class="plain">
+    <li><b>1. 即修正 (Critical 2)</b> — 絵文字検査の grep を perl/python 等に置換(検知ゼロの解消)、秘密ファイル検査に <code>.env.example</code> 系の除外を追加(CLAUDE.md との矛盾解消)。</li>
+    <li><b>2. 早期 (3層保護の失効)</b> — 引用符付きフェーズ・空フェーズファイル・「..」混じりパスの 3 経路を塞ぐ。Macro 層の最小権限が同時に破れている。</li>
+    <li><b>3. 取りこぼし系</b> — 秘密/ハードコードの抜け道、<code>git -C</code> 付き commit の取りこぼし、禁止語の部分一致誤検知。</li>
+    <li><b>4. 設計レベル</b> — 5 つの根因を構造で断つ。文章解析は機械可読フィールドへ、素の変数展開は行単位読込へ、命名決め打ちは追従可能な形へ、文字列照合は語境界・アンカー付きへ。</li>
+  </ul>
+
+  <h2><span class="no">08</span>総評</h2>
+  <div class="quote">これは essence-gate 単体の問題ではなく、ハーネスの hook 層全体に同じ設計の癖が広く根を張っている。「文章を正規表現で読む」「失敗時に素通りさせる」「変数を素で展開する」「命名を決め打つ」——この 4 つが 21 hook を横断する。個々の修正は小さいが、対症療法を積むより、根因 5 つを設計思想の統一で断つのが本筋だ。多くは潜在的・条件付きだが、絵文字検査と秘密ファイル検査の 2 つの Critical、そして 3層保護の失効は、今この瞬間に効いている。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.14 23:25 JST
+  </footer>
+
+</div>
+</body>
+</html>

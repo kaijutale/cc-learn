@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>citation-format.md — Patch Review</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1C1B19; --surface2:#242220;
+    --text:#E8E4D8; --muted:#A8A296; --border:#34322E;
+    --red:#E63946; --amber:#D9A05B; --sage:#7A8471;
+    --add-bg:rgba(122,132,113,0.14); --add-line:#8c9a82;
+    --del-bg:rgba(230,57,70,0.10); --del-line:#E63946;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.68; font-size:17px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px; margin:0 auto; padding:76px 28px 130px;}
+  .kicker{font-family:ui-monospace,monospace; font-size:11px; letter-spacing:0.18em;
+    text-transform:uppercase; color:var(--amber); display:block; margin-bottom:22px;}
+  h1.hero{font-family:ui-serif,Georgia,serif; font-weight:700; font-size:54px;
+    line-height:1.08; margin:0 0 26px; letter-spacing:-0.01em;}
+  .standfirst{font-size:19px; max-width:680px; margin:0 0 8px;}
+  .standfirst .em{color:var(--amber); font-weight:700;}
+  .standfirst .emr{color:var(--red); font-weight:700;}
+  .statbar{display:flex; margin:54px 0 8px; border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);}
+  .stat{flex:1; padding:24px 8px 22px;}
+  .stat + .stat{border-left:1px solid var(--border);}
+  .stat .num{font-family:ui-serif,Georgia,serif; font-weight:700; font-size:40px;
+    line-height:1; display:block; margin-bottom:10px;}
+  .stat .num.g{color:var(--add-line);}
+  .stat .num.r{color:var(--red);}
+  .stat .lab{font-family:ui-monospace,monospace; font-size:10.5px; letter-spacing:0.13em;
+    text-transform:uppercase; color:var(--muted);}
+  section{margin-top:78px;}
+  .seclabel{font-family:ui-monospace,monospace; font-size:11px; letter-spacing:0.16em;
+    text-transform:uppercase; color:var(--amber); margin-bottom:18px;}
+  h2{font-family:ui-serif,Georgia,serif; font-weight:700; font-size:32px;
+    line-height:1.15; margin:0 0 20px; letter-spacing:-0.01em;}
+  p{max-width:700px; margin:0 0 18px;}
+  p .code{font-family:ui-monospace,monospace; font-size:0.86em; background:var(--surface2);
+    border:1px solid var(--border); border-radius:4px; padding:1px 6px; color:var(--amber);}
+  strong{color:var(--text); font-weight:700;}
+  .red{color:var(--red); font-weight:700;}
+  .green{color:var(--add-line); font-weight:700;}
+  .filecard{margin:30px 0 10px; border:1px solid var(--border); border-radius:8px;
+    overflow:hidden; background:var(--surface);}
+  .filehead{display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:13px 18px; background:var(--surface2); border-bottom:1px solid var(--border);}
+  .fname{font-family:ui-monospace,monospace; font-size:13.5px; word-break:break-all;}
+  .fstat{font-family:ui-monospace,monospace; font-size:13px; white-space:nowrap;}
+  .fstat .add{color:var(--add-line); font-weight:700;}
+  .fstat .del{color:var(--red); font-weight:700;}
+  table.diff{width:100%; border-collapse:collapse; font-family:ui-monospace,monospace;
+    font-size:13px; line-height:1.62;}
+  table.diff td{vertical-align:top; padding:0;}
+  td.ln{width:46px; min-width:46px; text-align:right; padding:1px 10px 1px 0;
+    color:#6f6a60; user-select:none; border-right:1px solid var(--border);}
+  td.mk{width:22px; text-align:center; user-select:none; color:var(--muted);}
+  td.code{padding:1px 14px 1px 8px; white-space:pre-wrap; overflow-wrap:anywhere;}
+  tr.ctx td.code{color:#cfcabb;}
+  tr.del{background:var(--del-bg);}
+  tr.del td.mk{color:var(--red);}
+  tr.del td.code{box-shadow:inset 2px 0 0 var(--del-line);}
+  tr.add{background:var(--add-bg);}
+  tr.add td.mk{color:var(--add-line);}
+  tr.add td.code{box-shadow:inset 2px 0 0 var(--add-line);}
+  tr.hunk td{background:#1a1f24; color:#7f96ad; padding:4px 14px; font-size:12px;
+    border-top:1px solid var(--border); border-bottom:1px solid var(--border);}
+  .why{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border);
+    border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-top:26px;}
+  .why .cell{background:var(--surface); padding:26px 24px;}
+  .why .tag{font-family:ui-monospace,monospace; font-size:10.5px; letter-spacing:0.12em;
+    text-transform:uppercase; margin-bottom:12px; display:inline-block;}
+  .why .tag.r{color:var(--red);}
+  .why .tag.g{color:var(--add-line);}
+  .why h3{font-family:ui-serif,Georgia,serif; font-weight:700; font-size:21px;
+    margin:0 0 12px; line-height:1.25;}
+  .why p{font-size:15.5px; color:var(--muted); margin:0;}
+  .why p strong{color:var(--text);}
+  .closing{margin-top:84px; border-top:1px solid var(--border); padding-top:40px;}
+  .closing .quote{font-family:ui-serif,Georgia,serif; font-weight:700; font-size:27px;
+    line-height:1.3; max-width:720px; margin:0 0 20px;}
+  .closing .quote .hl{color:var(--amber);}
+  .closing .meta{font-family:ui-monospace,monospace; font-size:12px; color:var(--muted);}
+  @media (max-width:640px){
+    h1.hero{font-size:38px;}
+    .stat{flex:1 1 50%; border-left:none;}
+    .why{grid-template-columns:1fr;}
+    .wrap{padding:54px 18px 90px;}
+  }
+  @media print{ body{background:#fff; color:#111;} .filecard,.why .cell{background:#fff;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="kicker">Harness / Rule Patch &middot; 2026-06-11</span>
+  <h1 class="hero">存在しない「例」を、<br>辿れる規範へ。</h1>
+  <p class="standfirst">
+    新設したルール <strong>citation-format.md</strong> が、皮肉にも自分の原則に違反しておった ——
+    例として書いた出典パスが <span class="emr">実在しなかった</span>。
+    その腐った例を削り、<span class="em">書いた本人が実機で辿れることを確かめる検証規範</span>を足した patch じゃ。
+  </p>
+  <div class="statbar">
+    <div class="stat"><span class="num">1</span><span class="lab">File Changed</span></div>
+    <div class="stat"><span class="num g">+7</span><span class="lab">Lines Added</span></div>
+    <div class="stat"><span class="num r">&minus;3</span><span class="lab">Lines Removed</span></div>
+    <div class="stat"><span class="num">0</span><span class="lab">Dead Paths Left</span></div>
+  </div>
+  <section>
+    <div class="seclabel">Files Changed</div>
+    <h2>citation-format.md</h2>
+    <p style="color:var(--muted); font-size:15.5px;">
+      GitHub の Files changed タブ風に unified diff を表示する。
+      <span class="red">赤 / &minus;</span> が削除、<span class="green">緑 / +</span> が追加。
+      左の列が変更前 (old) の行番号、その右が変更後 (new) の行番号じゃ。
+    </p>
+    <div class="filecard">
+      <div class="filehead">
+        <span class="fname">~/.claude/rules/citation-format.md</span>
+        <span class="fstat"><span class="add">+7</span> <span class="del">&minus;3</span></span>
+      </div>
+      <table class="diff">
+        <tr class="hunk"><td colspan="4">@@ -1,14 +1,18 @@ # Citation Format</td></tr>
+        <tr class="ctx"><td class="ln">1</td><td class="ln">1</td><td class="mk"></td><td class="code"># Citation Format (出典表記)</td></tr>
+        <tr class="ctx"><td class="ln">2</td><td class="ln">2</td><td class="mk"></td><td class="code"></td></tr>
+        <tr class="ctx"><td class="ln">3</td><td class="ln">3</td><td class="mk"></td><td class="code">skill / rule / doc に外部出典を書くとき、プロジェクト固有の略記 (例: `note 260405`) だけで終わらせない。その略記は、別セッション / 別PJ の Claude には解決不能な暗号になる。</td></tr>
+        <tr class="ctx"><td class="ln">4</td><td class="ln">4</td><td class="mk"></td><td class="code"></td></tr>
+        <tr class="ctx"><td class="ln">5</td><td class="ln">5</td><td class="mk"></td><td class="code">理由: グローバルハーネス (`~/.claude/`) は特定プロジェクト情報を持たない前提で動く。番号略記は発行元 PJ でしか辿れない。</td></tr>
+        <tr class="ctx"><td class="ln">6</td><td class="ln">6</td><td class="mk"></td><td class="code"></td></tr>
+        <tr class="ctx"><td class="ln">7</td><td class="ln">7</td><td class="mk"></td><td class="code">## ルール</td></tr>
+        <tr class="ctx"><td class="ln">8</td><td class="ln">8</td><td class="mk"></td><td class="code"></td></tr>
+        <tr class="ctx"><td class="ln">9</td><td class="ln">9</td><td class="mk"></td><td class="code">本文中は略記でよいが、末尾に出典セクションを置き、どのセッションの Claude でも機械的に解決できる形を必ず添える。</td></tr>
+        <tr class="ctx"><td class="ln">10</td><td class="ln">10</td><td class="mk"></td><td class="code"></td></tr>
+        <tr class="del"><td class="ln">11</td><td class="ln"></td><td class="mk">&minus;</td><td class="code">- glob パス (例: `~/.claude/.docs/references/note-articles/NNNNNN_*.pdf`)</td></tr>
+        <tr class="del"><td class="ln">12</td><td class="ln"></td><td class="mk">&minus;</td><td class="code">- 索引 (README.md 等) への導線</td></tr>
+        <tr class="add"><td class="ln"></td><td class="ln">11</td><td class="mk">+</td><td class="code">- ID から実ファイルへ glob 解決できる絶対パス (`~/` または `$HOME/` 始まり)</td></tr>
+        <tr class="add"><td class="ln"></td><td class="ln">12</td><td class="mk">+</td><td class="code">- その出典群を一覧する索引 (README.md 等) への導線</td></tr>
+        <tr class="ctx"><td class="ln">13</td><td class="ln">13</td><td class="mk"></td><td class="code"></td></tr>
+        <tr class="del"><td class="ln">14</td><td class="ln"></td><td class="mk">&minus;</td><td class="code">番号 → ファイルパスを Claude が解決できる状態を担保する。適用例: `~/.claude/rules/harness-modification-policy.md` の「## 出典 (note 参照先)」。</td></tr>
+        <tr class="add"><td class="ln"></td><td class="ln">14</td><td class="mk">+</td><td class="code">番号 → ファイルパスを Claude が機械的に解決できる状態を担保する。</td></tr>
+        <tr class="add"><td class="ln"></td><td class="ln">15</td><td class="mk">+</td><td class="code"></td></tr>
+        <tr class="add"><td class="ln"></td><td class="ln">16</td><td class="mk">+</td><td class="code">## 検証 (書いた本人が辿れることを実機確認する)</td></tr>
+        <tr class="add"><td class="ln"></td><td class="ln">17</td><td class="mk">+</td><td class="code"></td></tr>
+        <tr class="add"><td class="ln"></td><td class="ln">18</td><td class="mk">+</td><td class="code">出典パス・適用例を書いたら、書いた本人がその場で `ls` / glob 展開で実在を確かめてから確定する。実在しないパスを「例」として書くのは、このルール自身の違反であり最も犯しやすい失敗。原則を、原則を書く自分自身に適用せよ。</td></tr>
+      </table>
+    </div>
+  </section>
+  <section>
+    <div class="seclabel">Why this patch</div>
+    <h2>2つの変更、1つの教訓</h2>
+    <div class="why">
+      <div class="cell">
+        <span class="tag r">&minus; Removed &middot; 削除</span>
+        <h3>腐った「例」を消した</h3>
+        <p>削除した2行 (glob 例パス・適用例) は、いずれも<strong>実在しないファイル</strong>を指していた。<strong>note-articles/</strong> は <strong>references-INVALID/</strong> に封印され中身は空、引用した <strong>harness-modification-policy.md の出典節</strong>も grep でヒットゼロ。「辿れる形で書け」と命じるルールが、自分の例で辿れぬパスを量産しておった。</p>
+      </div>
+      <div class="cell">
+        <span class="tag g">+ Added &middot; 追加</span>
+        <h3>検証規範を内蔵した</h3>
+        <p>追加した <strong>## 検証</strong> 節は「出典パスを書いたら書いた本人が <strong>ls / glob で実在を確かめてから確定せよ</strong>」を規範化する。例の実在を確かめず転記する失敗を、次回からルール自身が構造的に防ぐ。具体パスは形式テンプレ (<span class="code">~/</span> / <span class="code">$HOME/</span>) に置き換え、実在主張をやめた。</p>
+      </div>
+    </div>
+  </section>
+  <div class="closing">
+    <p class="quote">原則 (辿れる形で書け) を、<span class="hl">原則を書く自分自身に適用せよ</span>。</p>
+    <p class="meta">~/.claude/rules/citation-format.md &middot; auto-memory &rarr; global rules へ昇格した patch</p>
+  </div>
+</div>
+</body>
+</html>

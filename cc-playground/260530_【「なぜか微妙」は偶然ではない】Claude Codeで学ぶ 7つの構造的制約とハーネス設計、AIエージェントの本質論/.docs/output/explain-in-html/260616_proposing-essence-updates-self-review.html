@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>proposing-essence-updates skill の essence self-review — v1 FAIL から v2 PASS へ</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">SELF-REVIEW · 2026.06.16</div>
+  <h1>proposing-essence-updates の <em>essence self-review</em></h1>
+  <div class="meta"><span>2026.06.16</span><span>essence レビュー記録</span><span>対象: ハーネス運用 skill</span></div>
+
+  <div class="hero grade-a">
+    <div class="grade-box grade-a">
+      <div class="grade-letter">A</div>
+      <div class="grade-pct">Critical 0 / High 0</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT</div>
+      <p>初回レビューで <strong>Critical 1 / High 3 / Medium 5 / Low 3</strong> を検出。全 12 件を修正し、独立した再レビューで <strong>Critical 0 / High 0 (PASS)</strong> を確認した。見逃していた最重要欠陥は、作り手自身の「読んで OK」では掘り当てられなかった <em>silent failure</em> (エラーを出さず黙って失敗する不具合) であった。</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="k">評価領域</div><div class="v">3 (harness / skill / ui)</div></div>
+    <div class="stat"><div class="k">検出 → 修正</div><div class="v">12 件 全件</div></div>
+    <div class="stat"><div class="k">統合役の補正</div><div class="v">2 件 却下</div></div>
+    <div class="stat"><div class="k">最終判定</div><div class="v">PASS (C0 / H0)</div></div>
+  </div>
+
+  <h2><span class="no">01</span>どう評価したか</h2>
+  <p>対象は <code>proposing-essence-updates</code> — ハーネスの評価基準 (essence-docs) の陳腐化や不足を点検し、改訂案を <strong>PR ドラフト</strong>として提案する運用 skill。これを評価する装置 <code>essence-reviewing-orchestrator</code> を、作り手の記憶を持たない <strong>新しいセッション (fresh session)</strong> で起動した。作り手バイアス (自分の作ったものを甘く見る偏り) を断つためである。</p>
+  <p>ところが装置の起動時、内部コマンドの 1 行 (ワイルドカードを含むファイル一覧取得) が <em>permission</em> (実行許可チェック) で止まった。そこで装置に頼らず、<strong>3 領域 (ハーネス / skill / UI) の独立レビューを並列起動</strong>し、各々の結果を統合判断する手動方式へ切り替えた。視点を分けた独立レビューと、それを束ねる統合役を分離する構造は、装置の本質をそのまま手で再現したものである。</p>
+
+  <h2><span class="no">02</span>初回レビューで見つかった欠陥 (v1 = FAIL)</h2>
+  <div class="card">
+    <h3><span class="sev sev-fail">CRITICAL</span>棄却候補の照合が黙って空振りしていた</h3>
+    <div class="kv"><b>場所</b><code>scripts/collect_baseline.sh</code> の awk 処理</div>
+    <div class="kv"><b>問題</b>過去に却下した候補を再提案しないための照合が、固定文字列「棄却した候補」を探していた。だが実際の見出しは「棄却 / 他領域へ振った候補」で <strong>1 件もヒットしない</strong>。エラーも出さず空を返すため誰も気づけない。skill の中核安全機構が機能不全だった。</div>
+    <div class="kv"><b>確証</b>机上で読むのでなく実機実行し、該当件数 = 0 を確認</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">HIGH</span>config.json の保護が「主張のみ」で実在せず</h3>
+    <div class="kv"><b>問題</b>秘密情報 (Discord の webhook URL) を含む config.json を「git 管理から除外済み」と 4 箇所で宣言しながら、実際の除外設定には登録されていなかった。秘密が誤って公開リポジトリに入る危険。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">HIGH</span>webhook URL がプロセス引数で露出</h3>
+    <div class="kv"><b>場所</b><code>scripts/notify_discord.sh</code></div>
+    <div class="kv"><b>問題</b>秘密の webhook URL をコマンド引数 (argv) で渡していた。同じマシンの他プロセスから <code>ps</code> コマンドで読めてしまう。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">HIGH</span>セクション境界が浅く、別項目が混入</h3>
+    <div class="kv"><b>問題</b>見出しの区切り判定が大見出しでしか止まらず、隣の「保留候補」が「棄却候補」の出力に混ざっていた。</div>
+  </div>
+  <p>このほか Medium 5 件 (skill 名の誤記・状態の記録欠如・確信度の使い方・異常時の挙動・通知の文字切れ) と Low 2 件も検出した。</p>
+
+  <h2><span class="no">03</span>統合役が覆した「誤検出」2 件</h2>
+  <p>独立レビューは強力だが、<strong>分けたレビュー同士が同じ盲点を共有する</strong>ことがある。それを束ねる統合役 (fresh Lead) が、両レビューの一致した指摘を 2 件、事実で却下した。</p>
+  <ul class="plain">
+    <li><b>schedule skill は「不在」ではなかった</b> — 2 つのレビューが揃って「定期実行用の schedule skill が存在しない」と指摘。だが両者ともディレクトリ <code>~/.claude/skills/</code> しか見ておらず、Claude Code 組み込みの schedule 機能を見落としていた。統合役が実在を確認して却下。</li>
+    <li><b>essence-docs は「除外」されていなかった</b> — あるレビューが「essence は git 管理から除外されている」と指摘したが、確認した場所がたまたま別ブランチ (essence を除外する設定のブランチ) だった。対象 skill が動くブランチでは正しく管理対象。却下。</li>
+  </ul>
+
+  <h2><span class="no">04</span>全件修正と再レビュー (v2 = PASS)</h2>
+  <p>検出した 12 件をすべて修正し、それぞれ実機で検証した。中核の awk は固定文字列の照合を <strong>正規表現</strong>に置き換え、見出しの大小両方で正しく区切るよう直し、3 領域すべてで実行確認した。config.json は「除外設定を先に効かせ、検証が通るまで秘密を書き込まない」順序ゲートを skill 内に組み込んだ。</p>
+  <table>
+    <thead><tr><th>深刻度</th><th>v1 (修正前)</th><th>v2 (修正後)</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">Critical</td><td class="score-cell"><span class="mark mark-fail">1</span></td><td class="score-cell"><span class="mark mark-pass">0</span></td></tr>
+      <tr><td class="cat-name">High</td><td class="score-cell"><span class="mark mark-fail">3</span></td><td class="score-cell"><span class="mark mark-pass">0</span></td></tr>
+      <tr><td class="cat-name">Medium</td><td class="score-cell"><span class="mark mark-warn">5</span></td><td class="score-cell"><span class="mark mark-pass">0 (修正済)</span></td></tr>
+      <tr><td class="cat-name">Low</td><td class="score-cell"><span class="mark mark-warn">3</span></td><td class="score-cell"><span class="mark mark-pass">0 (修正済)</span></td></tr>
+    </tbody>
+  </table>
+  <p>再レビューは新たに Medium 1 件と Low 2 件を掘り当てた。Medium はまた <strong>事実誤認の指摘</strong>で — 品質ゲート (essence-gate) の対象は skills / agents / hooks のみで、この skill が作る PR (essence-docs を変更) は対象外だった。「ゲートに引っかかる」という記述自体が誤りで、これも修正。修正が新たな欠陥を生んでいないことも独立確認した。</p>
+
+  <h2><span class="no">05</span>成果物</h2>
+  <ul class="plain">
+    <li><b>PR #7</b> — proposing-essence-updates skill 本体 (<code>kaijutale/claude-harness</code> の pull/7)。9 ファイル・415 行。</li>
+    <li><b>issue #6</b> — 評価装置 (orchestrator) 自身の改善 2 件 (起動時の load 失敗 + 永続化命名の曖昧さ) は、対象 skill と切り離して別 issue に集約。スコープの混在を避けた。</li>
+    <li><b>self-eval 記録</b> — 修正前 (v1 = FAIL) と修正後 (v2 = PASS) を、品質ゲートが読める正しい命名 (<code>_self-eval-v&lt;N&gt;</code>) で永続化。次回の自動チェックが参照できる。</li>
+  </ul>
+
+  <h2><span class="no">06</span>総評</h2>
+  <div class="quote">この self-review が示したのは 3 点である。第一に、作り手自身の「読んで OK」では <strong>silent failure (黙って失敗する不具合)</strong> を見逃す — 中核の安全機構が空振りしていたのに、作り手の自己検証は通過していた。第二に、それを掘り当てたのは <strong>記憶を持たない独立レビューと実機実行</strong>だった。第三に、独立レビューでも複数が同じ盲点を共有しうるため、最後に <strong>統合役が事実で覆す層</strong>が要る (誤検出 2 件を却下)。検証は「読む」ではなく「動かす」。評価は「一度」ではなく「独立に重ねる」。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.16 08:17 JST
+  </footer>
+
+</div>
+</body>
+</html>

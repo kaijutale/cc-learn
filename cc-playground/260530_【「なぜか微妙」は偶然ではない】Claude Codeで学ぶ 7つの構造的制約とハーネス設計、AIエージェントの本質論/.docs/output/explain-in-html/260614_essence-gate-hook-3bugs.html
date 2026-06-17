@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>essence-gate フック調査 — 3 つのバグ (hook_pre_commit_essence_gate.sh)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">HARNESS DIAGNOSIS · 2026.06.14</div>
+  <h1>essence-gate フックは<br><em>両方向に壊れている</em></h1>
+  <div class="meta"><span>2026.06.14</span><span>対象 hook_pre_commit_essence_gate.sh</span><span>調査 / 未修正</span></div>
+
+  
+
+  
+  <div class="hero grade-e">
+    <div class="grade-box grade-e">
+      <div class="grade-letter">E</div>
+      <div class="grade-pct">Critical 1 / High 2</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT</div>
+      <p>skill・agent・hook の改修を含む commit を、essence レビュー(ハーネスの自己点検)の合否で止める安全ゲート。だが<strong>最新の判定を取り逃し、過去の数値を誤検出し、最新フォーマットを読めない</strong>。結果、正しい commit を誤って止め、不適格な commit を誤って通す——ゲートとして両方向に壊れている。すべて実ファイルで再現済み。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>このフックは何を守る仕掛けか</h2>
+  <p>このフックは、ハーネス(エージェントを制御する仕組み)の中核ファイル——skill・agent・hook——を変更して commit しようとした瞬間に割り込み、直近の essence レビュー(設計原則に照らした自己点検)の結果を見て <strong>合格なら通し、不合格(重大な指摘あり)なら止める</strong> 役目を持つ。判定材料は <code>essence-review-runs</code> フォルダに溜まる self-eval(自己点検レポート)で、フックはその「最新の 1 通」を読んで合否を決める。つまり<strong>「最新の 1 通を正しく選び、そこから合否を正しく読む」</strong>——この 2 点が生命線じゃ。3 つのバグは、まさにこの 2 点を突き崩している。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">対象フック</div><div class="v">166 行 / bash</div></div>
+    <div class="stat"><div class="k">検出したバグ</div><div class="v">3 件</div></div>
+    <div class="stat"><div class="k">最悪 severity</div><div class="v">Critical 1 件</div></div>
+    <div class="stat"><div class="k">現在の実害</div><div class="v">誤 block の可能性</div></div>
+  </div>
+
+  <h2><span class="no">02</span>検出した 3 つのバグ</h2>
+  <p>「最新を選ぶ」段でバグ 1、「合否を読む」段でバグ 2 と 3 が起きる。壊れる方向(止めすぎ／通しすぎ)はバグごとに違う。</p>
+  <table>
+    <thead><tr><th>バグ</th><th>症状</th><th>壊れる方向</th><th>severity</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="cat-name">1. グロブ命名ドリフト</td>
+        <td>最新の判定ファイルを取り逃し、約 1 ヶ月前の古い判定を「最新」と誤認</td>
+        <td>土台が崩れる</td>
+        <td><span class="mark mark-warn">HIGH</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">2. 過去の数値を誤検出</td>
+        <td>本文の説明文に書かれた解消済みの数値を、結論の数値と取り違える</td>
+        <td>誤 block(止めすぎ)</td>
+        <td><span class="mark mark-warn">HIGH</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">3. 最新フォーマット非対応</td>
+        <td>最新の判定ファイルから合否を一切読めず、常にゼロ件扱いになる</td>
+        <td>誤 approve(通しすぎ)</td>
+        <td><span class="mark mark-fail">CRITICAL</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>バグの詳細</h2>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">HIGH</span>バグ 1 — グロブ命名ドリフト(最新判定の取り逃し)</h3>
+    <div class="kv"><b>該当</b>フック 68 行目。最新の self-eval(自己点検レポート)を選ぶ処理。</div>
+    <div class="kv"><b>問題</b>ファイル名を拾うパターン <code>*_self-eval-v*.md</code> が旧命名専用。レポートの命名規則は 3 世代に渡って変化しており(<code>_self-eval.md</code> → <code>_self-eval-vN.md</code> → <code>__&lt;パス&gt;.md</code>)、グロブ(ワイルドカードでのファイル名一致)が真ん中の世代しか拾えない。</div>
+    <div class="kv"><b>実証</b>実際にコマンドを走らせると、最新の 6/12 ではなく 5/14 のファイルが選ばれた。約 1 ヶ月前の判定を「最新」と誤認する。</div>
+    <pre># フック 68 行目
+LATEST_SELFEVAL=$(ls -t &quot;$DIR&quot;/*_self-eval-v*.md | head -1)
+
+グロブが拾う :  2026-05-14_…_self-eval-v2.md            (約 1 ヶ月前の古い判定)
+実際の最新   :  2026-06-12_…_code-review-lane-fork.md
+                              ↑ &quot;self-eval-v&quot; が無い命名 → グロブが取り逃す</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">HIGH</span>バグ 2 — 過去の数値を誤検出(正しい commit を止める)</h3>
+    <div class="kv"><b>該当</b>フック 86-88 行目。レポート本文から Critical / High の件数を抜き出す処理。</div>
+    <div class="kv"><b>問題</b>抜き出しに使う検索パターンが、結論の表だけでなく<strong>本文の説明文(散文)</strong>にも一致する。最初に見つけた数値を採るため、前置きに書かれた「過去の・既に解消済みの数値」を拾ってしまう。</div>
+    <div class="kv"><b>実証</b>5/14 レポートの本当の結論は Critical 0 / High 0(合格)。だがフックは前置き文の「Critical 1 / High 3」を抜き、不合格と誤判定して commit を止めた。</div>
+    <div class="kv"><b>皮肉</b>同じファイルには機械が読みやすい <code>verdict: CONDITIONAL</code> という行もあったのに、フックは散文を先に拾って外している。</div>
+    <pre># フック 86-88 行目
+grep -E &quot;Critical [0-9]+ / High [0-9]+&quot;     ← 結論の表だけでなく散文にも一致する
+
+5/14 ファイル 7 行目(前置きの散文):
+  「v1 self-eval の Critical 1 / High 3 … を全 Apply 後の評価」
+                    ↑ 過去の・解消済みの数値を最初に拾う
+本当の結論(表 63-64 行): Critical 0 / High 0  = 合格
+→ なのに Critical=1 と誤判定 → 正しい commit を誤って止める</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-fail">CRITICAL</span>バグ 3 — 最新フォーマット非対応(不適格を見逃す)</h3>
+    <div class="kv"><b>該当</b>バグ 2 と同じ抽出処理(86-88 行目)。</div>
+    <div class="kv"><b>問題</b>最新レポート(6/12)は、合否を <code>verdict:</code> 行や「Critical N / High N」の決まった形では書かず、散文で「High 1 件」と記す。検索パターンが何にも一致せず、件数は常にゼロと読まれる。</div>
+    <div class="kv"><b>実証</b>6/12 レポートの真の結論は High 1 件(不適格)。だが抽出結果はゼロ件。<em>fail-open</em>(失敗したとき止めずに通してしまう挙動)で、不適格な commit がそのまま素通りする。これがゲートの存在意義を無効化するため最も重い。</div>
+    <pre># 同じ抽出ロジック(86-88 行目)
+最新 6/12 ファイルの合否表記:
+  「Critical はゼロ」  「High 1 / Medium 3 / Low 4」   ← すべて散文
+  行頭 &quot;verdict:&quot; ラベルも &quot;Critical N / High N&quot; 連続形式も持たない
+→ grep が何もマッチせず Critical=0 / High=0 と読む
+真の結論: High 1 件(不適格)
+→ 不適格なのに 0/0 と読み、誤って approve(そのまま通す)</pre>
+  </div>
+
+  <h2><span class="no">04</span>3 つのバグはこう連鎖する</h2>
+  <p>個々のバグも問題じゃが、組み合わさると<strong>どちらに転んでも壊れる</strong>のが核心。これが「単なる書き間違い」を超えて深刻な理由じゃ。</p>
+  <ul class="plain">
+    <li><b>いまの状態(バグ 1 + 2)</b> — グロブが 5/14 を拾い、その前置き文から「Critical 1 / High 3」を誤抽出する。結果、いま <code>~/.claude</code> で skill・agent・hook を含む commit が<strong>誤った理由で止められる</strong>。セッション開始時に出た「未 commit 7 件」に該当ファイルがあれば、すでに弾かれている可能性がある。</li>
+    <li><b>仮にバグ 1 だけ直すと(バグ 3 が表面化)</b> — グロブが最新 6/12 を拾えるようになるが、今度は抽出が 0/0 になり、High 1 件の不適格を<strong>誤って通してしまう</strong>。片方を直すと、もう片方の故障が顔を出す。</li>
+    <li><b>結論</b> — 正しい commit を止め(止めすぎ)、不適格な commit を通す(通しすぎ)。両方向に誤るゲートは、もはやゲートとして信頼できない。</li>
+    <li><b>根本原因</b> — バグ 2 と 3 は同じ根を持つ。合否を、決まった形式の項目ではなく<strong>「人間が読む散文を検索して抜こうとしている」</strong>こと。レポートの書式が少し変わるだけで、誤抽出(バグ 2)も抽出失敗(バグ 3)も起きる。</li>
+  </ul>
+
+  <h2><span class="no">05</span>いま取れる選択肢</h2>
+  <ul class="plain">
+    <li><b>緊急の迂回</b> — 環境変数 <code>SKIP_ESSENCE_GATE=1</code> を立てれば、このフック全体を一時的に無効化できる(フック 8・24-27 行目)。誤 block で詰まったら即座に回避可能。</li>
+    <li><b>対症の修正</b> — グロブを最新命名に追従させ(バグ 1)、合否の抜き出しを機械可読な項目優先に直す(バグ 2・3)。フック単体で、依存先を壊さず後方互換に閉じられる。</li>
+    <li><b>根本の修正</b> — レポート(self-eval)側に機械可読の項目(Critical 件数・High 件数・合否)を必須化し、フックはそれだけを読む。書式の揺れに構造的に強くなる。</li>
+  </ul>
+  <p>本セッションは<strong>調査のみで修正はしていない</strong>。どの道を採るかは判断待ちじゃ。</p>
+
+  <h2><span class="no">06</span>総評</h2>
+  <div class="quote">このフックの弱点は個別の書き間違いではなく、「人間が読む散文から機械が合否を抜く」という設計そのものにある。レポートの書式が変わるたびに、止めるべきを通し、通すべきを止める。安全ゲートは<strong>厳格に作るほど、壊れたときに静かに無効化される</strong>のが恐ろしい——だからこそ合否は、散文ではなく機械可読の一点に固定すべきだ。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.14 22:47 JST
+  </footer>
+
+</div>
+</body>
+</html>
