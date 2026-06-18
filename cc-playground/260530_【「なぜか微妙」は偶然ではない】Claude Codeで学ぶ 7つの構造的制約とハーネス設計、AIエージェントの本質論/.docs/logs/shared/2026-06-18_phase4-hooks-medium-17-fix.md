@@ -57,6 +57,7 @@ read_secret: 空 file_path / jq失敗時の素通り(exit0=fail-open)を deny(ex
 3. **`/tmp` ≠ `~/.claude/tmp`**: 検証は system temp `/tmp`(macOSで `/private/tmp` symlink)を使用。`~/.claude/tmp`(本番配下)は不使用。「live ~/.claude は触らない」は文字どおり。
 4. **rm 忌避ハーネスで `rm -rf` がBashごと拒否される**: テスト setup の `rm -rf` で permission denied。新規 dir + `mkdir -p`(冪等)で回避。
 5. **監査の指示を鵜呑みにしない**: L242/L266 の同根バグを能動的に発見(監査外)、#4 approve・#13 tsc は回帰/カバレッジ理由で意図的に据置、#8 Windows は portability理由で見送り。
+6. **マージ後 live 反映の surgical stash**: PR マージ後に ~/.claude へ反映する際、別 WIP(footerLinks の settings.json/CLAUDE.md 未commit)が pull を阻む。対象ファイルのみ `git stash push -- settings.json` → `merge --ff-only origin/main` → `stash pop` で、WIP を壊さず Phase 4 だけ live 化できた(footerLinks=L377 と Phase4 matcher=L156-263 が非重複ゆえ pop が clean)。全 stash でなく**ファイル指定 stash** が WIP 保全の肝。`git pull` 拒否の真因は「未push commit」ではなく「dirty な作業ツリーが更新対象ファイルを上書きするのを git が拒む」点(未commit変更は push 対象ですらない)。
 
 ## 残 (Phase 5)
 
@@ -67,4 +68,4 @@ Low 22件 + 5根因の構造対処 + #4 approve・#13 tsc の方針決定 + 「h
 - .docs/plans/2026-06-15-harness-hooks-bug-fix.md — plan(Phase 4 を済に更新)
 - .docs/output/explain-in-html/260618_pr20-harness-hooks-medium-fix.html — PR #20 解説HTML
 - PR #4 (P1) / #15 (P2) / #19 (P3) / #20 (P4) — kaijutale/claude-harness
-- ~/.claude/hooks/ の9 hook + settings.json + rules + three-elements-harness/scripts/hooks/ の2 hook — 修正対象(merge済、live反映は footerLinks WIP 解消後)
+- ~/.claude/hooks/ の9 hook + settings.json + rules + three-elements-harness/scripts/hooks/ の2 hook — 修正対象(merge済・**live反映済** HEAD=21ec73d、footerLinks WIP は surgical stash で保全)
