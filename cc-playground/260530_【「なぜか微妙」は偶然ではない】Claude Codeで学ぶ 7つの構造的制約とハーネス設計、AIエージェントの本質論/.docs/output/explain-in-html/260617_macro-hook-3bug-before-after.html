@@ -1,0 +1,244 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>検証器が素通ししていた — Macro保護hookの3つのバグと修正 (PR #15)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · 2026.06.17 · HARNESS HOOK</div>
+  <h1>検証器が<em>素通し</em>していた<br>Macro保護hookの3つのバグと修正</h1>
+  <div class="meta"><span>2026.06.17</span><span>ハーネス hook 解説</span><span>kaijutale/claude-harness PR #15</span></div>
+
+  
+
+  <h2><span class="no">01</span>なぜ「検証器が素通し」は怖いのか</h2>
+<p><code>three-elements-harness</code> (3層ハーネス。AI エージェントを Macro=戦略層 と Micro=実装層 に分けて動かす仕組み) では、Macro 層が勝手に実装ファイルを書いたり下請けエージェントを直接呼んだりせぬよう、<strong>PreToolUse hook</strong> (ツール実行の直前に割り込む検査スクリプト) が見張っている。</p>
+<p>問題は、その見張り役 2 本が <em>fail-open</em> (検査に失敗したのに「異常なし」として素通しさせてしまう挙動) を起こしていたこと。鍵が壊れているのに「施錠済み」ランプが点く金庫と同じで、<strong>守っているつもりで、実際には素通し</strong>になっていた。検証器そのもののバグは気づきにくいぶん、最も怖い。</p>
+<div class="stats">
+  <div class="stat"><div class="k">対象 HOOK</div><div class="v">2 本 (Macro 保護)</div></div>
+  <div class="stat"><div class="k">バグ類型</div><div class="v">3 (引用符 / 空 / トラバーサル)</div></div>
+  <div class="stat"><div class="k">実機検証</div><div class="v">14 項目 全 OK</div></div>
+  <div class="stat"><div class="k">危険度</div><div class="v">High (fail-open)</div></div>
+</div>
+
+<h2><span class="no">02</span>この 2 つの hook は何を守るのか</h2>
+<p>2 本はいずれも「いま Macro 層か?」を <code>.docs/project-os/state/phase.yaml</code> という小さな状態ファイルの <code>phase:</code> 値 (<code>macro</code> か <code>micro</code> の 2 値) で判定し、Macro のときだけ制限をかける。</p>
+<ul class="plain">
+  <li><b>block-team-in-macro.sh</b> — Macro 層から下請けエージェント (<code>team-*</code> で始まる subagent) を直接呼ぶのを止める。本来は指揮 skill 経由で呼ぶ約束だから。</li>
+  <li><b>restrict-macro-writes.sh</b> — Macro 層の書込先を <code>.docs/</code> 配下のメモ類だけに限定する。実装ファイル (<code>src/</code> 等) を Macro が直接書くのを止める。</li>
+</ul>
+<p>どちらも判定の入口は同じ「<strong>phase.yaml を読む</strong>」一点。ここが 3 通りに抜けていた。</p>
+
+<h2><span class="no">03</span>壊れ方 ① — 「phase の読み方」が 2 通りに抜けていた</h2>
+<p>入口で phase 値を取り出すコードに、2 つのバグが同居していた。</p>
+<p><strong>バグ 2-1 (引用符)</strong>: YAML では <code>phase: macro</code> も <code>phase: "macro"</code> も同じ意味。だが旧コードは引用符付きだと <code>"macro"</code> を引用符ごと取り、「macro という文字列ではない」と誤判定して素通しした。</p>
+<p><strong>バグ 2-2 (空 / 壊れ)</strong>: phase.yaml が空や壊れていて値が取れないと、変数は空文字になる。旧コードは「macro 以外なら素通し」だったので、<em>空っぽ=異常なのに素通し</em>。コメントには「異常時は安全側に倒す (fail-closed)」と書いてあったのに、実装は真逆だった。</p>
+<p><strong>直し方</strong>: ① 取り出した値の前後の引用符を外す。② phase の正規値は <code>macro</code> か <code>micro</code> の 2 つだけなので、判定を「<strong>micro のときだけ素通し / それ以外 (macro・空・未知) は止める</strong>」に反転した。正規値が micro しかないので、正しい micro を誤って止める心配 (over-block) もない。</p>
+<div class="diff">
+  <div class="diff-head"><span class="file">block-team-in-macro.sh / restrict-macro-writes.sh (要点抜粋)</span>
+    <span class="tally"><span class="add">+2</span><span class="del">&minus;1</span></span></div>
+  <div class="diff-body">
+    <div class="diff-row"><span class="ln">46</span><span class="ln new">46</span><span class="mk"> </span><span class="code">  PHASE=$(awk '…' phase.yaml)   # phase値を取り出す</span></div>
+    <div class="diff-row del"><span class="ln">47</span><span class="ln new"> </span><span class="mk">&minus;</span><span class="code">  if [[ "$PHASE" != "macro" ]]; then   # 引用符付き/空だと誤判定→素通し</span></div>
+    <div class="diff-row add"><span class="ln"> </span><span class="ln new">47</span><span class="mk">+</span><span class="code">  PHASE=引用符を除去した値   # " や ' を外す (bug 2-1)</span></div>
+    <div class="diff-row add"><span class="ln"> </span><span class="ln new">48</span><span class="mk">+</span><span class="code">  if [[ "$PHASE" == "micro" ]]; then   # microのみ通す・空/未知はblock (bug 2-2)</span></div>
+    <div class="diff-row"><span class="ln">48</span><span class="ln new">49</span><span class="mk"> </span><span class="code">      echo '{"continue": true}'   # 素通し（許可）</span></div>
+  </div>
+</div>
+
+<h2><span class="no">04</span>壊れ方 ② — <code>..</code> で .docs の外へ書けた</h2>
+<p>restrict-macro-writes.sh は「書込先が <code>.docs/logs/</code> 等で始まれば許可」と判定する。だが <code>.docs/logs/../../../etc/passwd</code> のように <code>..</code> (1 つ上の階層へ戻る記号) を挟むと、文字列としては <code>.docs/logs/</code> で始まるので<em>許可されてしまう</em>。実際には .docs の外、システム領域まで書ける抜け穴だった (パストラバーサル)。</p>
+<p><strong>直し方</strong>: 許可判定の<strong>前に</strong>、path の構成要素として <code>..</code> を含むものは問答無用で止める。判定は <code>/パス/</code> の形にして <code>*/../*</code> と照合するので、<code>v1..2.md</code> のような「名前にたまたまドットが 2 つ並ぶ正規ファイル」は誤って止めない。</p>
+<div class="diff">
+  <div class="diff-head"><span class="file">restrict-macro-writes.sh (要点抜粋)</span>
+    <span class="tally"><span class="add">+3</span></span></div>
+  <div class="diff-body">
+    <div class="diff-row"><span class="ln">63</span><span class="ln new">63</span><span class="mk"> </span><span class="code">  # 絶対パスを相対に正規化 → NORMALIZED</span></div>
+    <div class="diff-row add"><span class="ln"> </span><span class="ln new">64</span><span class="mk">+</span><span class="code">  case "/${NORMALIZED}/" in   # 追加: 書込先に .. があれば</span></div>
+    <div class="diff-row add"><span class="ln"> </span><span class="ln new">65</span><span class="mk">+</span><span class="code">      */../* ) exit 2 ;;       # 即 block (bug 2-3)</span></div>
+    <div class="diff-row add"><span class="ln"> </span><span class="ln new">66</span><span class="mk">+</span><span class="code">  esac</span></div>
+    <div class="diff-row"><span class="ln">64</span><span class="ln new">67</span><span class="mk"> </span><span class="code">  case "$NORMALIZED" in</span></div>
+    <div class="diff-row"><span class="ln">65</span><span class="ln new">68</span><span class="mk"> </span><span class="code">      .docs/logs/*) ALLOW=1 ;;   # ../.. が紛れても通っていた</span></div>
+  </div>
+</div>
+
+<h2><span class="no">05</span>「直った」と言い切れる根拠</h2>
+<p>机上の判断で終わらせず、hook を <code>/tmp</code> に複製し、偽の状態ファイルと入力を与えて実際に動かして確かめた (生きた設定には触れずに)。終了コード <code>2</code> が「正しく止めた」、<code>0</code> が「通した」を意味する。</p>
+<table>
+  <thead><tr><th>検証項目</th><th>修正前</th><th>修正後</th></tr></thead>
+  <tbody>
+    <tr><td class="cat-name">3 類型バグ (引用符 / 空 / ..)</td><td><span class="mark mark-fail">素通し</span></td><td><span class="mark mark-pass">block</span></td></tr>
+    <tr><td class="cat-name">正規 micro・正規の書込</td><td class="score-cell">—</td><td><span class="mark mark-pass">通過</span></td></tr>
+    <tr><td class="cat-name">名前に .. を含む正規ファイル</td><td class="score-cell">—</td><td><span class="mark mark-pass">通過</span></td></tr>
+    <tr><td class="cat-name">構文チェック (bash -n)</td><td class="score-cell">—</td><td><span class="mark mark-pass">OK</span></td></tr>
+  </tbody>
+</table>
+<p>14 項目すべて期待どおり。なお hook が返す合否の形式 (終了コードや JSON) は一切変えていないので、Claude Code 本体との約束 (契約) を保ったままの<strong>後方互換</strong>修正じゃ。</p>
+
+<h2><span class="no">06</span>総評</h2>
+<div class="quote">この PR の核心は新機能ではなく<strong>「検証器を実際に機能させる」</strong>ことにある。3 つのバグはいずれも、保護が有効に見えて実際は素通しする fail-open 型で、最も発見が遅れる種類だった。phase の読み取りを厳格にし (引用符と空値の穴を塞ぎ)、パストラバーサルの抜け道を断ち、正規の操作は 1 件も巻き込まないことを 14 項目の実機検証で確認した。Phase 1 (#4) が「壊れた検証器」を直した続きとして、Macro 層の最小権限保護がようやく言葉どおりに効くようになった。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.17 12:24 JST
+  </footer>
+
+</div>
+</body>
+</html>
