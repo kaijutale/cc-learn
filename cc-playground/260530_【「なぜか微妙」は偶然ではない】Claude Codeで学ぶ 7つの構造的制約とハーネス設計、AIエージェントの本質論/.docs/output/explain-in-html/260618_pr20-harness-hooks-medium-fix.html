@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PR #20 解説 — ハーネス hook の Medium 17 件修正</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · 2026.06.18 · kaijutale/claude-harness</div>
+  <h1>PR #20 は何を直したか<br>ハーネス hook の <em>Medium 17 件</em></h1>
+  <div class="meta"><span>kaijutale/claude-harness #20</span><span>Phase 4 / 6 batch</span><span>13 files · +81 −31</span></div>
+
+  
+
+  
+  <h2><span class="no">01</span>このPRは何か</h2>
+  <p>このPR (<code>kaijutale/claude-harness #20</code>) は、ハーネス (AIエージェントを制御する仕組み一式) の <strong>hook (フック=特定の操作の前後で自動実行される検査スクリプト)</strong> 群を総点検して見つかった全60件のバグのうち、深刻度「Medium (中)」の17件をまとめて直したものじゃ。深刻度順に進める段階修正の<strong>4段目 (Phase 4)</strong>にあたる。致命的な3件と保護まわりの高深刻度は、Phase 1〜3 (PR #4 / #15 / #19) で既にマージ済み。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">FIXED</div><div class="v">Medium 17 件</div></div>
+    <div class="stat"><div class="k">COMMITS</div><div class="v">6 バッチ</div></div>
+    <div class="stat"><div class="k">CHANGES</div><div class="v">13 files / +81 −31</div></div>
+    <div class="stat"><div class="k">VERIFY</div><div class="v">両方向グリーン</div></div>
+  </div>
+
+  <h2><span class="no">02</span>なぜバグが生まれたか — 5つの構造的根因</h2>
+  <p>個々のバグはバラバラの偶然ではなく、<strong>5つの設計上の癖</strong>が hook 層を横断していた。修正もこの根因に沿って束ねている。</p>
+  <table>
+  <thead><tr><th>#</th><th>構造的根因</th><th>あるべき方向</th></tr></thead>
+  <tbody>
+  <tr><td class="score-cell">1</td><td>人間が読む文章を正規表現で機械的に読む</td><td>機械可読フィールド / 語の境界 / コード範囲に限定</td></tr>
+  <tr><td class="score-cell">2</td><td>検査が失敗した時に素通りする (fail-open=安全でない側へ倒れる)</td><td>検査できないなら拒否側へ倒す (fail-closed)</td></tr>
+  <tr><td class="score-cell">3</td><td>ツール名・命名の決め打ち</td><td>新しいツール名 (<code>MultiEdit</code> 等) も追従させる</td></tr>
+  <tr><td class="score-cell">4</td><td>境界の数え違い (off-by-one=1個ずれ)</td><td>改行数でなく行数で数える / 文字コードを正規化</td></tr>
+  <tr><td class="score-cell">5</td><td>シェル変数を生のまま展開する</td><td>必ずクォートする / 1行ずつ読む</td></tr>
+  </tbody></table>
+
+  <h2><span class="no">03</span>6つのバッチで何を直したか</h2>
+  <p>修正は「同じ性質のもの」でまとめ、6つのコミット (バッチ) に分けた。1つずつ実機で検証してから積んでいる。</p>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">A · 配線</span>新しい編集ツールで検査がすり抜けていた</h3>
+    <div class="kv"><b>項目</b>#17 (根因3)</div>
+    <div class="kv"><b>症状</b><code>MultiEdit</code> (複数箇所を一度に書き換えるツール) で編集すると、行数・絵文字・命名規約などの検査 hook が一切発火しなかった。検査の発火条件が古いツール名しか見ていなかったため。</div>
+    <div class="kv"><b>修正</b>発火条件 (matcher) に <code>MultiEdit</code> を追加。点検中に、同じ取りこぼしが報告外の2箇所 (うち1つは保護用のセキュリティ hook) にも潜んでいたのを発見し、まとめて塞いだ。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">B · 出力形式</span>検査結果のJSONが壊れて片方が消える</h3>
+    <div class="kv"><b>項目</b>#12, #4</div>
+    <div class="kv"><b>症状</b>lint hook が「文法エラー」と「型エラー」の両方を見つけた時、結果のJSONを2回に分けて出力し、片方が握り潰されていた。別の hook はブロック応答に非推奨の古い形式を使っており、将来のバージョンで無視される恐れがあった。</div>
+    <div class="kv"><b>修正</b>診断を1つにまとめて1回だけ出力。ブロック応答を現行の正式形式 (<code>permissionDecision:"deny"</code>) へ。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-fail">C · 安全側へ</span>秘密ファイル検査が異常時に素通りしていた</h3>
+    <div class="kv"><b>項目</b>#1 (根因2)</div>
+    <div class="kv"><b>症状</b>秘密ファイル (<code>.env</code> や SSH 鍵) の読み取りを止める hook が、入力が壊れて対象パスを取れない時に「素通り=許可」していた。これが <strong>fail-open</strong> (失敗時に危険な側へ倒れる) の典型。</div>
+    <div class="kv"><b>修正</b>判定できないなら拒否側 (<strong>fail-closed</strong>) へ倒す。正常な読み取りは必ずパスを持つので、正当な操作を巻き込む誤ブロックは起きない。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-fail">D · 異常終了</span>セキュリティhookが途中で落ちて素通り</h3>
+    <div class="kv"><b>項目</b>#6, #7, #5 (根因2, 5)</div>
+    <div class="kv"><b>症状</b>司令塔モード (Macro 層) での書き込みや、チーム用エージェントの直接呼び出しを制限する hook が、内部の検索が空振りした瞬間に script ごと異常終了し、結果として制限がかからなかった。さらに作業フォルダ名に <code>[ ]</code> 等の特殊文字があるとパス判定が壊れた。</div>
+    <div class="kv"><b>修正</b>空振りで落ちないようガード (<code>|| true</code>) を追加し、変数をクォート。配線Aで見つけた残りのツール名取りこぼしも、この hook の修正と同じコミットで塞いだ。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">E · 境界</span>数え方・大小・閉じ忘れの取りこぼし</h3>
+    <div class="kv"><b>項目</b>#14, #8, #15 (根因1, 4)</div>
+    <div class="kv"><b>症状</b>行数を「改行の数」で数えるため、末尾に改行がない501行のファイルを500行と誤判定して見逃す。パス検査が大文字小文字を区別し、小文字の <code>/users/</code> を見逃す。SKILL.md の設定部 (frontmatter) の閉じ忘れを検出できない。</div>
+    <div class="kv"><b>修正</b>行数は行単位で数え、大小を無視して照合し、区切り (<code>---</code>) が2本ない閉じ忘れを検出するようにした。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">F · 誤ブロック緩和</span>正当な操作まで巻き込む過剰ブロックの是正</h3>
+    <div class="kv"><b>項目</b>#2, #3, #9, #10, #11, #16 (根因1)</div>
+    <div class="kv"><b>症状</b>禁止コマンドの検査が部分一致で、無関係な語 (例: 「curly」) まで誤検知。保護フォルダ「から」外へコピーするバックアップ操作まで禁止。発言の言葉づかい検査が、直前がツール操作だと最新の発言を見逃す。参照リンク検査やサーバー名抽出の取りこぼし。</div>
+    <div class="kv"><b>修正</b>語の境界で照合し、書き込み先 (最終引数) だけを判定し、直近のテキスト発言まで遡って検査する、など6点を是正。<strong>このPRを作る間、実際にこのバグが私の正当なコマンドを巻き込んでブロックした</strong>ため、症状を実地で確認できた。</div>
+  </div>
+
+  <h2><span class="no">04</span>代表例 — fail-open から fail-closed へ (項目C #1)</h2>
+  <p>最も分かりやすい根因2 (失敗時に素通り) の修正。入力が壊れて対象パスが取れない時、旧コードは <code>exit 0</code> (=許可) で素通りしていた。これを <code>exit 2</code> (=拒否) に倒す。</p>
+  <div class="diff">
+    <div class="diff-head"><span class="file">hooks/hook_pre_read_secret_check.sh</span>
+      <span class="tally"><span class="add">+6</span><span class="del">&minus;2</span></span></div>
+    <div class="diff-body">
+      <div class="diff-row"><span class="ln">12</span><span class="ln new">12</span><span class="mk"> </span><span class="code">FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')</span></div>
+      <div class="diff-row del"><span class="ln">14</span><span class="ln new"> </span><span class="mk">&minus;</span><span class="code"># 空なら通過 (異常入力)</span></div>
+      <div class="diff-row del"><span class="ln">15</span><span class="ln new"> </span><span class="mk">&minus;</span><span class="code">[ -z "$FILE_PATH" ] &amp;&amp; exit 0</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">14</span><span class="mk">+</span><span class="code"># file_path 不明なら fail-closed (秘密保護のため安全側 deny に倒す)</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">15</span><span class="mk">+</span><span class="code">if [ -z "$FILE_PATH" ]; then</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">16</span><span class="mk">+</span><span class="code">  echo "判定不能のため deny しました (fail-closed)" &gt;&amp;2</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">17</span><span class="mk">+</span><span class="code">  exit 2</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">18</span><span class="mk">+</span><span class="code">fi</span></div>
+    </div>
+  </div>
+
+  <h2><span class="no">05</span>監査の指示を鵜呑みにせず下した判断</h2>
+  <p>点検レポートの記述をそのまま適用せず、安全性と回帰リスクを天秤にかけて以下を判断した。</p>
+  <ul class="plain">
+    <li><b>監査外のバグも発見・修正</b> — ツール名の取りこぼし (根因3) は報告された1箇所だけでなく、同じ原因で2箇所 (片方は保護用セキュリティ hook) にも潜んでいた。挙動を壊さない追加ゆえ、まとめて塞いだ。</li>
+    <li><b>自動承認の挙動 (#4) は意図的に据置</b> — ブロック側だけ現行形式に直した。「ブロックされないコマンドを全部自動承認する」挙動を形式変更で触ると回帰の恐れがあるため、次フェーズ送りに。</li>
+    <li><b>重い型チェック (#13) は現状維持</b> — 毎回プロジェクト全体を型チェックするのは重いが、外すと型エラー検出を失う。検査は残し、設計事項として持ち越し。</li>
+    <li><b>Windows パス検出は見送り</b> — この環境は macOS 専用で発生確率がほぼ無く、ブロック hook の正規表現を複雑にする risk に見合わぬと判断。文書化済みの検査範囲に揃えた。</li>
+  </ul>
+
+  <h2><span class="no">06</span>どう検証したか</h2>
+  <p>「動いた」で終わらせず、各 hook を一時フォルダ (<code>/tmp</code>) で実際に動かして<strong>両方向</strong>を確認した。live (本番) の <code>~/.claude</code> は触らない。</p>
+  <ul class="plain">
+    <li><b>取りこぼし方向</b> — 直すべき入力が「見逃し → 捕捉」に変わるか。</li>
+    <li><b>過剰ブロック方向</b> — 正当な操作が「誤ブロック → 通過」に変わるか。</li>
+    <li><b>正常系維持</b> — 元々正しく動いていたケースを壊していないか。</li>
+    <li><b>ルール変更の faithful テスト</b> — 検査 hook が本番のルールファイルを直接参照するため、hook を <code>/tmp</code> にコピーしてルール参照先を作業ブランチ側へ差し替え、実際の変更が効くことを確認した。</li>
+    <li><b>機械チェック</b> — 全11個のシェル hook が文法チェック (<code>bash -n</code>) を通過、変更したJSON 2本も妥当。</li>
+  </ul>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">このPRの主眼は「検査する側 (hook) 自身が、いざという時に正しく働くか」を取り戻すことにある。秘密の読み取りを止めるはずが異常時に素通りし、過剰なブロックが正当な操作を巻き込む — こうした不具合は、検査器を信頼している限り表に出にくい。17件を6バッチに整理し、それぞれを取りこぼし・過剰ブロックの両方向で実機検証した。残るは Low 22件と、5つの根因そのものを設計で断つ仕上げ (次フェーズ) じゃ。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.18 17:20 JST
+  </footer>
+
+</div>
+</body>
+</html>
