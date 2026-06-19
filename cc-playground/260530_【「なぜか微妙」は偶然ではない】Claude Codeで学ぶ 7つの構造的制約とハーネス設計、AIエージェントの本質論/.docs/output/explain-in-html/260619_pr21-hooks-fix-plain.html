@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PR #21 は何を直し、何をもたらすのか — わかりやすい解説</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · 2026.06.19 · kaijutale/claude-harness</div>
+  <h1>PR #21 は何を直し、<em>何をもたらす</em>のか</h1>
+  <div class="meta"><span>kaijutale/claude-harness #21</span><span>hook 22件 + 規約</span><span>わかりやすい版</span></div>
+
+  
+
+  
+  <h2><span class="no">01</span>一言で言うと</h2>
+  <p>PR #21 は、Claude Code が自動で走らせる <strong>検査の仕組み (hook = フック)</strong> に潜んでいた <strong>軽微なバグ 22 件</strong> を直した変更じゃ。新機能ではなく、「検査が <em>見逃す・誤爆する・特定の環境で壊れる</em>」という小さなほころびの修繕。あわせて、同じ失敗を繰り返さないための <strong>心得ガイド 1 本</strong> を新設した。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">対象バグ</div><div class="v">22 件</div></div>
+    <div class="stat"><div class="k">実際に直した</div><div class="v">16 件</div></div>
+    <div class="stat"><div class="k">監査60件の</div><div class="v">最終ピース</div></div>
+    <div class="stat"><div class="k">再発防止</div><div class="v">規約 1 本</div></div>
+  </div>
+
+  <h2><span class="no">02</span>そもそも何の検査なのか</h2>
+  <p>ここで言う検査 (hook) は、<strong>作業の要所に立つ「自動の門番」</strong> のようなものじゃ。わらわ (Claude) がファイルを編集したり、コマンドを実行したり、応答を終えたりする <strong>その前後</strong> で自動的に割り込み、こう見張っておる:</p>
+  <ul class="plain">
+    <li><b>秘密を守る</b> — パスワードや鍵などの秘密ファイルを読ませない</li>
+    <li><b>危険を止める</b> — 禁止されたコマンドの実行を未然に止める</li>
+    <li><b>品質を保つ</b> — コードに絵文字が混じれば警告、ファイルが大きくなりすぎれば合図</li>
+    <li><b>約束を守らせる</b> — 応答が口調や言い回しのルールを破れば差し戻す</li>
+  </ul>
+  <p>今回の PR は、この門番たち <strong>自身</strong> にあった「見逃し」「誤爆」「特定環境で動かない」という小さな不具合を直すもの。<strong>門番が少し賢く・頑丈になる</strong>、と思えばよい。</p>
+
+  <h2><span class="no">03</span>何が直ったか (困っていた → 直した → 良くなること)</h2>
+  <table>
+  <thead><tr><th>門番の不具合 (before)</th><th>直した内容 (after)</th><th>これで良くなること</th></tr></thead>
+  <tbody>
+  <tr><td><span class="mark mark-fail">見逃し</span>小文字の <code>.ts</code> は見るのに <code>.TS</code> (大文字) や新形式 <code>.mts/.cts</code> を素通り</td><td>大文字・小文字を区別せず、新形式も対象に</td><td>大文字や新しい形式のファイルでも検査が効く</td></tr>
+  <tr><td><span class="mark mark-fail">誤爆</span>Windows の改行や見えない先頭記号 (BOM)・余分な空白で、設定の区切りを認識できず誤って警告</td><td>表記を揃えて (正規化して) から判定</td><td>環境の違いで門番が誤って騒がない</td></tr>
+  <tr><td><span class="mark mark-fail">穴</span>秘密フォルダ <code>.ssh</code> を「中のファイル」しか守らず、フォルダ参照そのものは許可</td><td>フォルダ自身への参照も守る</td><td>秘密保護の穴が 1 つ減る</td></tr>
+  <tr><td><span class="mark mark-fail">抜け道</span>複数箇所を一度に書き換えるツール (MultiEdit) の中身を門番が読まず、禁止パス混入を見逃し</td><td>一括編集の中身も読むように</td><td>一括編集を経由した抜け道が塞がる</td></tr>
+  <tr><td><span class="mark mark-fail">抜け道</span>禁止署名を <code>gh pr create</code> では止めるのに、コメントやレビュー経由だと素通り</td><td>それらの経路も検査対象に</td><td>禁止署名を付ける別ルートが塞がる</td></tr>
+  <tr><td><span class="mark mark-fail">誤爆</span>文章中の「便利!」のような感嘆符を「実行命令」と誤検出</td><td>行頭にある本物の命令だけを検出</td><td>無関係な警告に邪魔されない</td></tr>
+  <tr><td><span class="mark mark-fail">環境</span>時刻の取得が macOS 専用コマンドで、Linux だと壊れる</td><td>両方の環境に対応</td><td>別の環境に持って行っても動く</td></tr>
+  </tbody></table>
+  <p>このほか、口調チェックの門番が「全角の疑問符」を見逃していた穴なども塞いだ。合計 <strong>16 件</strong> を修繕。残り 6 件のうち 2 件は前のフェーズで既に直っており、3 件は下記の理由であえて手を付けず、1 件は強度を優先して現状維持とした。</p>
+
+  <h2><span class="no">04</span>この修正がもたらすもの</h2>
+  <ul class="plain">
+    <li><b>取りこぼさない門番</b> — 大文字ファイル・一括編集・別コマンド経由など、これまですり抜けていた経路がまとめて塞がった</li>
+    <li><b>誤爆しない門番</b> — 環境差 (改行コード等) や文章中の記号で誤って騒ぐことが減り、正当な作業が止められにくくなった</li>
+    <li><b>どこでも動く門番</b> — macOS 専用だった部分が他の環境でも動く</li>
+    <li><b>総点検の完了</b> — 致命 3・高 18・中 17・低 22 の全 60 件を一巡。これが最後のピースじゃ</li>
+    <li><b>再発しない土台</b> — 5 つの根本原因を「次に門番を作る時の心得」として 1 枚のガイドに固定した (再発防止)</li>
+  </ul>
+
+  <h2><span class="no">05</span>あえて直さなかった 3 件 (理由つき)</h2>
+  <table>
+  <thead><tr><th>件</th><th>なぜ手を付けなかったか</th></tr></thead>
+  <tbody>
+  <tr><td class="cat-name">禁止署名フィルタの誤爆</td><td>フィルタを緩めると <strong>本物の禁止署名がすり抜ける危険</strong>。誤爆はメッセージを書き換えれば避けられる軽微な不便ゆえ、ガードの強度を優先して現状維持</td></tr>
+  <tr><td class="cat-name">到達しないコード</td><td>一見「使われない無駄」だが、実は <strong>将来の保険 (二重防止)</strong> をコメント付きで仕込んだ防御コード。消すと堅牢性が下がるので残す</td></tr>
+  <tr><td class="cat-name">軽微な安全策</td><td>効果が限定的で、他の似た門番も採用していない。一貫性と費用対効果から見送り</td></tr>
+  </tbody></table>
+
+  <h2><span class="no">06</span>おまけ — 今日その場で起きた「生きた実例」</h2>
+  <p>皮肉なことに、この解説を書いている最中、<strong>口調チェックの門番</strong> が、わらわが「禁止語を <em>説明のために引用しただけ</em>」の文にも反応して、応答を一度差し戻した。門番は <strong>「説明している人」と「違反している人」を見分けられぬ</strong> — これこそ今回の PR が向き合った根本原因 (人間の文章を機械的なパターンで読むことの限界) の、その場での生きた実演じゃった。文章を機械で読む限り、この種の誤爆は完全には無くせぬ構造的な宿題として残る。</p>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">一言で言えば、PR #21 は「検査の門番たちの小さなほころびを 16 箇所まとめて繕い、二度と同じ穴を開けないための心得を 1 枚残した」修繕じゃ。派手さはないが、ハーネス (Claude を自動で制御する仕組み一式) が静かに・確実に効くための地固め。これで hook 群 60 件の総点検は一巡を終えた。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.19 15:46 JST
+  </footer>
+
+</div>
+</body>
+</html>
