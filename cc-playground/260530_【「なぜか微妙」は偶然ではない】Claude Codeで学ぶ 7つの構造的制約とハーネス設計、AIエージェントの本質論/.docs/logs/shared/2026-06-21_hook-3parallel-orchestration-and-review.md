@@ -56,3 +56,10 @@ related_skill: [creating-gtr-worktree, explain-in-html, logging, handoff]
 - ~/.claude/hooks/hook_pre_commit_essence_gate.sh(hook-test gate 統合) — #28
 - .docs/plans/2026-06-15-harness-hooks-bug-fix.md(監査plan、#5最終処遇更新)
 - .docs/output/explain-in-html/260620_hook-{overblock-fix, verification-phase-bcd}.html(保全した解説)
+
+## 最終局面 (2026-06-21 01:01 追記)
+
+- **live反映完了**: かいじゅうが ~/.claude で git pull。629cd9d→b209fcc の fast-forward(35ファイル)。WIP(M CLAUDE.md / settings.json / hook_stop_words_rules.json)はコンフリクトせず保持。#27/#28/#29 が live 稼働に。
+- **over-block 修正の実機実証**: 本セッション冒頭で over-block に誤遮断された read-only パターン(`find ... 2>/dev/null && ls ~/.claude/hooks` 系)を live(b209fcc)で再実行 → allow。バグ発見→plan→実装→レビュー→マージ→live→実証 の環が閉じた。**検証層プロジェクトの本質(「配線済みか」でなく「実装が動くか」)を、この実証自体が体現**。
+- **remote branch 掃除**: `push --delete` は「remote ref does not exist」で失敗 = GitHub がマージ時に自動削除済。local の stale 追跡参照 6本(#24-29)を `fetch --prune` で掃除。WIP 無傷。
+- **総括**: 後片付け(worktree/branch/remote) + 記録(ログ/handoff/commit/push) + live反映 + 実証、全て漏れなく完了。**残務ゼロで完全完結**。
