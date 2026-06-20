@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hook 検証層 Phase B/C/D — 壊れた hook を commit で止める</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">EXPLAINER · 2026.06.20 · HOOK 検証層</div>
+  <h1>hook 検証層 Phase B/C/D<br>壊れた hook を <em>commit で止める</em></h1>
+  <div class="meta"><span>2026.06.20</span><span>ハーネス / hook 検証</span><span>対象: 全 24 hook</span></div>
+
+  <h2><span class="no">01</span>今回やったこと</h2>
+  <p>これまでの <code>/review-harness</code> (ハーネス健診) は「hook (Claude Code がツール実行の前後で自動で走らせる小さなスクリプト) が設定に配線されているか」までしか見られなかった。今回はその先 ―― <strong>各 hook が実際に意図どおり動くか</strong>を機械で確かめる検証層を整え、さらに<strong>壊れた hook が commit を通れない強制境界</strong>を立てた。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">新規テスト</div><div class="v">19 本 (B1-B5)</div></div>
+    <div class="stat"><div class="k">検証カバー</div><div class="v">23 / 24 hook</div></div>
+    <div class="stat"><div class="k">テスト結果</div><div class="v">23 file 全緑</div></div>
+    <div class="stat"><div class="k">防御の核</div><div class="v">commit ゲート統合</div></div>
+  </div>
+  <p>残る 1 本 (<code>generated_comment_ban</code>) は別計画 (#5) の担当ゆえ意図的に除外している。3 つの計画 (本件 / over-block / #5) が出揃えば 24 / 24 になる設計じゃ。</p>
+
+  <h2><span class="no">02</span>検証の土台を 3 層に分けた</h2>
+  <p>テストの足場 (lib) を関心ごとに 3 つへ分離した。1 つの部品が 1 つの仕事だけを持つようにし、後から読んでも責務が一目で取れる形にしてある。</p>
+  <ul class="plain">
+    <li><b>harness.sh</b> — hook を起動して、標準出力 (stdout) ・標準エラー (stderr) ・終了コードを捕捉する土台。今回 <code>hooks/</code> の外に住む helper hook (三要素ハーネスのスクリプト) も起動できるよう、パスを解決する <code>_resolve_hook</code> を足した。テストの入力 JSON を組む補助 (PostToolUse / PostCompact / SessionStart) も追加。</li>
+    <li><b>assert.sh</b> — 合否を判定するヘルパ。hook の「物の言い方」は 3 種類ある ―― 通知 (stdout に JSON) ・警告 (stderr + 終了コード 2) ・素通り (何も出さない)。これを別々の判定関数に分け、出力チャネルの取り違えという後戻りの劣化 (regression) まで捕まえられるようにした。</li>
+    <li><b>fixtures.sh (新規)</b> — 隔離した一時ディレクトリの作成と後始末、最終更新時刻 (mtime) の操作、通知音や読み上げといった副作用コマンドの無効化 (stub) をまとめた。テストが macOS に音を鳴らしたり喋らせたりせず、本番環境を汚さず動く。</li>
+  </ul>
+  <p>仕組み上の地雷も踏み抜いた。<code>TMP="$(new_tmp)"</code> のように一時ディレクトリ作成を <em>コマンド置換 (副シェル)</em> で呼ぶと、後始末リストへの登録が副シェル内で消える。そこで登録先をファイル (レジストリ) にし、副シェルをまたいでも親プロセスが確実に回収できるようにした (古い bash 3.2 での空配列エラーも同時に回避)。</p>
+
+  <h2><span class="no">03</span>essence-gate に「壊れた hook を通さぬ門」</h2>
+  <p>commit を見張る <code>hook_pre_commit_essence_gate.sh</code> (skill / agent / hook の改修を essence レビュー結果で gate する仕組み) に、新しい判定次元 (c) を<strong>後方互換</strong>で足した。ステージした hook 本体を抜き出し、その検証テストを <code>run-all.sh --changed</code> で走らせ、赤 (失敗) なら commit を拒否 (deny) する。既存の判定 (a: レビュー結果が不適格 / b: レビューが古い) は<strong>一切変えていない</strong>。</p>
+  <div class="diff">
+    <div class="diff-head"><span class="file">hooks/hook_pre_commit_essence_gate.sh</span>
+      <span class="tally"><span class="add">+ (c) hook-test gate</span><span class="del">&minus;0 (既存 a/b は不変)</span></span></div>
+    <div class="diff-body">
+      <div class="diff-row"><span class="ln">64</span><span class="ln new">64</span><span class="mk"> </span><span class="code">[ -z "$STAGED" ] &amp;&amp; exit 0   # ステージ無し = 対象外</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">65</span><span class="mk">+</span><span class="code"># (c) 変更 hook の検証テストが赤なら deny</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">66</span><span class="mk">+</span><span class="code">if [ -z "${ESSENCE_GATE_HOOK_TEST_RUNNING:-}" ]; then  # 再帰防止</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">67</span><span class="mk">+</span><span class="code">  RUNNER="${HOOK_TEST_RUNNER:-.../test/run-all.sh}"   # テスト用 seam</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">68</span><span class="mk">+</span><span class="code">  # ステージ済から hook 本体 (.sh) を抽出</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">69</span><span class="mk">+</span><span class="code">  # 未カバー hook は stderr で可視化 (block はしない)</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">70</span><span class="mk">+</span><span class="code">  TEST_OUT=$(... bash "$RUNNER" --changed $HOOK_FILES)</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">71</span><span class="mk">+</span><span class="code">  [ "$TEST_RC" -ne 0 ] &amp;&amp; deny "検証テストが赤"</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">72</span><span class="mk">+</span><span class="code">fi</span></div>
+      <div class="diff-row"><span class="ln">65</span><span class="ln new">73</span><span class="mk"> </span><span class="code"># 以降は既存の verdict gate (a/b) ―― 変更なし</span></div>
+    </div>
+  </div>
+  <p>commit パスを直撃する改修ゆえ、落とし穴を 2 つ設計で塞いだ。<strong>無限再帰</strong> ―― 門がテストを走らせ、そのテストが門自身を呼び戻す環 ―― は <code>ESSENCE_GATE_HOOK_TEST_RUNNING</code> という合言葉 (sentinel) で断ち切る。<strong>テストのしやすさ</strong>は <code>HOOK_TEST_RUNNER</code> で検証ランナーを差し替え可能にし、赤 / 緑を模擬 (stub) して隔離検証できるようにした。</p>
+
+  <h2><span class="no">04</span>レビュー指摘の反映</h2>
+  <p>commit 前に <code>harness-essentials-reviewer</code> (ハーネス本質レビュー専任エージェント) を別コンテキストで走らせ、判定は <strong>CONDITIONAL GO (条件付き合格) / Critical 0・High 4・Medium 2</strong>。直せる指摘はその場で潰し、構造的なものは記録した。</p>
+  <table>
+    <thead><tr><th>指摘 (原則)</th><th>重要度</th><th>対応</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">緑の過信</td><td><span class="mark mark-fail">High</span></td><td><span class="mark mark-pass">反映済</span> deny 根拠に「保証は検証テスト範囲のみ」と明記</td></tr>
+      <tr><td class="cat-name">未カバー hook の素通り</td><td><span class="mark mark-fail">High</span></td><td><span class="mark mark-pass">反映済</span> 門が stderr で可視化 (silent をやめた)</td></tr>
+      <tr><td class="cat-name">SKIP 迂回の無痕跡</td><td><span class="mark mark-warn">Medium</span></td><td><span class="mark mark-pass">反映済</span> 迂回時に監査ログを残す</td></tr>
+      <tr><td class="cat-name">テスト作者 = 実装者</td><td><span class="mark mark-fail">High</span></td><td><span class="mark mark-warn">記録</span> ハーネス全体の課題 (門は独立レビューを要求し緩和)</td></tr>
+      <tr><td class="cat-name">スペース含みパス誤分割</td><td><span class="mark mark-warn">Medium</span></td><td><span class="mark mark-warn">記録</span> 既存コード・実トリガなし</td></tr>
+      <tr><td class="cat-name">live での過剰ブロック退行</td><td><span class="mark mark-na">条件</span></td><td><span class="mark mark-na">未</span> live 反映時に退行ゼロを実証</td></tr>
+    </tbody>
+  </table>
+  <p>直した 3 点 (緑の過信 / 未カバー可視化 / 迂回監査) はいずれも<strong>観測可能性</strong>の改善 ―― 見えないものは制御できぬ、を地で行く修正じゃ。それぞれテストも足し、<code>essence-gate</code> のテストは 17 件すべて緑。</p>
+
+  <h2><span class="no">05</span>残した宿題</h2>
+  <ul class="plain">
+    <li><b>commit → push → PR</b> — push はかいじゅうのみ。本変更は <code>hooks/*.sh</code> を含むゆえ、わらわが作った門がわらわの commit を試す (self-eval が要る、または記録済み前提で SKIP)。</li>
+    <li><b>マージ順序</b> — 兄弟計画 (over-block / #5) を先にマージし、本件を最後に重ねて 24 / 24 を確定する。両者が足したテストを二重に書かぬための順序じゃ。</li>
+    <li><b>live 検証</b> — <code>$HOME/.claude</code> へ反映した初回 commit で、保護パスへの過剰ブロックが起きないことを実証する (worktree では実証済)。</li>
+  </ul>
+
+  <h2><span class="no">06</span>総評</h2>
+  <div class="quote">これまでの健診は「hook が配線されているか」までしか見なかった。今回の層はその先へ進み、各 hook が実際に意図どおり拒否し・通知し・警告するかを機械で確かめ、壊れた hook を commit の手前で止める。ハーネスがハーネス自身を検証する再帰構造が、口先の約束ではなく commit ゲートという実体を持った ―― それが Phase B/C/D の核心じゃ。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.20 19:15 JST
+  </footer>
+
+</div>
+</body>
+</html>
