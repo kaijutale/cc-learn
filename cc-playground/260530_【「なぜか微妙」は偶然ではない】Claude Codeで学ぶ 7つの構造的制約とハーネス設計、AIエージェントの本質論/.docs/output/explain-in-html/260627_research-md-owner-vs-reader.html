@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>research.md の「担い手」とは — 読む人ではなく決める人</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · ISSUE #50 · 担い手の正体</div>
+  <h1>research.md の「担い手」とは<br>読む人ではなく<em>決める人</em></h1>
+  <div class="meta"><span>2026.06.27</span><span>設計解説</span><span>担い手 = 所有 ≠ 読む</span></div>
+
+  
+
+    <h2><span class="no">01</span>ひとことで</h2>
+  <p>重い調査の結果を <code>research.md</code> という独立ファイルに書き出し、それを踏み台に仕様書 (spec.md) を作る。そして <strong>実装は仕様書だけを読み、調査の生データ (research.md) は読まない</strong>。これが技術記事「7つの構造的制約」(260405) のパターン2「Phase 分離」で、現ハーネスに欠けていた最初の段（Phase 0＝調査）の補完である。</p>
+  <div class="quote">research.md は「仕様を作るまでの踏み台」。用が済めば実装には持ち込まない — それが今回の設計の狙い。</div>
+
+  <h2><span class="no">02</span>全体の流れ</h2>
+  <p>「重い調査が要るか」の判断から、実装・検証までを一本で並べるとこうなる。</p>
+  <pre>①  重い調査が要るか?
+       いいえ → 従来どおり（research.md は作らない ＝ opt-in：使う時だけ）
+       はい  ↓
+
+②  conducting-research-phase が research.md を書く（事実だけ）
+       → 中枢（指揮者）には「要約」だけ返す。生データは調査係の中に閉じ込める
+       ↓
+
+③  指揮者が research.md の場所（パス）を spec係に渡す
+       ↓
+
+④  spec係（spec-based-development）が research.md を読む
+       ＋ 人間にインタビュー  →  spec.md（仕様書）を書く
+       ↓
+
+⑤  実装：spec.md "だけ" を読んでコードを書く
+       ★ research.md は読まない！  ← ここが今回の肝
+       ↓
+
+⑥  検証：テスト ＋ コードレビュー</pre>
+
+  <h2><span class="no">03</span>なぜ外部化するのか（最重要点）</h2>
+  <p>実装フェーズは仕様書 (spec.md) だけを読み、<em>research.md は読まない</em>。こうすると、実装のコンテキスト（AI が一度に集中できる作業領域）が調査の生データで埋まらず、集中力が保たれる。これが「関心の分離」である。</p>
+  <p>今回の改修では、実装を担う skill 群に「research」という参照が <strong>一つも無い</strong>ことを機械検査 (grep) で確認した（<strong>0 件</strong>）。つまり調査の生データが実装に漏れ込む経路は、構造として存在しない。</p>
+
+  <h2><span class="no">04</span>「担い手」の正体 — 読む人ではなく、決める人</h2>
+  <p>ここが一番誤解されやすい。<strong>「担い手」とは research.md を読む人のことではない。</strong>「研究をいつ起こし、その何を仕様に活かすか」を <strong>決める人</strong>のことだ。</p>
+  <p>下の表が核心。<em>「誰が読むか」は案A でも案B でも同じ（spec係）</em>。違うのは <strong>「誰が決めるか」</strong>の列だけ。</p>
+  <table>
+    <thead><tr><th>　</th><th>誰が research.md を読むか</th><th>誰が "決める" か（＝担い手・所有者）</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">案A（却下）</td><td><span class="mark mark-na">spec係</span></td><td><span class="mark mark-fail">spec係 本人</span>　調査の要否も・何が効くかも自分で決める（指揮者は不在）</td></tr>
+      <tr><td class="cat-name">案B（採用）</td><td><span class="mark mark-na">spec係</span></td><td><span class="mark mark-pass">指揮者</span>　決めて渡す。spec係は指示されて読むだけ</td></tr>
+    </tbody>
+  </table>
+  <p>読む手はどちらも spec係で <strong>変わらない</strong>。だから「spec係が読むから案A」ではない。決定権の置き場所こそが案A／案B の分かれ目だ。所有者が握る「決定」は2つ — <strong>発火判断</strong>（そもそも重い調査をするか）と <strong>統合判断</strong>（調査結果のどれが仕様に効くか）。今回はこの2つを指揮者に持たせた（案B）。</p>
+
+  <h2><span class="no">05</span>家づくりで例えると</h2>
+  <p>三者の役割は、家を建てる現場に置き換えると一目で分かる。</p>
+  <table>
+    <thead><tr><th>役</th><th>現場の例え</th><th>ハーネスでの担当</th><th>やること</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">調べる人</td><td>測量士</td><td>調査の子エージェント</td><td>土地を測り報告書 (research.md) を書く。大量の測定値（生データ）は自分の中だけに留め、監督には<strong>要約だけ</strong>渡す</td></tr>
+      <tr><td class="cat-name">決める人</td><td>現場監督</td><td>オーケストレーター（指揮者）</td><td>測量するか決める・どのデータが効くか決める・報告書を設計士に渡す ＝ <strong>担い手・所有者</strong></td></tr>
+      <tr><td class="cat-name">描く人</td><td>設計士</td><td>spec-based-development</td><td>報告書を読んで設計図 (spec) を描く。読む・書くが、<strong>決めるのは監督</strong></td></tr>
+    </tbody>
+  </table>
+  <p>設計士が報告書を読むのは案A でも案B でも同じ。案A は設計士が監督を兼ねる（末端が決定権まで持つ）、案B は監督が決めて設計士は描くことに徹する。今回選んだのは案B だ。</p>
+
+  <h2><span class="no">06</span>まとめ — 3つの役割を混ぜない</h2>
+  <ul class="plain">
+    <li><b>決める＝指揮者（オーケストレーター）</b> — 調査するか（発火）・何が仕様に効くか（統合）を所有する。</li>
+    <li><b>読んで書く＝spec係（spec-based-development）</b> — research.md を読み、仕様 (spec.md) を書く。決定権は持たない。</li>
+    <li><b>生データを背負う＝調査係（子エージェント）</b> — 大量の検索結果は自分の中に閉じ込め、要約だけ返す。</li>
+  </ul>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">「担い手」は research.md を読む人ではなく、研究をいつ起こし何を仕様に活かすかを決める人のこと。読むのは案A でも案B でも spec係で変わらない — 変わるのは "決める頭" が spec係本人か指揮者か、だけ。今回は指揮者に決定権を持たせ（案B）、spec係は読み手・書き手に徹させた。決める・読んで書く・生データを背負う、この三役を混ぜないことが今回の設計の核心である。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.27 00:28 JST
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>issue #50 Phase 0 調査フェーズの追加 — 修正の before/after 解説</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · ISSUE #50 → PR #51</div>
+  <h1>Phase 0 調査フェーズの追加<br><em>before / after</em> 解説</h1>
+  <div class="meta"><span>2026.06.26</span><span>ハーネス改修</span><span>conducting-research-phase + 3 skills</span></div>
+
+  
+
+    <h2><span class="no">01</span>何を変えたか（要旨）</h2>
+  <p>技術記事「7つの構造的制約」(260405) の <strong>パターン2「Phase 分離」</strong>は、開発を「調査 → 設計 → 実装 → 検証」の4つのフェーズに分け、各フェーズは前フェーズの成果物ファイルだけを読む、という関心の分離を説く。現ハーネスはこのうち <em>Phase 0（調査 → research.md）だけが欠けていた</em>。</p>
+  <p>修正前は、重い調査（大規模なコード把握や技術選定）の結果が独立した成果物にならず、仕様書 (spec.md) に畳み込まれるか会話の中に残り続けていた。すると実装フェーズに調査の生データが持ち込まれ、コンテキスト（AI が一度に集中できる作業領域）の集中力が落ちていた。</p>
+  <p>今回の変更は、重い調査を <code>.docs/research/&lt;topic&gt;.md</code> に外部化し、仕様策定がそれを入力として読む「2段分離」を、<strong>重い調査が要るタスクでのみ有効になる opt-in（使う時だけ有効・既定では従来通り）</strong>として導入した。</p>
+
+  <h2><span class="no">02</span>変更の構成</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">新規 SKILL</div><div class="v">1 本</div></div>
+    <div class="stat"><div class="k">改修 SKILL</div><div class="v">3 本</div></div>
+    <div class="stat"><div class="k">COMMIT</div><div class="v">4 個</div></div>
+    <div class="stat"><div class="k">成果</div><div class="v">PR #51</div></div>
+  </div>
+  <p>新規は <code>conducting-research-phase</code>。改修は <code>orchestrating-team-development</code>（中枢の指揮役）/ <code>spec-based-development</code>（対話で仕様を作る役）/ その参照ファイル群。実装フェーズを担う <code>enforcing-strict-tdd-cycle</code> は <strong>あえて触っていない</strong>（既に spec.md だけを読む構造で、検証基準を満たしているため）。</p>
+
+  <h2><span class="no">03</span>設計の核心 — research.md の「担い手」は誰か</h2>
+  <p>最大の論点は「research.md を読んで仕様に反映するのは誰か」だった。3案を比較し、<strong>案B（オーケストレーターが所有）</strong>に確定した。</p>
+  <table>
+    <thead><tr><th>案</th><th>担い手</th><th>判定</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">案A</td><td>spec-based-development が読む</td><td><span class="mark mark-fail">却下</span></td><td>統合判断を末端の skill に押し込む（責務分離に反する）。発火の判断も持てない</td></tr>
+      <tr><td class="cat-name">案B</td><td>オーケストレーターが所有</td><td><span class="mark mark-pass">採用</span></td><td>発火判断・統合判断 (T-2.3) を中枢が握る。spec-based-development は「読み手」に留める</td></tr>
+      <tr><td class="cat-name">案C</td><td>調査駆動設計の新規 skill</td><td><span class="mark mark-fail">却下</span></td><td>改修ポリシー「新規作成は退避策」に反する + skill の肥大化</td></tr>
+    </tbody>
+  </table>
+  <p>つまり <strong>「決める・束ねる」のは中枢のオーケストレーター、「読んで仕様に書く」のは spec-based-development</strong> という役割分担にした。調査の生データを背負うのは調査の子エージェントだけで、中枢には要約だけが返る。</p>
+
+  <h2><span class="no">04</span>主要な差分（before / after）</h2>
+  <p>代表的な3つの変更を、修正前（赤）と修正後（緑）で示す。</p>
+
+  <div class="diff">
+    <div class="diff-head"><span class="file">orchestrating-team-development/SKILL.md — 🔬Research モード</span><span class="tally"><span class="add">+1</span><span class="del">&minus;1</span></span></div>
+    <div class="diff-body">
+      <div class="diff-row del"><span class="ln">273</span><span class="ln new"> </span><span class="mk">&minus;</span><span class="code">| 7 | 🔬 Research | … | spec(調査メモ) → exec(実験) | 1 | なし |</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">273</span><span class="mk">+</span><span class="code">| 7 | 🔬 Research | … | 重い: conducting-research-phase → research.md / 軽い: Explore → exec(実験) | 1 | なし |</span></div>
+    </div>
+  </div>
+  <p>調査メモを spec に畳む扱いから、<strong>重い調査は research.md へ外部化・軽い調査は Explore のまま</strong>へ。発火条件（重い／軽いの線引き）を圧縮表にも残し、軽い調査まで research.md 化する過剰分割を防いだ。</p>
+
+  <div class="diff">
+    <div class="diff-head"><span class="file">spec-based-development/SKILL.md — Step 2</span><span class="tally"><span class="add">+3</span><span class="del">&minus;0</span></span></div>
+    <div class="diff-body">
+      <div class="diff-row"><span class="ln">28</span><span class="ln new">28</span><span class="mk"> </span><span class="code">- 存在する場合: 内容を読み込み、既存仕様を踏まえてインタビュー</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">29</span><span class="mk">+</span><span class="code">research.md（前提資料・opt-in）: 重い調査が先行していれば読む。</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">30</span><span class="mk">+</span><span class="code">  既知の事実は問い直さない。ただし設計に効く事実は source を確認し、</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">31</span><span class="mk">+</span><span class="code">  不確実なものは「未確認点」として再確認する（誤情報の伝播を防ぐ）</span></div>
+    </div>
+  </div>
+  <p>仕様策定が research.md を前提資料として読み、既知の事実はインタビューで問い直さない。ただし調査は子エージェントが集めた<strong>未レビューの成果物</strong>なので、設計に効く事実は出典 (source) を確認する検証の関所を置いた。</p>
+
+  <div class="diff">
+    <div class="diff-head"><span class="file">conducting-research-phase — research.md の出力スキーマ（レビュー指摘 High の修正）</span><span class="tally"><span class="add">+5</span><span class="del">&minus;2</span></span></div>
+    <div class="diff-body">
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">1</span><span class="mk">+</span><span class="code">type: knowledge</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">2</span><span class="mk">+</span><span class="code">category: research</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">3</span><span class="mk">+</span><span class="code">title: "Research: &lt;topic&gt;"</span></div>
+      <div class="diff-row del"><span class="ln">2</span><span class="ln new"> </span><span class="mk">&minus;</span><span class="code">status: research          # 許可値の外 → 検証で失敗</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">4</span><span class="mk">+</span><span class="code">status: active</span></div>
+      <div class="diff-row del"><span class="ln">3</span><span class="ln new"> </span><span class="mk">&minus;</span><span class="code">created: &lt;YYYY-MM-DD HH:MM:SS&gt;   # 時刻入り → 検証で失敗</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">5</span><span class="mk">+</span><span class="code">created: &lt;YYYY-MM-DD&gt;</span></div>
+    </div>
+  </div>
+  <p>これがレビューで暴かれた最大の欠陥（次節）の修正。<code>type</code> 欠落・許可値外の <code>status</code>・時刻入りの日付をやめ、既存の知識ドキュメント schema に <strong>準拠</strong>させた。</p>
+
+  <h2><span class="no">05</span>レビューが暴いた欠陥と修正</h2>
+  <p>実装後、独立した2つのレビュー（ハーネス原則 / skill 原則）を並列で回した。第一版には <em>契約破壊の High が 1 件</em>潜んでおり、これを修正した。「問題ゼロを疑う」が機能した一件だった。</p>
+  <div class="card">
+    <h3><span class="sev sev-fail">HIGH</span>research.md が検証ゲートの契約を破壊していた</h3>
+    <div class="kv"><b>before</b> research.md の frontmatter（ファイル冒頭の YAML メタデータ）が <code>type</code> 欠落・<code>status</code> が許可値外・<code>created</code> に時刻入り。知識永続化 skill が各プロジェクトに設置する検証スクリプト <code>validate-knowledge.py</code> を破壊し、commit が止まる。しかも SKILL.md は「規約に整合」と <strong>虚偽記載</strong> していた。</div>
+    <div class="kv"><b>after</b> <code>type: knowledge, category: research</code> で既存 schema に準拠（検証スクリプトは一切改修せず＝契約ゼロ変更）。サンプルを実機の検証スクリプトに通し <strong>通過 (exit 0) を実証</strong>。虚偽記述も是正した。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">MEDIUM &times; 6</span>関心の分離と「正直さ」の綻び</h3>
+    <div class="kv"><b>主なもの</b> 圧縮表で発火条件 (gate) が消え軽い調査まで誘発 / 調査パスが実装エージェントに漏れる経路 / 「コンテキスト汚染を回避」という不正確な主張 / 調査→設計の検証ゲート不在 / 並行書き込みの競合 / 「物理的に保証」という過剰表現。</div>
+    <div class="kv"><b>after</b> いずれも該当箇所を直接修正。発火条件を表に戻し、調査パスは仕様策定の起動入力にのみ渡す限定注入にし、主張は実態（隔離されるのは生ログのみ・要約は中枢に載る）へ正確化した。</div>
+  </div>
+
+  <h2><span class="no">06</span>検証 — 完了条件は全て満たした</h2>
+  <ul class="plain">
+    <li><b>research.md 生成 → 仕様策定が読む</b> — 機構を実装。サンプルが検証スクリプトを通過することを実機で確認。</li>
+    <li><b>実装フェーズは spec.md だけ読む（生データ非持ち込み）</b> — 実装系の skill / エージェントに「research」参照が無いことを grep で確認＝<strong>0 件</strong>。</li>
+    <li><b>未使用時は従来と完全に同一の挙動</b> — 追加処理は全て「research.md の有無 / 重い調査かの判断」を入口 (gate) にしており、使わなければ既存フローと一字一句同じ。</li>
+  </ul>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">記事が説く「調査と設計を別フェーズに分ける」を、既存フローを壊さない opt-in として最小の改修で実現した。設計の核心は「中枢が判断を所有し、末端は読み手に徹する」役割分担にある。第一版には検証契約を破る欠陥が潜んでいたが、独立レビューがそれを捕らえ、既存契約をゼロ変更のまま準拠させて実機で潰した。「動く」と「契約を壊さない」は別物だという原則を、レビューが体現した一件だった。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.26 14:27 JST
+  </footer>
+
+</div>
+</body>
+</html>
