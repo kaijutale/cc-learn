@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bash / Glob / Grep — Claude Code の3ツール解説</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">CONCEPT · 2026.06.27 · CLAUDE CODE TOOLS</div>
+  <h1>Bash / Glob / Grep<br>3つのツールの<em>役割分担</em></h1>
+  <div class="meta"><span>2026.06.27</span><span>概念解説</span><span>Claude Code の基本ツール</span></div>
+
+  <h2><span class="no">01</span>3つのツールの役割</h2>
+  <p>Claude Code には、ファイルやコマンドを扱う基本ツールが3つある。役割がはっきり分かれており、奪い合わぬ:</p>
+  <div class="stats">
+    <div class="stat"><div class="k">BASH</div><div class="v">コマンド実行</div></div>
+    <div class="stat"><div class="k">GLOB</div><div class="v">名前で探す</div></div>
+    <div class="stat"><div class="k">GREP</div><div class="v">中身で探す</div></div>
+    <div class="stat"><div class="k">関係</div><div class="v">競合せず分担</div></div>
+  </div>
+
+  <h2><span class="no">02</span>Bash — コマンドを実行する</h2>
+  <p><strong>シェルコマンド(bash)を実行し、その出力を返すツール</strong>じゃ。git 操作・gh コマンド・ビルド・テスト・スクリプト実行など、「<strong>副作用のある決定論的な処理</strong>(実行すれば毎回同じ結果になる作業)」に使う。</p>
+  <ul class="plain">
+    <li><b>作業ディレクトリは保持される</b> — 呼び出しをまたいで、移動した場所が維持される</li>
+    <li><b>timeout はミリ秒で指定</b> — 既定 120000(2分)、最大 600000(10分)</li>
+    <li><b>run_in_background(バックグラウンド実行)</b> — 長時間かかるコマンドを裏で走らせられる</li>
+    <li><b>避けるべき使い方</b> — cat / head / tail / sed / awk / echo / find / grep を Bash で代用しない(理由は後述。専用ツールを使う)</li>
+  </ul>
+
+  <h2><span class="no">03</span>Glob — ファイルを「名前・パス」で探す</h2>
+  <p><strong>glob パターン(ワイルドカードによるファイル名の指定)で、ファイルのパスを高速に探すツール</strong>。<code>**/*.ts</code>(全階層の .ts ファイル)や <code>src/**/*.test.tsx</code> のように書く。<strong>中身は見ない</strong> ── あくまでファイル名・パスのマッチングじゃ。</p>
+  <p>結果はマッチしたファイルパスの一覧(更新時刻順などでソート)。「この拡張子のファイル一覧が欲しい」「あのディレクトリ配下の特定パターンのファイルを知りたい」というときに使う。</p>
+
+  <h2><span class="no">04</span>Grep — ファイルの「中身」を検索する</h2>
+  <p><strong>ファイルの中身を正規表現(文字列パターンの記法)で検索するツール</strong>。高速検索エンジン <code>ripgrep</code> がベースじゃ。「この関数はどこで使われている?」「この文字列を含むファイルは?」というときに使う。</p>
+  <p>主なパラメータ:</p>
+  <table>
+    <thead><tr><th>パラメータ</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">pattern</td><td>検索する正規表現(必須)</td></tr>
+      <tr><td class="cat-name">path</td><td>検索する場所(ファイル / ディレクトリ)</td></tr>
+      <tr><td class="cat-name">glob</td><td>対象ファイルの絞り込み(例: *.ts)</td></tr>
+      <tr><td class="cat-name">type</td><td>言語タイプで絞り込み(例: js, py)</td></tr>
+      <tr><td class="cat-name">output_mode</td><td>content(マッチ行)/ files_with_matches(ファイル名のみ)/ count(件数)</td></tr>
+      <tr><td class="cat-name">-i / -n</td><td>大文字小文字を無視 / 行番号を表示</td></tr>
+      <tr><td class="cat-name">-A / -B / -C</td><td>マッチ行の 後 / 前 / 前後 の行も一緒に表示</td></tr>
+      <tr><td class="cat-name">multiline</td><td>複数行にまたがるパターンも検索</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">05</span>使い分け — 競合せず役割分担</h2>
+  <table>
+    <thead><tr><th>やりたいこと</th><th>使うツール</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">ファイルを名前・パスで探す</td><td><span class="mark mark-pass">Glob</span></td></tr>
+      <tr><td class="cat-name">ファイルの中身(テキスト)を探す</td><td><span class="mark mark-pass">Grep</span></td></tr>
+      <tr><td class="cat-name">コマンドを実行する(git / ビルド / 副作用)</td><td><span class="mark mark-pass">Bash</span></td></tr>
+      <tr><td class="cat-name">ファイルの中身を読む(参考)</td><td><span class="mark mark-warn">Read</span></td></tr>
+    </tbody>
+  </table>
+  <p>比喩で言えば ── <strong>Glob はファイル名の地図、Grep は中身の検索エンジン、Bash は実行装置</strong>。3つは奪い合わず、それぞれの仕事を持つ。</p>
+
+  <h2><span class="no">06</span>なぜ検索を Bash でやらないのか</h2>
+  <p>Bash でも <code>find</code>(ファイル探し)や <code>grep</code>(中身検索)や <code>cat</code>(中身表示)は打てる。だが Claude Code は<strong>検索・読み取りを専用ツール(Glob / Grep / Read)に寄せる</strong>方針じゃ。理由は4つ:</p>
+  <ul class="plain">
+    <li><b>速度と最適化</b> — 専用ツールは検索に特化し、出力が読み手(Claude)向けに整形される</li>
+    <li><b>権限・安全性</b> — 専用ツールは権限管理やサンドボックス(隔離された実行環境)と相性が良い</li>
+    <li><b>移植性</b> — OS による差(macOS の BSD 系と Linux の GNU 系で find / grep の挙動が違う)に左右されない</li>
+    <li><b>構造化された結果</b> — 出力が整理され、後の処理で扱いやすい</li>
+  </ul>
+  <p>原則は ── <em>検索・読み取りは専用ツール、コマンド実行(副作用)は Bash</em> という役割分担じゃ。</p>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">3つのツールは競合せず、役割で分担しておる ── <strong>Glob はファイル名の地図、Grep は中身の検索、Bash は実行装置</strong>。探すなら Glob / Grep、動かすなら Bash。find や grep を Bash で代用せず専用ツールに寄せるのが、速度・安全・移植性の面で Claude Code 流じゃ。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.27 13:22 JST
+  </footer>
+
+</div>
+</body>
+</html>

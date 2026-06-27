@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gitflow は必須ではない — worktree 並列と協調系の担当</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">CONCEPT · 2026.06.27 · 続編 / WORKTREE 並列と協調系</div>
+  <h1>gitflow は<em>必須ではない</em><br>worktree 並列と協調系の担当</h1>
+  <div class="meta"><span>2026.06.27</span><span>概念解説(前回の続編)</span><span>gitflow 必須性 / 協調系の worktree 担当</span></div>
+
+  <h2><span class="no">01</span>まず結論 — 2つの問いへの答え</h2>
+  <p><strong>問い1: gitflow は必須ではない。</strong>worktree を作る skill(<code>creating-gtr-worktree</code> / <code>launching-gtr-issue-worktree</code>)を複数回起動すれば worktree が複数でき、チーム開発級の並列も技術的には回せる。gitflow を絶対に使わねばならぬ、ということはない(そなたの理解どおり)。</p>
+  <p><strong>問い2: 協調系で worktree を作る担当は <code>launching-gitflow-worktrees</code> 一つ。</strong>中枢の指揮役 <code>orchestrating-team-development</code> が、複数チームを並列で走らせるとき Step 2.5 でこれを呼ぶ。</p>
+
+  <h2><span class="no">02</span>問い1 — gitflow は「並列の必須条件」ではない</h2>
+  <p>大事なのは、2 つを別レイヤーで捉えることじゃ:</p>
+  <ul class="plain">
+    <li><b>worktree を複数作る</b> — 並列の「手段」。gtr 系を何回起動してもよい。これだけで並列開発は成立する</li>
+    <li><b>gitflow</b> — 並列の「安全管理」。並列が大規模化したときの事故を防ぐ仕組み</li>
+  </ul>
+  <p>つまり gitflow は「並列を可能にするもの」ではなく「並列が大きくなったときに事故を防ぐもの」。<em>worktree 複数 = 並列の実現、gitflow = 並列の安全運用</em>じゃ。</p>
+
+  <h2><span class="no">03</span>gitflow を使わないと「手動」になるもの</h2>
+  <p>gtr 系の複数起動だけで並列する場合、gitflow が自動でやってくれる安全装置が抜ける。その分は自分で気をつける必要が出る:</p>
+  <table>
+    <thead><tr><th>gitflow が自動でやること</th><th>無いとどうなるか</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">複数 feature を main 前に develop で一旦統合・検証する中間層</td><td>各 feature が main へ直接マージされ、複数成果物を束ねた統合状態を本番前に検証する場が無い(専用ブランチ + PR レビューで個別検証は効くので、実害が出るのは大規模並列時)</td></tr>
+      <tr><td class="cat-name">pre-push hook で main/develop への push をブロック</td><td>誤って本番ブランチへ push しないよう自分で注意</td></tr>
+      <tr><td class="cat-name">current-team.md でチームの担当情報を注入</td><td>各 worktree に担当範囲・他チーム情報を手動で渡す</td></tr>
+      <tr><td class="cat-name">誤 merge(誤統合)の多層防止</td><td>統合を慎重に手動管理</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">04</span>規模での使い分け</h2>
+  <table>
+    <thead><tr><th>規模</th><th>推奨</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">小規模</td><td><span class="mark mark-pass">gtr 系を複数起動</span></td><td>独立タスクが少数で main を同時に触らないなら、gitflow の階層は過剰。軽く済む</td></tr>
+      <tr><td class="cat-name">大規模</td><td><span class="mark mark-warn">launching-gitflow-worktrees</span></td><td>複数チームが同じ develop に向かい main を守りたいなら、保護・緩衝・誤マージ防止の価値が出る</td></tr>
+    </tbody>
+  </table>
+  <p>結論 ── <strong>gitflow は並列の必須条件ではなく、大規模並列の安全オプション</strong>じゃ。</p>
+
+  <h2><span class="no">05</span>問い2 — 協調系で worktree を作るのは誰か</h2>
+  <p>中枢の指揮役 <code>orchestrating-team-development</code>(複数の専門エージェントを束ねる L3 指揮者)の一次記述より、担当は 1 つに定まる:</p>
+  <div class="card">
+    <h3><span class="sev sev-pass">担当</span>launching-gitflow-worktrees</h3>
+    <div class="kv"><b>呼ぶ場所</b>orchestrating-team-development の Step 2.5</div>
+    <div class="kv"><b>発動条件</b>複数チームが並列作業する場合</div>
+    <div class="kv"><b>根拠</b>「launching-gitflow-worktrees で gitflow + worktree 環境を構築」+ 接続スキル群にこれだけ載る(creating / issue 系は無い)</div>
+  </div>
+
+  <h2><span class="no">06</span>重要な区別 — context:fork は worktree ではない</h2>
+  <p>協調系でも、すべてが worktree を作るわけではない。<code>coder</code> / <code>enforcing-strict-tdd-cycle</code> / <code>llm-debate</code> などは <code>context:fork</code>(新しい会話コンテキストを分岐する仕組み)で隔離する ── これは worktree とは<strong>別物</strong>じゃ:</p>
+  <table>
+    <thead><tr><th>隔離手段</th><th>何を分けるか</th><th>使う skill の例</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">context:fork</td><td>会話履歴(コンテキスト)の分離</td><td>coder / enforcing-strict-tdd-cycle / llm-debate</td></tr>
+      <tr><td class="cat-name">worktree</td><td>ファイル(作業ディレクトリ)の分離</td><td>launching-gitflow-worktrees</td></tr>
+    </tbody>
+  </table>
+  <p>協調系で「ファイルの worktree」を作るのは <code>launching-gitflow-worktrees</code> ただ一つ。他は「会話の分岐」で隔離しておる ── ここを混同すると、どの skill が何を分けているか見失う。</p>
+
+  <h2><span class="no">07</span>総評 — 2つの問いの接点</h2>
+  <div class="quote">gitflow は技術的に必須ではない(問い1)。だが、ハーネスのチーム協調 skill は<strong>あえて</strong> gitflow を選んでいる(問い2)。これは矛盾ではない ── チーム協調級の並列では、main 直結禁止・誤マージ防止という安全管理の価値が、gitflow のひと手間を上回るからじゃ。小さく回すなら gtr 系の複数起動で軽く済ませてよい。<strong>規模で選ぶ</strong> ── それが答えじゃ。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.27 09:39 JST
+  </footer>
+
+</div>
+</body>
+</html>

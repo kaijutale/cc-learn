@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gitflow とは何か — gtr 系 worktree との違い</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">CONCEPT · 2026.06.27 · GIT / WORKTREE / GTR / GITFLOW</div>
+  <h1>gitflow とは何か<br>gtr 系 worktree との<em>違い</em></h1>
+  <div class="meta"><span>2026.06.27</span><span>概念解説</span><span>ブランチ戦略 vs worktree ツール</span></div>
+
+  <h2><span class="no">01</span>まず結論</h2>
+  <p><strong>gitflow は Git の「機能」ではない。</strong>ブランチ(枝分かれした作業の系統)を<strong>どう切り、どう統合するか</strong>を取り決めた「運用ルール・戦略」じゃ。一方の <code>worktree</code>(作業ディレクトリ)は Git に組み込まれた本物の機能、<code>gtr</code> はその worktree を扱う道具(ツール)。</p>
+  <p>だから ── <em>gtr 系 skill で worktree を作っても、gitflow が使われるとは限らない</em>。ハーネスの中で gitflow を使うのは <code>launching-gitflow-worktrees</code> ただ一つじゃ。</p>
+
+  <h2><span class="no">02</span>gitflow — 「機能」ではなく「戦略」</h2>
+  <p>gitflow は 2010 年に Vincent Driessen が提唱した<strong>ブランチ運用モデル</strong>(原題 "A successful Git branching model")。次の役割でブランチを切る「決め事」じゃ:</p>
+  <ul class="plain">
+    <li><b>main</b> — 本番リリース用。常に安定した状態を保つ</li>
+    <li><b>develop</b> — 開発の統合先。各機能を集めて統合する場所</li>
+    <li><b>feature/*</b> — 個別の機能。develop から枝分かれし、完成したら develop へ戻す</li>
+    <li><b>release/* · hotfix/*</b> — リリース準備・本番の緊急修正</li>
+  </ul>
+  <p>補助ツール <code>git-flow</code>(コマンド)は存在するが、それも普通の git コマンドを束ねた<strong>ラッパー(包み紙)に過ぎない</strong>。<strong>Git 本体に「gitflow」という機能は無い</strong> ── あくまで人間が決めた使い方の約束事じゃ。料理に例えるなら、包丁や鍋(= Git の機能)ではなく、段取りを定めた<strong>レシピの手順書</strong>に当たる。</p>
+  <div class="quote">gitflow の狙いは「AI や開発者の成果物を、いきなり本番(main)に直結させない」こと。feature で作業し、develop で統合し、最後に人間が main へマージする ── この段取りの規約こそが gitflow じゃ。</div>
+
+  <h2><span class="no">03</span>worktree と gtr — 「仕組み」と「道具」</h2>
+  <p><strong>worktree(ワークツリー)= Git の機能。</strong>1 つのリポジトリに対して<strong>複数の作業ディレクトリを同時に持てる</strong>仕組みじゃ。各 worktree は別々のブランチを開けるので、並列で作業しても互いのファイルを上書きせず、衝突を物理的に防げる。机を 1 つ増やして、別の作業を同じ部屋で同時に進めるイメージじゃ。</p>
+  <p><strong>gtr(git-worktree-runner)= 道具。</strong>worktree を作る・消す・移動するのを楽にする補助ツール。中身は Git 標準の <code>git worktree</code> を包み、設定ファイルのコピーや作成後の自動処理(フック)などの便利機能を足したものじゃ。</p>
+
+  <h2><span class="no">04</span>混同を解く — 4 つのレイヤー</h2>
+  <p>この 4 つは<strong>別々の階層</strong>に属する。ここを一緒くたにすると見誤る:</p>
+  <table>
+    <thead><tr><th>レイヤー</th><th>正体</th><th>役割</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">Git</td><td>基盤</td><td>branch(枝分かれ) / merge(統合) / worktree の機能を提供する土台</td></tr>
+      <tr><td class="cat-name">worktree</td><td>Git の機能</td><td>作業場所(作業ディレクトリ)を分離する</td></tr>
+      <tr><td class="cat-name">gtr</td><td>道具(ツール)</td><td>worktree を作る・消すのを楽にする</td></tr>
+      <tr><td class="cat-name">gitflow</td><td>戦略(規約)</td><td>ブランチの切り方・統合の仕方を取り決める</td></tr>
+    </tbody>
+  </table>
+  <p>核心は ── <em>gitflow は「枝の設計図」、worktree と gtr は「作業場所とその道具」</em>。両者は軸が直交しておる。gitflow は worktree が無くても成立するし(1 つの作業場所でブランチを切り替えればよい)、worktree は gitflow が無くても成立する(どんなブランチでも作業場所を分けられる)。</p>
+
+  <h2><span class="no">05</span>ハーネスの gtr 系 skill との対応</h2>
+  <p>そなたのハーネスには gtr を使う skill が 3 つある。<strong>そのうち gitflow を使うのは一番下の 1 つだけ</strong>じゃ:</p>
+  <table>
+    <thead><tr><th>skill</th><th>gitflow</th><th>作るもの</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">creating-gtr-worktree</td><td><span class="mark mark-na">なし</span></td><td>worktree を 1 つ(ブランチ 1 本)だけ</td></tr>
+      <tr><td class="cat-name">launching-gtr-issue-worktree</td><td><span class="mark mark-na">なし</span></td><td>issue-&lt;番号&gt;-&lt;名前&gt; というブランチ 1 本</td></tr>
+      <tr><td class="cat-name">launching-gitflow-worktrees</td><td><span class="mark mark-pass">あり</span></td><td>main &rarr; develop &rarr; feature/team-* の階層 + 各 worktree + main/develop 保護フック</td></tr>
+    </tbody>
+  </table>
+  <p><code>launching-gitflow-worktrees</code> だけが「<strong>gtr を道具として使い、その上に gitflow の階層を建てる</strong>」── つまり道具と戦略を組み合わせた skill じゃ。複数チームが並列でファイルを書く規模になって初めて、本番(main)を守る gitflow の段取りが必要になる。</p>
+
+  <h2><span class="no">06</span>実例 — issue #50 はどちらだったか</h2>
+  <div class="card">
+    <h3><span class="sev sev-pass">実例</span>issue #50 = gtr あり・gitflow なし</h3>
+    <div class="kv"><b>使った skill</b>launching-gtr-issue-worktree</div>
+    <div class="kv"><b>作ったもの</b>issue-50-phase0-research-phase というブランチ 1 本</div>
+    <div class="kv"><b>gitflow?</b>使っていない(develop も feature 階層も作らず、main から 1 本切っただけ)</div>
+  </div>
+  <p>そなたが issue #50 で通した道は「<strong>gtr(道具)は使ったが、gitflow(戦略)は使っていない</strong>」典型例じゃ。単発の 1 作業に、main を守る gitflow の階層までは要らぬ。gitflow が出てくるのは、チーム開発級に並列度が上がったときだけじゃ。</p>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">gtr で worktree を作ること と gitflow は、別レイヤーの話じゃ。<strong>gtr は道具、worktree は Git の機能、gitflow はブランチの戦略</strong> ── この三つを「同じもの」と捉えると設計を見誤る。普段の単発作業は gtr 系(gitflow なし)で十分、本番を守りながら複数チームを並列で走らせるときだけ launching-gitflow-worktrees で gitflow を建てる。この使い分けだけ押さえておけばよい。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.27 09:17 JST
+  </footer>
+
+</div>
+</body>
+</html>
