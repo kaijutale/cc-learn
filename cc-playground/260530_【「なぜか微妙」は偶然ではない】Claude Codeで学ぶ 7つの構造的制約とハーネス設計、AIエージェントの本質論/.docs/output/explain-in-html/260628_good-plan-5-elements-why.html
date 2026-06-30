@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>良い計画の5つの必須要素とは何か、なぜ必要か (note 260405 T-2.1)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · 2026.06.28 · PLANNING BASICS</div>
+  <h1>良い計画の<em>5つの必須要素</em>とは<br>なぜ必要なのか</h1>
+  <div class="meta"><span>2026.06.28</span><span>note 260405 / T-2.1 (p.60)</span><span>対象: 初学者向け</span></div>
+
+  
+
+  
+  <div class="stats">
+    <div class="stat"><div class="k">必須要素</div><div class="v">5 個</div></div>
+    <div class="stat"><div class="k">出典</div><div class="v">note 260405 / T-2.1</div></div>
+    <div class="stat"><div class="k">計画の本質</div><div class="v">再起動できる引き継ぎ書</div></div>
+    <div class="stat"><div class="k">効く相手</div><div class="v">記憶を持たない AI</div></div>
+  </div>
+
+  <h2><span class="no">01</span>結論 &mdash; 5要素を一言ずつ</h2>
+  <p>良い計画とは、やることを並べた<strong>TODO リスト</strong>ではなく、それ単体で<strong>再開・実行・確認</strong>できる「引き継ぎ書」じゃ。そのために欠かせぬのが次の 5 つ。まずは一言で掴め。</p>
+  <ul class="plain">
+    <li><b>1. 目的</b> &mdash; <strong>何を</strong>達成すれば完了か。</li>
+    <li><b>2. 前提</b> &mdash; <strong>何が必要か</strong> (触るファイル・環境・依存・参照する実装)。</li>
+    <li><b>3. 判断理由</b> &mdash; <strong>なぜ</strong>この方法を選んだか (捨てた代替案も)。</li>
+    <li><b>4. 検証</b> &mdash; <strong>どう確かめるか</strong> (人の主観でなく、機械が合否を出せる形で)。</li>
+    <li><b>5. 進捗</b> &mdash; <strong>どこまで</strong>終わったか (チェック + commit の印 + 今いる場所)。</li>
+  </ul>
+
+  <h2><span class="no">02</span>そもそも、なぜ「計画」が要るのか</h2>
+  <p>AI (大規模言語モデル) には決定的な性質がある &mdash; <strong>ステートレス</strong> (記憶を持たず、セッションが終わると前回の文脈がまるごとゼロに戻る) ということ。</p>
+  <p>たとえるなら &mdash; <strong>腕は一流だが、部屋を出るたびに記憶を全部失う同僚</strong>。次に呼ぶときは「何も知らない新人」として現れる。その相手に「あとはよろしく」とだけ言って渡せるか? 渡せぬ。だから計画は、その同僚が<em>一人で読んで、一人で再開できる</em>「引き継ぎ書」でなければならぬ。</p>
+  <p>5 つの要素は、この引き継ぎ書が<strong>絶対に落としてはいけない問い</strong>を 1 つずつ埋めるためのもの。裏付けとして記事はこう引く &mdash; Steinberger 「計画ファイルを<strong>再起動可能な状態</strong> (途中から再開できる形) として設計せよ」、Ronacher 「<strong>5 ステップを超える作業なら</strong>、行き当たりばったりでなく計画フェーズを置け」。</p>
+
+  <h2><span class="no">03</span>5要素を1つずつ &mdash; なにを答え、無いと何が起きるか</h2>
+  <p>各要素は「答える問い」と「それが無いときに必ず起きる事故」が一対一で対応しておる。事故 (赤字) を見れば、なぜ必須かが腑に落ちるはずじゃ。</p>
+
+  <div class="card">
+    <h3>1. 目的<span class="chip">何を達成するか</span></h3>
+    <div class="kv"><b>これは何</b>このタスクが「完了」と言える到達点。ゴールそのもの。</div>
+    <div class="kv"><b>無いと</b><em>ドリフト</em> (目標からのズレ) が起きる。手段をいじるうちに「そもそも何のためだったか」を見失い、手段が目的にすり替わる。</div>
+    <div class="kv"><b>たとえ</b>行き先を決めずに車を出すようなもの。走ってはいるが、着いたかどうかを誰も判定できぬ。</div>
+  </div>
+
+  <div class="card">
+    <h3>2. 前提<span class="chip">何が必要か</span></h3>
+    <div class="kv"><b>これは何</b>作業に必要な材料 &mdash; 触るファイル、動かす環境、依存ライブラリ、お手本にする参照実装。</div>
+    <div class="kv"><b>無いと</b><em>存在しないファイルを参照</em>したり、<em>環境の違いで失敗</em>する。記憶ゼロの相手は「どこに何があるか」を自力で知らぬ。</div>
+    <div class="kv"><b>たとえ</b>料理のレシピで材料表を省くようなもの。手順だけ渡されても、何を冷蔵庫から出すかが分からぬ。</div>
+  </div>
+
+  <div class="card">
+    <h3>3. 判断理由<span class="chip">なぜこの方法か</span></h3>
+    <div class="kv"><b>これは何</b>その方法を選んだ理由。そして<strong>検討した上で却下した代替案</strong>も含める。</div>
+    <div class="kv"><b>無いと</b>次のセッションが<em>別のやり方で作り直し</em>、前の判断と矛盾する。「なぜ A でなく B にしたか」が残っていないと、同じ議論を何度も蒸し返す。</div>
+    <div class="kv"><b>たとえ</b>「あえてこの道を選んだ」というメモが無いと、後から来た人が「近道があるのに」と勝手に作り変えて、地雷を踏み直す。</div>
+  </div>
+
+  <div class="card">
+    <h3>4. 検証<span class="chip">どう確認するか</span></h3>
+    <div class="kv"><b>これは何</b>「できた」を確かめる手段。各ステップを<strong>機械が合否を出せる形</strong> (テストが通る / <code>exit 0</code> で終わる等) で書く。</div>
+    <div class="kv"><b>無いと</b>AI の<em>「できました」という自己申告を検出できない</em>。本当は途中なのに完了と宣言される「早期完了宣言」を見抜けぬ。</div>
+    <div class="kv"><b>たとえ</b>テストの答案を<strong>自分で採点</strong>させるようなもの。「満点です」と言われても、客観的な採点基準が無ければ信じる根拠が無い。</div>
+  </div>
+
+  <div class="card">
+    <h3>5. 進捗<span class="chip">どこまで終わったか</span></h3>
+    <div class="kv"><b>これは何</b>現在地の記録 &mdash; チェックボックス + commit の印 (どの変更まで保存したか) + 今いる場所。</div>
+    <div class="kv"><b>無いと</b><em>同じ作業を二重にやり直し</em>たり、逆に<em>やり残しを見落とす</em>。記憶ゼロの相手は「どこまで進めたか」を毎回ゼロから推測するしかない。</div>
+    <div class="kv"><b>たとえ</b>登山の途中に道標が無いようなもの。同じ斜面を登り直すか、まだ先があるのに頂上だと勘違いする。</div>
+  </div>
+
+  <h2><span class="no">04</span>ただの TODO リストとの違い</h2>
+  <p>「やることリスト」と「良い計画」の差は、この 5 要素が入っているかどうかに尽きる。最後の行 &mdash;「一人で再開できるか」&mdash; が両者を分ける決定打じゃ。</p>
+  <table>
+    <thead><tr><th>観点</th><th>ただの TODO リスト</th><th>良い計画 (5要素入り)</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">目的</td><td><span class="mark mark-fail">欠</span>「○○を直す」だけ</td><td><span class="mark mark-pass">有</span>何を満たせば完了かまで書く</td></tr>
+      <tr><td class="cat-name">前提</td><td><span class="mark mark-fail">欠</span>書かない</td><td><span class="mark mark-pass">有</span>触るファイル・環境・参照実装を明記</td></tr>
+      <tr><td class="cat-name">判断理由</td><td><span class="mark mark-fail">欠</span>書かない</td><td><span class="mark mark-pass">有</span>なぜこの方法か・却下案も残す</td></tr>
+      <tr><td class="cat-name">検証</td><td><span class="mark mark-warn">主観</span>「動けば OK」</td><td><span class="mark mark-pass">有</span>機械が合否を出せる形で書く</td></tr>
+      <tr><td class="cat-name">進捗</td><td><span class="mark mark-warn">浅</span>チェックのみ</td><td><span class="mark mark-pass">有</span>チェック + commit の印 + 現在地</td></tr>
+      <tr><td class="cat-name">一人で再開できる?</td><td><span class="mark mark-fail">不可</span>頭の中の文脈が要る</td><td><span class="mark mark-pass">可</span>単体で再開・実行・確認できる</td></tr>
+    </tbody>
+  </table>
+  <p>TODO リストは「<strong>書いた本人の記憶</strong>」に寄りかかっておる。良い計画は記憶に頼らぬ &mdash; だからこそ、記憶を持たない AI にも、明日の自分にも、別の誰かにも、そのまま手渡せる。</p>
+
+  <h2><span class="no">05</span>総評</h2>
+  <div class="quote">良い計画の 5 要素 &mdash; 目的・前提・判断理由・検証・進捗 &mdash; は、AI が記憶を持たない (ステートレスな) 存在だという前提から逆算して生まれた。新しいセッションは毎回「何も知らない新人」として現れるから、計画は本人の頭の中に頼らず、一人で読んで再開できる引き継ぎ書でなければならぬ。5 つはそれぞれ「何を達成するか / 何が必要か / なぜこの方法か / どう確かめるか / どこまで進んだか」という、引き継ぎ書が絶対に落としてはいけない問いを 1 つずつ埋める。逆に言えば、この 5 つのどれかが欠けた瞬間に、ドリフト・参照ミス・作り直し・偽の完了・二重作業という、決まった事故が顔を出す。だから 5 つは飾りでなく、必須なのじゃ。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.28 08:14 JST
+  </footer>
+
+</div>
+</body>
+</html>

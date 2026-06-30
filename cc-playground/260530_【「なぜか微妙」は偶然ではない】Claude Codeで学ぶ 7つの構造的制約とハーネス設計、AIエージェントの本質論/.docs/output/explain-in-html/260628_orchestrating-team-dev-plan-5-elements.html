@@ -1,0 +1,276 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>orchestrating-team-development が束ねる skill は良い計画の5要素を担うのか (note 260405 T-2.1)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · 2026.06.28 · ORCHESTRATOR &times; PLAN</div>
+  <h1>orchestrating-team-development が束ねる skill は<br>良い計画の<em>5要素</em>を担うのか</h1>
+  <div class="meta"><span>2026.06.28</span><span>note 260405 / T-2.1 (p.60)</span><span>対象: orchestrating-team-development (L3 指揮者)</span></div>
+
+  
+
+  
+  <div class="stats">
+    <div class="stat"><div class="k">出典</div><div class="v">note 260405 / T-2.1</div></div>
+    <div class="stat"><div class="k">必須要素</div><div class="v">5 個</div></div>
+    <div class="stat"><div class="k">skill が直接担当</div><div class="v">3 / 5</div></div>
+    <div class="stat"><div class="k">構造的に最弱</div><div class="v">要素3 判断理由</div></div>
+  </div>
+
+  <h2><span class="no">01</span>結論 &mdash; 3要素は skill が、2要素は指揮者自身の機構が担う</h2>
+  <p>そなたの問い「束ねる skill 達が 5 要素を担っておるか」へ、要素ごとに割って断定する。<code>orchestrating-team-development</code> (チーム開発の指揮者 skill。以下「指揮者」) は、5 要素を <strong>2 つの系統</strong> に振り分けて実装しておる &mdash; 委譲先の <strong>skill が担う系統</strong> と、指揮者 <strong>自身の workflow 状態 (手綱) が担う系統</strong> じゃ。</p>
+  <ul class="plain">
+    <li><b>要素1 目的</b> &mdash; skill が担う (<code>spec-based-development</code>)。<span class="mark mark-pass">YES</span></li>
+    <li><b>要素2 前提</b> &mdash; skill が担う (<code>spec-based-development</code> / <code>conducting-research-phase</code> / <code>designing-dd</code>)。<span class="mark mark-pass">YES</span></li>
+    <li><b>要素3 判断理由</b> &mdash; 専用 skill は<strong>無い</strong>。指揮者の機構 (Step7 の判断記録) で部分的に代替するのみ。<span class="mark mark-warn">最弱</span></li>
+    <li><b>要素4 検証</b> &mdash; skill が担う (<code>enforcing-strict-tdd-cycle</code> / <code>branch-validator</code> / gep) + 指揮者の機械判定。最も多重。<span class="mark mark-pass">YES (最強)</span></li>
+    <li><b>要素5 進捗</b> &mdash; 専用 skill では<strong>なく</strong>、指揮者自身の機構 (共有タスクリスト + フェーズゲート) が担う。<span class="mark mark-pass">YES</span></li>
+  </ul>
+  <p>つまり &mdash; <strong>「skill が担う」が正確に当てはまるのは 目的・前提・検証 の 3 要素</strong>。進捗と判断理由の 2 要素は、委譲先 skill ではなく指揮者そのものの状態管理が担っておる。よって「skill 達が 5 要素を担う」は<strong>半分しか正しくない</strong> &mdash; どの半分かは次節以降で具体に割る。</p>
+
+  <h2><span class="no">02</span>良い計画の5要素とは (T-2.1 の再掲)</h2>
+  <p>LLM (大規模言語モデル) のセッションは <strong>ステートレス</strong> (記憶を持たず、セッションが変わると前回の文脈がゼロになる) じゃ。だから計画は「あとよろしく」の TODO リストではなく、それ単体で再開・実行・検証できる <strong>自己完結した引き継ぎ書</strong> にせよ、というのが T-2.1 の主張。その必須要素が以下の 5 つぞ。</p>
+  <table>
+    <thead><tr><th>要素</th><th>答える問い</th><th>不在時に起きる事故</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">1. 目的</td><td>何を達成するか</td><td>ドリフト (目標からの逸脱)。手段が目的化する</td></tr>
+      <tr><td class="cat-name">2. 前提</td><td>何が必要か (触るファイル / 環境 / 依存 / 参照実装)</td><td>存在しないファイルを参照、環境差で失敗</td></tr>
+      <tr><td class="cat-name">3. 判断理由</td><td>なぜこの方法か (却下した代替案を含む)</td><td>次セッションが別方式で再実装し矛盾が生まれる</td></tr>
+      <tr><td class="cat-name">4. 検証</td><td>どう確認するか (各ステップに <code>exit 0</code> 等の機械的合否)</td><td>早期完了宣言 (C-4) を検出できない</td></tr>
+      <tr><td class="cat-name">5. 進捗</td><td>どこまで終わったか (チェックボックス + commit hash + 現在地)</td><td>同じ作業の重複実行、未完了の見落とし</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>要素 &times; 指揮者の担当マッピング</h2>
+  <p>指揮者が接続する skill 群 (<code>spec-based-development</code> / <code>conducting-research-phase</code> / <code>designing-dd</code> / <code>enforcing-strict-tdd-cycle</code> / <code>branch-validator</code> / <code>reviewing-pr-with-google-engineering-practices</code> 等) と、指揮者自身が動かす機構を、5 要素ごとに突き合わせた。現物の SKILL.md を読んで確認した検証済みの対応ぞ。</p>
+  <table>
+    <thead><tr><th>要素</th><th>担当する skill (委譲先)</th><th>指揮者自身の機構 (手綱)</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="cat-name">1. 目的</td>
+        <td><code>spec-based-development</code> の <code>## 背景・目的</code></td>
+        <td>Step1 で実行モード (Lightning/Sprint 等) を選び目的を確定 + 共有タスクリストに記録。project-os 構成なら ticket の <code>original_goal</code> (書換禁止)</td>
+        <td><span class="mark mark-pass">skill あり</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">2. 前提</td>
+        <td><code>spec-based-development</code> の <code>## 技術仕様 / 統合ポイント</code>、<code>conducting-research-phase</code> (調査の生データを子コンテキストに隔離し <code>research.md</code> に外部化)、<code>designing-dd</code> (UI 成果物)</td>
+        <td><code>!</code> コマンド構文で <code>SRC_DIR</code> / <code>TEST_DIR</code> / <code>TEST_RUNNER</code> を skill 読込時に決定論的注入 (環境前提をモデル判断に委ねない)</td>
+        <td><span class="mark mark-pass">skill あり (複数)</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">3. 判断理由</td>
+        <td><span class="mark mark-na">専用 skill なし</span></td>
+        <td>Step7 統合で「修正/見送り」の<strong>判断理由</strong>を <code>.docs/logs/shared/&lt;feature&gt;/review-deferred.md</code> に記録 + 統合判断を委譲しない原則 (T-2.3)。ただし採用案の<strong>却下代替案</strong>は構造的に残らない</td>
+        <td><span class="mark mark-warn">部分的 = 最弱</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">4. 検証</td>
+        <td><code>enforcing-strict-tdd-cycle</code> (TDD + フェーズゲート)、<code>branch-validator</code> (spec 照合 Missing=0)、<code>reviewing-pr-with-google-engineering-practices</code> (外部基準ゲート gep。VERDICT 行で機械分岐)</td>
+        <td>Step5.5 で behavior_oracle (挙動の合否 = test 全 PASS / lint exit 0) を指揮者自身が機械実行 + V-2.2 の structure_oracle (構造の合否 = ファイルサイズ / 関数長 / 循環依存 <code>assert-no-cycles.sh</code> / 重複)。両方 pass で初めて合格</td>
+        <td><span class="mark mark-pass">skill あり (多重・最強)</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">5. 進捗</td>
+        <td><span class="mark mark-na">専用 skill なし</span></td>
+        <td>共有タスクリスト (<code>TaskUpdate</code> で状態更新、Step4.5 で task-status 遅延を能動 steer) + フェーズゲート (Step5 で spec&rarr;design&rarr;test&rarr;実装&rarr;検証&rarr;レビュー&rarr;統合 の順序を依存関係で構造強制) + ticket の done 遷移 (project-os)</td>
+        <td><span class="mark mark-pass">機構あり</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">04</span>「skill が担う」の正確な切り分け &mdash; 2 系統</h2>
+  <p>そなたの問いへの核心の補正はここじゃ。指揮者は 5 要素を「全部 skill に委譲」しておるのではない。<strong>情報の器とゲートを skill に出す系統</strong>と、<strong>指揮者の状態機械が直接抱える系統</strong>に分かれておる。</p>
+  <ul class="plain">
+    <li><b>skill が直接担う系統 (3 要素: 目的・前提・検証)</b> &mdash; <code>spec-based-development</code> が目的と前提の「器」を、<code>conducting-research-phase</code> / <code>designing-dd</code> が前提の調査・設計を、<code>enforcing-strict-tdd-cycle</code> / <code>branch-validator</code> / gep が検証の「ゲート」を提供する。ここは確かに skill が担っておる。</li>
+    <li><b>指揮者自身の手綱が担う系統 (2 要素: 進捗・判断理由)</b> &mdash; 共有タスクリスト・フェーズゲート・<code>review-deferred.md</code> は委譲先 skill ではなく、指揮者 (= L3 の Claude 自身) が握る workflow 状態。とりわけ <strong>統合判断は委譲してはならない</strong> (T-2.3) と SKILL.md に明示され、進捗の確定も「自己申告を完了の証拠にしない」(C-4) ため指揮者の機械判定に閉じておる。</li>
+  </ul>
+  <p>だから答えは &mdash; <strong>3 要素 (目的・前提・検証) は skill が担い、2 要素 (進捗・判断理由) は skill ではなく指揮者自身の機構が担う</strong>。「skill 達が担う」は前者には当たり、後者には当たらぬ。</p>
+
+  <h2><span class="no">05</span>唯一の弱点 &mdash; 要素3「判断理由」</h2>
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span>採用案の「却下した代替案」だけが、どの器にも残らない</h3>
+    <div class="kv"><b>担っている所</b>Step7 統合で「この指摘は見送る」という<strong>見送り判断</strong>の理由は <code>review-deferred.md</code> に記録される。指揮者が統合判断を委譲しない原則 (T-2.3) も判断の主体を明確にする。</div>
+    <div class="kv"><b>欠けている所</b>「なぜこの設計を選び、どの代替案を却下したか」という<strong>採用側の判断理由</strong>を残す専用 skill・専用の器が指揮者の束に無い。spec は What を、テストは合否を残すが、Why の却下系譜は構造化されない。</div>
+    <div class="kv"><b>整合</b>ハーネス全体を見た先行分析 (260628 の whole-harness マッピング) でも、第一級の器を持たぬ唯一の要素は「判断理由」じゃった。指揮者単体で見ても同じ穴が出る &mdash; これは偶然でなく、ADR (設計判断記録) 専用器がハーネスに無いことの反映ぞ。</div>
+    <div class="kv"><b>補強策</b>spec / ticket のテンプレに「判断理由・却下案」を<strong>必須見出し</strong>として昇格させるか、ADR 専用の器 (ディレクトリ + テンプレ + 検証スクリプト) を新設する。</div>
+  </div>
+
+  <h2><span class="no">06</span>見落としやすい前提 &mdash; これは計画「文書」でなく「実行器」</h2>
+  <p>もう一つ構造的な補正をしておく。T-2.1 の 5 要素は本来「<strong>再起動可能な単一の計画文書</strong>」(restartable な 1 枚の引き継ぎ書) が満たすべき中身じゃ。だが指揮者は計画文書を 1 枚書く skill ではなく、<strong>実行を回す指揮者 (オーケストレーター)</strong>。ゆえに 5 要素を 1 枚に集約せず、<code>spec</code> / <code>research.md</code> / 共有タスクリスト / oracle / <code>review-deferred.md</code> という<strong>複数の状態物に分散実装</strong>しておる。</p>
+  <ul class="plain">
+    <li><b>利点</b> &mdash; 各要素が専用の器とゲートを持ち、検証 (要素4) を多重化できる。実行時の堅さは単一文書より高い。</li>
+    <li><b>代償</b> &mdash; 「1 枚読めば再開できる」restartable 性は分散する。セッション境界をまたぐ再開を担う <code>handoff</code> skill は<strong>指揮者の束には含まれない別系統</strong>で、指揮者は「実行中の状態」を spec + 共有タスクリスト + ticket に頼って再構成する。</li>
+  </ul>
+  <p>つまり &mdash; 指揮者は「良い計画文書を 1 枚書く」のではなく、「良い計画の 5 つの情報役割を、実行パイプラインの状態として満たす」。問いを「skill が 5 要素を担うか」と立てると、この<strong>文書 vs 実行器</strong>のレイヤー差が見えにくくなる。</p>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">orchestrating-team-development が束ねる skill 群は、良い計画の 5 要素のうち 目的・前提・検証 の 3 要素を直接担う &mdash; spec-based-development が目的と前提の器を、conducting-research-phase と designing-dd が前提の調査を、enforcing-strict-tdd-cycle・branch-validator・gep が検証のゲートを提供する。残る 2 要素、進捗 と 判断理由 は、委譲先 skill ではなく指揮者自身の手綱 (共有タスクリスト・フェーズゲート・review-deferred.md と統合判断) が担う。そして 5 要素で構造的に最弱なのは、ハーネス全体で見たときと同じく要素3「判断理由」ただ一つ &mdash; 採用案の却下代替案を残す専用器が無い。最後に忘れてはならぬのは、指揮者は計画文書を 1 枚書く skill ではなく実行器であり、5 要素を複数の状態物に分散して満たしておる、ということじゃ。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.28 07:45 JST
+  </footer>
+
+</div>
+</body>
+</html>
