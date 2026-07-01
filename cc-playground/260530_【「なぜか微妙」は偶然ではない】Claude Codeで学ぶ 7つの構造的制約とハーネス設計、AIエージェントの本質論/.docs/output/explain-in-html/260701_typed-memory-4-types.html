@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>型付き記憶パターン(4型の永続記憶) — note K-1 とkaijuハーネスの構築状況</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · 2026.07.01 · note K-1「記憶の外部化」</div>
+  <h1>型付き記憶パターン<br><em>4型</em>の永続記憶 ― 定義と、その実体</h1>
+  <div class="meta"><span>note 7つの構造的制約 · K-1</span><span>正本 p.64-67</span><span>対象 kaiju ハーネス</span></div>
+
+  
+
+    <h2><span class="no">01</span>なぜ記憶を「型」で分けるのか</h2>
+  <p>Claude Code は毎セッションが<strong>「初対面」</strong>だ。前回の会話も発見も失敗も、明示的に書き残さなければ消える。これは能力不足ではなく、<em>ステートレス</em>(状態を保持しない。前回の続きを覚えていない性質) という構造的な制約の帰結である。</p>
+  <p>note K-1 はこれを<strong>「毎朝、記憶がリセットされる同僚」</strong>にたとえる。口頭で伝えても翌朝には消える。だから重要なことはすべて共有ドキュメントに書き、その同僚が毎朝読めるようにするしかない。必要なのは「思い出させる」ことではなく、<strong>何も知らない次のセッションがメモだけで再開できる仕組み</strong>だ。</p>
+  <p>ステートレスを放置すると、次の4つが構造的に起きる:</p>
+  <ul class="plain">
+    <li><b>状態の揮発</b> — 判断理由・中間成果・進捗が、セッション終了とともに回収不能になる。</li>
+    <li><b>暗黙知の蓄積不能</b> — 「この API は仕様と挙動が違う」といった発見が、次のセッションに伝わらない。</li>
+    <li><b>同じ失敗の反復</b> — 地雷を踏んで回避策を見つけても、次のセッションがまた踏む。学習曲線がリセットされ続ける。</li>
+    <li><b>引き継ぎの不在</b> — 長時間タスクが中断したとき、どこから再開すべきか分からない。</li>
+  </ul>
+  <p>解決はプロンプトの改善ではなく、<strong>状態を外部に永続化するハーネス設計</strong>にある。そして記憶をただ放り込むのではなく<em>「型」</em>で分類することで、記憶の<strong>用途と寿命</strong>が明確になり、検索性と保守性が上がる。型がなければ、半年後に「これは何の教訓だったか」「まだ有効か」が分からなくなる。<strong>型は記憶の棚卸しと整理を可能にする</strong> — これが K-1 の核心思想だ。</p>
+
+  <h2><span class="no">02</span>4型の記憶分類 ― 正本の定義</h2>
+  <p>note K-1 は、Claude Code の Memory(記憶) システムが記憶を<strong>4つの型</strong>で分類すると説く。記事はこれを<strong>「4つの引き出し」</strong>のメタファーで図示する — ファイルボックスの4段それぞれに型のカードが差さり、必要なとき正しい引き出しを開けて「あ、これだ」と取り出す絵だ。</p>
+  <table>
+    <thead><tr><th>type(型)</th><th>用途</th><th>寿命</th><th>例(正本ママ)</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">user</td><td>ユーザーの属性・好み</td><td>長期(ほぼ不変)</td><td>「シニアエンジニア、Go が得意、React は初心者」</td></tr>
+      <tr><td class="cat-name">feedback</td><td>実際の失敗からの教訓</td><td>中期(解消まで)</td><td>「テストは実 DB を使う。モックで事故った」</td></tr>
+      <tr><td class="cat-name">project</td><td>進行中の状態</td><td>短〜中期(タスク完了まで)</td><td>「リリースフリーズ 3/5 開始」</td></tr>
+      <tr><td class="cat-name">reference</td><td>外部リソースへのポインタ</td><td>中期(リソースが有効な間)</td><td>「バグは Linear の INGEST プロジェクトで追跡」</td></tr>
+    </tbody>
+  </table>
+  <p>4型を貫く軸は<strong>「寿命」</strong>だ。<code>user</code> はほぼ不変の人物属性、<code>feedback</code> は問題が解消するまでの教訓、<code>project</code> はタスク完了で用済みになる進行状態、<code>reference</code> は外部リソースが有効な間だけ生きるポインタ(行き先を指す道しるべ)。寿命の違うものを同じ箱に入れると棚卸しできない。だから型で引き出しを分ける。</p>
+  <p>記事はさらに、この記憶を「覚えておく」だけで終わらせない<strong>進化サイクル</strong>を説く — 失敗が起きたら注意喚起として書き、それでも再発したら lint(自動検査) や検証スクリプトへ<strong>昇格</strong>させ、自動で守られるようになったら元の覚え書きを消す。<strong>記憶の最終形態は「覚えていなくても守られる構造」</strong>だという思想だ。</p>
+
+  <h2><span class="no">03</span>kaiju ハーネスでの構築状況 ― 全体像</h2>
+  <p>では、この4型は<strong>そなた自身のハーネス</strong>(<code>~/.claude/</code> 配下) で実際どう構築されているか。実体を全数調査した。記憶は Claude Code 標準の記憶機構(native memory) として <code>~/.claude/projects/&lt;プロジェクト名&gt;/memory/</code> に、<strong>Markdown + frontmatter</strong>(ファイル冒頭のメタ情報欄。ここに <code>type:</code> を書く) の形式で格納されている。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">USER 型</div><div class="v">0 件 (未構築)</div></div>
+    <div class="stat"><div class="k">FEEDBACK 型</div><div class="v">5 件</div></div>
+    <div class="stat"><div class="k">PROJECT 型</div><div class="v">4 件</div></div>
+    <div class="stat"><div class="k">REFERENCE 型</div><div class="v">1 件</div></div>
+  </div>
+  <p>型の振り分けは <strong>frontmatter の <code>type:</code> フィールドが権威</strong>で、ファイル名の接頭辞(<code>feedback_*</code> 等) はゆるい慣習にすぎない。記憶の書き込みは<strong>手動キュレーション</strong> — 自動記憶蓄積の設定(<code>autoMemoryEnabled</code>) は <em>false</em> に倒してあり、価値あるものだけを人が選んで書く運用だ。記憶を自動で4型に振り分ける hook(イベント連動の自動処理) は<strong>存在しない</strong>。読み込みは必要なとき該当の記憶を参照する on-demand 方式で、セッション開始時の自動注入もしていない。</p>
+  <table>
+    <thead><tr><th>型</th><th>構築状況</th><th>実体の置き場</th><th>件数</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">feedback</td><td><span class="mark mark-pass">構築済</span></td><td>native memory(複数プロジェクトに分散)</td><td class="score-cell">5</td></tr>
+      <tr><td class="cat-name">project</td><td><span class="mark mark-pass">構築済</span></td><td>native memory 2 + MEMORY.md 直書き 2</td><td class="score-cell">4</td></tr>
+      <tr><td class="cat-name">reference</td><td><span class="mark mark-pass">構築済</span></td><td>native memory 1 ファイル</td><td class="score-cell">1</td></tr>
+      <tr><td class="cat-name">user</td><td><span class="mark mark-warn">memory 層は未構築</span></td><td>CLAUDE.md + ~/.claude/rules/ が代替</td><td class="score-cell">0</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">04</span>構築済みの3型 ― 実体の証拠</h2>
+  <p>feedback・project・reference の3型は、いずれも native memory に実ファイルとして存在する。代表例を挙げる。</p>
+  <div class="card">
+    <h3><span class="sev sev-pass">FEEDBACK · 5件</span>実際の失敗からの教訓</h3>
+    <div class="kv"><b>grep-before-delete</b>削除・移動の前に必ず <code>grep -r</code> で参照を確認する。サイズや名前の類似だけで不要と判断するとパス参照が壊れる(2026-04-27 の実失敗が出所)。</div>
+    <div class="kv"><b>rules-always-loaded</b><code>~/.claude/rules/*.md</code> は <code>paths</code> 指定が無いと system prompt(エージェントへの指示文) に常時フルロードされる。真の遅延化には paths 指定 / Skill 化 / .docs 切り出しの3手段が要る。</div>
+    <div class="kv"><b>prefer-skill-over-rules</b>ハーネス設計ではコードの DRY(同じ記述を繰り返さない原則) が逆効果になる。指示文が肥大して注力が散る。特定文脈だけの知識は skill にインラインで持たせる。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">PROJECT · 4件</span>進行中の状態・プロジェクト固有の事実</h3>
+    <div class="kv"><b>memopo-capture-memo-app</b>そなたの個人開発アプリ memopo(Expo 製のキャプチャ型短文メモアプリ) の本質・技術スタック・市場戦略。</div>
+    <div class="kv"><b>memopo-unified-editor</b>「1メモ = 1統合エディタ。入口や種類で分割しない」という設計原則。</div>
+    <div class="kv"><b>直書き型 (ninmu-ninmu / toybox)</b>個別の型ファイルを作らず、MEMORY.md に技術スタック・設計判断・ステータスを直接記載するモノリシック(一枚岩) 運用。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">REFERENCE · 1件</span>外部リソース・確定知識へのポインタ</h3>
+    <div class="kv"><b>permission-path-semantics</b><code>settings.json</code> の権限パス解釈4種(<code>~/</code>=ホーム相対で効く / 単一スラッシュ=プロジェクト相対で空振りの罠 / <code>//</code>=ファイルシステム絶対 / <code>**/file</code>=glob 一致)。2026-06-05 に実機検証済み。</div>
+  </div>
+
+  <h2><span class="no">05</span>未構築の型 ― user 型はどこへ消えたか</h2>
+  <p>結論から言う。<strong>user 型は memory 機構としては未構築</strong>だ(全6プロジェクトの memory を全数走査して <code>type: user</code> は<em>0件</em>)。<strong>だが、その責務は欠落していない</strong> — <code>~/.claude/CLAUDE.md</code> と <code>~/.claude/rules/*.md</code> が肩代わりしている。これは穴ではなく<strong>設計判断</strong>である。</p>
+  <div class="card">
+    <h3><span class="sev sev-warn">USER · 0件</span>memory には無い。だが責務は別基盤が担う</h3>
+    <div class="kv"><b>未構築の事実</b>native memory に <code>type: user</code> のファイルは1件も存在しない。</div>
+    <div class="kv"><b>責務の所在</b>user 型が記憶すべき「かいじゅう本人の恒久的な属性・好み・規範」は、常時ロードされる <code>~/.claude/CLAUDE.md</code>(persona・username・応答規約・禁止事項) と <code>~/.claude/rules/*.md</code>(行動規範) に手動配置されている。</div>
+    <div class="kv"><b>なぜ memory に置かないか</b>rules は system prompt に常時ロードされる = 不変の user 知識の置き場として最適。memory の user 型に同じ内容を持たせると<strong>二重管理</strong>になり冗長。<code>autoMemoryEnabled: false</code> の手動キュレーション運用と一体の判断だ。</div>
+  </div>
+  <p>記事の4型を「すべて memory ファイルとして作るべき」と<strong>字面で</strong>読めば、user 型のみ未充足だ。だが「機能が満たされていればよい」と<strong>本質で</strong>読めば、user 型は充足済み — ただ置き場が memory ではなく、常時ロードの rules / CLAUDE.md なだけだ。寿命「長期(ほぼ不変)」の知識を、揮発しやすい中期記憶と同じ引き出しに入れず、最も確実に毎回読まれる場所へ置く。これは4型の<strong>「寿命で分ける」思想に、むしろ忠実な配置</strong>といえる。</p>
+  <p>user 型相当の知識が、実際どこにあるかの対応:</p>
+  <ul class="plain">
+    <li><b>persona・一人称・二人称(ボア・ハンコック)</b> — <code>~/.claude/CLAUDE.md</code> Persona 節</li>
+    <li><b>username(かいじゅう)・呼称</b> — <code>~/.claude/CLAUDE.md</code> Username 節</li>
+    <li><b>応答規約・禁止事項・好み</b> — <code>~/.claude/CLAUDE.md</code> Response / Prohibition 節</li>
+    <li><b>恒久的な行動規範</b> — <code>~/.claude/rules/*.md</code>(常時ロード)</li>
+  </ul>
+
+  <h2><span class="no">06</span>総評</h2>
+  <div class="quote">4型のうち <strong>feedback・project・reference の3型は native memory で構築済み</strong>、<strong>user 型のみ memory 層は空(0件)</strong>だ。だが user 型の空白は欠落ではなく、寿命「ほぼ不変」の知識を常時ロードの CLAUDE.md + rules に置く設計判断である。note K-1 の思想「型は記憶の棚卸しを可能にする」を、そなたのハーネスは<strong>「揮発する中期知識は memory へ、不変の user 知識は常時ロードの rules へ」と層を分けて</strong>体現している。記事が説く記憶の最終形態は <strong>「覚えていなくても守られる構造」</strong> — 自動蓄積を切り、価値あるものだけを型付きで手キュレーションするその運用こそ、この思想の実装にほかならない。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.01 05:25 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
