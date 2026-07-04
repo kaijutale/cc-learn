@@ -1,0 +1,300 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>review系skill 欠落調査 — 3系統ギャップ分析</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">GAP ANALYSIS · 2026.07.03</div>
+  <h1>review系skillの<em>足りない部分</em>を洗い出す<br>3系統ギャップ分析</h1>
+  <div class="meta"><span>2026.07.03 調査実施</span><span>対象: review-harness / review-agent-essence / essence協調一式</span><span>成果: issue #73〜#83 起票</span></div>
+
+  
+
+    <h2><span class="no">01</span>調査の全体像 — レビュー装置を、レビューした</h2>
+  <p>review系skill 3系統 — <code>/review-harness</code> (ハーネス構成を25の指標で採点する診断装置)、<code>/review-agent-essence</code> (設計を原則集に照らして批評するレビュー装置)、essence協調一式 (3領域の原則照合を並列実行する協調装置) — は、ハーネスの品質を守る「レビューする側」の装置である。ところが装置自身は作られた時点の知識で止まる。本調査は<strong>「レビューする側は、いま何を見落とすようになっているか」</strong>を確定させるために行った。</p>
+  <p>体制は skill 1つにつき調査担当の subagent (子エージェント) 1体、計3体が対象ファイルを全文読解し、8つの分析軸で「事実」と「欠落候補」を分離して報告。さらに設計担当1体が強化案を作り、リーダーが重要な主張を原文で裏取りした。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">調査対象</div><div class="v">3系統 (skill+agent+基準文書)</div></div>
+    <div class="stat"><div class="k">調査体制</div><div class="v">subagent 4体 + 裏取り</div></div>
+    <div class="stat"><div class="k">分析軸</div><div class="v">8次元</div></div>
+    <div class="stat"><div class="k">確定バグ</div><div class="v">1件 (グレード表)</div></div>
+    <div class="stat"><div class="k">最重大発見</div><div class="v">評価基準の正本分裂</div></div>
+    <div class="stat"><div class="k">壊せない契約</div><div class="v">3系統分を明細化</div></div>
+    <div class="stat"><div class="k">強化項目</div><div class="v">11件 (P0×2 P1×4 P2×5)</div></div>
+    <div class="stat"><div class="k">起票</div><div class="v">issue #73〜#83 済み</div></div>
+  </div>
+
+  <h2><span class="no">02</span>横断的発見 — 3系統に共通する構造欠陥</h2>
+  <div class="card">
+    <h3><span class="sev sev-fail">最重大</span>評価基準の「正本」が分裂している</h3>
+    <p>review-agent-essence が同梱する評価基準 <code>agent-essence.md</code> (39項目) は 2026-04-05 から実質凍結。いっぽう essence協調一式が参照する正本 <code>essence-docs</code> は、更新装置 (<code>proposing-essence-updates</code> — 人間のレビューを経て原則を追記する仕組み) で成長し続けている。両者をつなぐ同期チェックは存在しない。</p>
+    <div class="kv"><b>なぜ致命的か</b>「誰も更新せず、誰も乖離を検知しない」基準でレビューし続けると、装置は静かに時代遅れの判定を下すようになる。しかも review-harness の25指標も凍結側の原則IDを参照しており、影響は2系統に及ぶ。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">未配線</span>迎合・アンカリング対策 — 道具はあるのに接続されていない</h3>
+    <div class="kv"><b>実証</b>満点S判定の直後に、別の subagent が弱点を後出しで指摘した記録が残っている (見逃しの実例)。</div>
+    <div class="kv"><b>皮肉な構図</b>review-agent-essence は「迎合 (相手に合わせて甘い判定を出す傾向)」を評価基準として持ちながら、自分の手続きには適用していない。essence協調一式は git log — つまり<em>著者の意図文言</em> — をレビュー担当へ能動的に渡しており、アンカリング (先に見た情報に判断が引きずられる現象) の源になっている。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">分断</span>自己改善ループが essence 系にしか無い</h3>
+    <div class="kv"><b>現状</b>self-eval (装置自身の反省メモ) を永続化し、人間確認付きで装置へ反映する仕組み (<code>accumulating-reviewer-feedback</code>) は稼働している。ただし接続されているのは essence協調一式のみで、review-harness と review-agent-essence は運用から学ぶ経路を持たない。</div>
+  </div>
+
+  <h2><span class="no">03</span>欠落マップ (7次元 × 3系統)</h2>
+  <p>凡例: <span class="mark mark-fail">FAIL</span> 構造的欠落 / <span class="mark mark-warn">WARN</span> 部分的欠落 / <span class="mark mark-pass">PASS</span> 強み (強化時の維持対象)。</p>
+  <table>
+    <thead><tr><th>次元</th><th>review-harness</th><th>review-agent-essence</th><th>essence協調一式</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">カバレッジ (検査観点の広さ)</td><td><span class="mark mark-fail">FAIL</span>2026年機能が0件</td><td><span class="mark mark-warn">WARN</span>対象タイプ別の観点なし</td><td><span class="mark mark-warn">WARN</span>領域が3本のみ</td></tr>
+      <tr><td class="cat-name">精度 (迎合・重み付け)</td><td><span class="mark mark-warn">WARN</span>スコアインフレ対策なし</td><td><span class="mark mark-fail">FAIL</span>severity (重大度) 段階なし</td><td><span class="mark mark-warn">WARN</span>担当間の判定較正なし</td></tr>
+      <tr><td class="cat-name">再現性 (同一入力→同一判定)</td><td><span class="mark mark-fail">FAIL</span>診断軸が回で揺れた実証</td><td><span class="mark mark-fail">FAIL</span>決定論要素ゼロ</td><td><span class="mark mark-warn">WARN</span>機械検証は形式整合まで</td></tr>
+      <tr><td class="cat-name">出力実用性</td><td><span class="mark mark-pass">PASS</span>Quick Wins は高品質</td><td><span class="mark mark-warn">WARN</span>着手順が読めない</td><td><span class="mark mark-warn">WARN</span>重複指摘の整理が手動</td></tr>
+      <tr><td class="cat-name">鮮度 (基準の更新経路)</td><td><span class="mark mark-fail">FAIL</span>指標の更新ループ不在</td><td><span class="mark mark-fail">FAIL</span>評価基準が孤立凍結</td><td><span class="mark mark-warn">WARN</span>ui領域が停滞</td></tr>
+      <tr><td class="cat-name">自己改善 (運用から学ぶ)</td><td><span class="mark mark-fail">FAIL</span>self-eval 出力ゼロ</td><td><span class="mark mark-warn">WARN</span>手動メンテのみ (意図的)</td><td><span class="mark mark-pass">PASS</span>観測の仕組みは機能</td></tr>
+      <tr><td class="cat-name">統合性 (3系統の呼び分け)</td><td><span class="mark mark-warn">WARN</span>文書化が1行のみ</td><td><span class="mark mark-fail">FAIL</span>新系統を認識していない</td><td><span class="mark mark-warn">WARN</span>重複の基準が未文書化</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">04</span>系統別の要点</h2>
+  <div class="card">
+    <h3><span class="sev sev-fail">要修正</span>review-harness — 診断装置が2026年を知らない</h3>
+    <div class="kv"><b>確定バグ</b>グレード定義が3ファイルで不一致。レポートのテンプレートだけ旧5段階 (E判定の行が無い) のまま、本体・HTML・OGP画像は6段階に更新済み。</div>
+    <div class="kv"><b>カバレッジ</b>Agent Teams (複数エージェントの協調機能) / autoMemory (自動記憶) / sandbox (隔離実行) / 新しい hook イベントが、評価基準の全377行に一度も登場しない。</div>
+    <div class="kv"><b>再現性</b>同一ハーネスに対し 50点満点・48点満点・92% と、採点の物差し自体が実行のたびに変わった記録がある。機械的に検証される指標は25個中ほぼ0。</div>
+    <div class="kv"><b>強み</b>修正手順のコピペ可能なスニペットと優先度付けは高品質 — 強化で壊してはならない側。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-fail">要修正</span>review-agent-essence — 評価基準が孤立凍結</h3>
+    <div class="kv"><b>最重大</b>同梱の評価基準39項目が、更新ループの対象外かつ同期チェックの射程外。成長する正本と別々に管理される「二重帳簿」状態。</div>
+    <div class="kv"><b>精度</b>判定が ○/△/× のみで severity (重大度) が無く「どれから直すべきか」が出力から読めない。根拠に行番号を引用する義務も無い。</div>
+    <div class="kv"><b>統合</b>「エッセンスレビュー」という一般的な言葉は必ずこの旧系統に流れ、後発の3領域並列系統には決して届かない (呼び分けの片方向記述)。参照側には「11原則」という古い数字が3箇所残存 (実態は39項目)。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">部分強化</span>essence協調一式 — 最も整備されているが、精度に穴</h3>
+    <div class="kv"><b>構造は堅牢</b>出力の形式は検証スクリプトと hook (コマンド実行の前後に自動で走る検査) が機械チェックしており、3系統で唯一 self-eval も稼働。</div>
+    <div class="kv"><b>精度</b>レビュー担当へ commit メッセージ (著者の意図文言) を渡すアンカリング源があり、担当間で重複した指摘の整理は人間頼み — 重大度の集計が二重計上で歪む余地。</div>
+    <div class="kv"><b>鮮度</b>ui 領域の原則だけ更新が止まっている (更新リマインダーは金曜起動時のみ発火する設計)。</div>
+  </div>
+
+  <h2><span class="no">05</span>「質を落とさない」ための資産 — 壊してはいけない契約</h2>
+  <p>本調査は欠落だけでなく、<strong>改修時に壊してはいけない配線 (契約)</strong> も明細化した。強化の絶対条件は「現状の質を落とさない」であり、このリストが全 issue 共通の実装チェックリストになる。</p>
+  <ul class="plain">
+    <li><b>review-harness</b> — 出力ファイルの命名規則 / グレード6段階とOGP画像の対応 / HTMLの配色 (本ページの生成装置 explain-in-html が同じ見た目を前提に依存) / 初心者向けスタートアップモードの分岐。</li>
+    <li><b>review-agent-essence</b> — 標準出力の構造 (原則適用マトリクス〜次のアクション指示) は「不変」と明記された正式成果物。自動改修の禁止指定 (変更は人間主導のみ) も設計意図として尊重する。</li>
+    <li><b>essence協調一式</b> — 出力の yaml キー名・件数の併記形式は、検証スクリプトと commit 前 hook が機械的に読み取る契約。fork (分離実行) の境界や評価基準の置き場所パスを含め10項目を確定。</li>
+  </ul>
+
+  <h2><span class="no">06</span>ここからどうするか — 強化プランと issue</h2>
+  <p>欠落は優先度 P0 (バグ・保守修正) 〜 P2 (カバレッジ・再現性・自己改善) に整理し、GitHub (kaijutale/claude-harness) へ11件を起票済み。実装は <strong>baseline (改修前の基準値) 取得 → 改修 → 同一対象へ再実行して比較</strong> の順を必須とし、説明できないスコア変動はリグレッション (品質後退) として差し戻す。特に review-harness は採点が揺れる実証があるため、baseline は2回実行して「自然なブレ幅」を先に測る。</p>
+  <table>
+    <thead><tr><th>issue</th><th>内容</th><th>優先度</th><th>人間確認</th></tr></thead>
+    <tbody>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/73">#73</a></td><td>グレード定義の3ファイル不一致を修正</td><td class="score-cell">P0</td><td><span class="mark mark-na">なし (機械検証)</span></td></tr>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/74">#74</a></td><td>「11原則」の古い表記を正本参照方式に統一</td><td class="score-cell">P0</td><td><span class="mark mark-na">なし (機械検証)</span></td></tr>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/75">#75</a></td><td>3系統の呼び分けを双方向に文書化</td><td class="score-cell">P1</td><td><span class="mark mark-na">なし</span></td></tr>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/76">#76</a></td><td>severity 4段階 + 行番号の根拠引用を義務化</td><td class="score-cell">P1</td><td><span class="mark mark-warn">PRレビュー</span></td></tr>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/77">#77</a></td><td>反迎合・反インフレ装置 (アンカー遮断 + 見逃し探索)</td><td class="score-cell">P1</td><td><span class="mark mark-warn">PRレビュー</span></td></tr>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/78">#78</a></td><td>評価基準の正本統合 (凍結側を正本群へ編入し更新ループに接続)</td><td class="score-cell">P1</td><td><span class="mark mark-fail">HITL 必須</span></td></tr>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/79">#79</a></td><td>25指標へ2026年機能を吸収 (指標数は据え置き)</td><td class="score-cell">P2</td><td><span class="mark mark-fail">HITL 必須</span></td></tr>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/80">#80</a></td><td>決定論ファクト収集スクリプトを診断の前段に新設</td><td class="score-cell">P2</td><td><span class="mark mark-na">なし</span></td></tr>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/81">#81</a></td><td>協調装置の入力からアンカー除去 + 重複指摘の整理手順</td><td class="score-cell">P2</td><td><span class="mark mark-warn">PRレビュー</span></td></tr>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/82">#82</a></td><td>review-harness に self-eval 永続化 + 自己改善ループ接続</td><td class="score-cell">P2</td><td><span class="mark mark-warn">既存の確認機構</span></td></tr>
+      <tr><td class="score-cell"><a href="https://github.com/kaijutale/claude-harness/issues/83">#83</a></td><td>ui 領域の原則の鮮度点検 (運用タスク)</td><td class="score-cell">P2</td><td><span class="mark mark-warn">既存の確認機構</span></td></tr>
+    </tbody>
+  </table>
+  <p>設計の全文は <code>.docs/plans/2026-07-03-review-skills-enhancement.md</code>、調査の詳細は <code>.docs/research/review-skills-gap-analysis.md</code> にある。</p>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">レビュー装置は作った瞬間から古び始める。今回確定した最重大の欠落は個々の指摘漏れではなく、「評価基準そのものが更新の輪の外にいる」という構造だった。強化の核心は基準を更新ループと乖離検知の網に接続すること (issue #78) で、ここだけは人間の最終判断 (HITL) が起点になる。残る10件は、明細化した契約をチェックリストに、baseline 比較で「質を落とさない」ことを機械的に確かめながら進められる。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.04 04:12 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
