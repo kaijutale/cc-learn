@@ -1,0 +1,294 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-2 可読性の4原則 — 記事定義とkaijuハーネス実装の照合</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">HARNESS AUDIT · K-2 LEGIBILITY · 2026.07.05</div>
+  <h1>K-2 可読性の4原則<br>記事定義と<em>ハーネス実装</em>の照合</h1>
+  <div class="meta"><span>2026.07.05</span><span>構造的制約 K-2 · 可読性</span><span>対象 kaiju harness ~/.claude/</span></div>
+
+  
+
+  <div class="hero grade-a">
+    <div class="grade-box grade-a">
+      <div class="grade-letter">A</div>
+      <div class="grade-pct">3 green · 1 amber</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">判定</div>
+      <p>K-2「エージェント可読性」の4原則のうち <strong>3つ (K-2.2 / K-2.3 / K-2.4) はハーネスが記事を超え</strong>、方針を書くだけでなく機械に守らせる段階まで到達している。<strong>K-2.1 のみ思想は達成・数値 (CLAUDE.md 60行) は未達</strong>。唯一のギャップは CLAUDE.md の行数だが、<em>病理ではない</em>。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>4原則サマリ</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">対象原則</div><div class="v">K-2.1〜2.4</div></div>
+    <div class="stat"><div class="k">記事超え</div><div class="v">3 / 4</div></div>
+    <div class="stat"><div class="k">思想○ 数値✗</div><div class="v">1 (K-2.1)</div></div>
+    <div class="stat"><div class="k">唯一のギャップ</div><div class="v">CLAUDE.md 112行</div></div>
+  </div>
+
+  <h2><span class="no">02</span>スコアカード</h2>
+  <table>
+    <thead><tr><th>原則</th><th>記事の設計パターン</th><th>ハーネス実装</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="cat-name">K-2.1<br>ポインタ優先</td>
+        <td>Progressive Disclosure / CLAUDE.md 60行以下</td>
+        <td>rules/ の導線 + progressive-disclosure/ に本体 + ポインタ実在の機械検証。但し CLAUDE.md 112行</td>
+        <td><span class="mark mark-warn">思想○ 数値✗</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">K-2.2<br>構造化</td>
+        <td>3層ドキュメント構造 + ADR</td>
+        <td>分類の正本 + frontmatter + <code>validate-knowledge.py</code> で機械検証</td>
+        <td><span class="mark mark-pass">記事超え</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">K-2.3<br>観測面</td>
+        <td>5チャネル観測面設計</td>
+        <td>全チャネル + fire-report のメタ観測 + statusLine 常時可視化</td>
+        <td><span class="mark mark-pass">記事超え</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">K-2.4<br>方針外部化</td>
+        <td>ルールを設定ファイルへ外部化</td>
+        <td>settings 分離 + ルールJSON化 + それを deny で保護</td>
+        <td><span class="mark mark-pass">記事超え</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>各原則の詳細</h2>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">思想○ 数値✗</span>K-2.1 ポインタは百科事典より強い</h3>
+    <div class="kv"><b>記事</b>CLAUDE.md を60行以下のポインタ (目次カード) 型にする。詳細は Progressive Disclosure (段階開示 = 必要な時だけ読み込む) でポインタ先に置く。狙いは帯域の常時圧迫 (C-1) の回避。</div>
+    <div class="kv"><b>実装</b><code>rules/</code> の5本が詳細への導線を持ち、本体は <code>.docs/progressive-disclosure/</code> に外置き。ポインタの実在は hook (特定操作に自動で割り込む小さなプログラム、<code>hook_validate_claudemd.sh</code>) が機械検証し、リンク切れを検出する。</div>
+    <div class="kv"><b>ギャップ</b>CLAUDE.md は実測 <em>112行</em> (60行目安の約1.87倍)。ただし中身は憲法 (人格・口調・応答規約) の本文 + 詳細ポインタの<strong>ハイブリッド</strong>で、記事が警告する500〜1000行の百科事典型病理には陥っていない。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">記事超え</span>K-2.2 ドキュメントは構造化する</h3>
+    <div class="kv"><b>記事</b>3層ドキュメント構造 (原則 / 戦術=ADR / 実行=SKILL.md) に分け、判断理由と却下案を永続化する。</div>
+    <div class="kv"><b>実装</b><code>knowledge-categories.md</code> が分類の正本、frontmatter (ファイル先頭の機械可読メタデータ) で型を固定。<code>validate-knowledge.py</code> が pre-commit (コミット直前に走る検証) で列挙値・循環依存・ADR却下案の非空を機械検証する。</div>
+    <div class="kv"><b>差</b>記事は「構造化された文書を残せ」まで。ハーネスは<strong>検証を機械強制</strong>する段階まで進めている。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">記事超え</span>K-2.3 観測面を設計する</h3>
+    <div class="kv"><b>記事</b>ファイル / コマンド / ログ / API / UI の5チャネルで世界を観測可能にする。観測できないものは制御できない (C-4 自己申告への対策)。</div>
+    <div class="kv"><b>実装</b>5チャネルを全カバーした上で、fire-report hook が「hook 自体が今月何回鳴ったか」を観測する<strong>メタ観測 (観測する仕組み自体の観測)</strong>、heartbeat で「静か = 平和か観測不能か」を判別、statusLine で使用状況を常時可視化。</div>
+    <div class="kv"><b>差</b>観測面そのものを観測する<strong>二階の仕組み</strong>まで到達している。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">記事超え</span>K-2.4 ルールは設定ファイルに分ける</h3>
+    <div class="kv"><b>記事</b>制御方針をコードに埋め込まず、設定ファイル (YAML 等) へ外部化する。差分表示で方針の違いが見え、別プロジェクトへの移植も容易になる。</div>
+    <div class="kv"><b>実装</b><code>settings.json</code> が hooks / permissions / env を分離、<code>hooks/rules/*.json</code> がルールをデータ化 (処理ロジックと分離)。さらにそのルールJSON自体を <code>permissions.deny</code> (操作を構造的に禁止する設定) で改竄禁止にする。</div>
+    <div class="kv"><b>差</b>外部化した器そのものを保護する<strong>メタ保護</strong>まで到達している。</div>
+  </div>
+
+  <h2><span class="no">04</span>唯一のギャップ — CLAUDE.md 112行をどう見るか</h2>
+  <p>4原則で唯一 amber なのは K-2.1 の CLAUDE.md 行数 (112行 vs 60行目安)。だが<strong>無理に60行へ削るべきではない</strong>。理由は3つ。</p>
+  <ul class="plain">
+    <li><b>百科事典型ではない</b> — 112行は憲法本文 + ポインタのハイブリッド。記事が警告する500〜1000行の止まらない肥大とは別物。</li>
+    <li><b>常時効かせたい核</b> — 人格・応答構造はポインタ先へ追いやると遅延ロードで効かなくなる。本文に置く合理性がある。</li>
+    <li><b>数値より本質</b> — 「60行」は目安にすぎない。見るべきは「肥大化していないか」であり、肥大の兆しが出た時が外出しの合図。</li>
+  </ul>
+
+  <h2><span class="no">05</span>総評</h2>
+  <div class="quote">K-2 可読性の4原則は、このハーネスにおいて「方針を書く」段階を超え「機械が守らせる」段階へ達している。K-2.2〜2.4 は記事の推奨を検証・保護のメタ層まで押し上げ、K-2.1 も思想は満たす。唯一の数値ギャップである CLAUDE.md 112行は欠陥ではなく、憲法を常時効かせるための意図的な厚みだ。数値を追うより、肥大化の兆しを監視することが本筋である。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.05 17:21 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
