@@ -1,0 +1,389 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rules/ Progressive Disclosure 化計画 — 仕分けと実装フェーズ (issue #110 設計意見)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">PLAN · RULES × PROGRESSIVE DISCLOSURE · 2026.07.08</div>
+  <h1>rules/ を <em>Progressive Disclosure</em> 化する設計意見</h1>
+  <div class="meta"><span>2026.07.08</span><span>ハーネス設計計画</span><span>対象: ~/.claude/rules/ 10本 110行</span><span>関連: issue #94 / #110</span></div>
+
+  
+
+    <h2><span class="no">01</span>現状の実測 — rules/ は全 10 本が起動時に全注入されている</h2>
+
+  <div class="stats">
+    <div class="stat"><div class="k">RULES 総数</div><div class="v">10 本</div></div>
+    <div class="stat"><div class="k">総行数</div><div class="v">110 行</div></div>
+    <div class="stat"><div class="k">PATHS 付与済</div><div class="v">0 本 (全て起動時注入)</div></div>
+    <div class="stat"><div class="k">核として維持すべき行</div><div class="v">84 行</div></div>
+  </div>
+
+  <p style="margin-top:18px;">
+    <code>~/.claude/rules/*.md</code> は、YAML frontmatter (ファイル冒頭のメタデータ欄) に <code>paths</code> (対象ファイルの glob パターン = ワイルドカード指定) が無い限り、
+    <strong>すべてのセッションの開始時にコンテキストへ全文注入される</strong>。実測したところ現状は 10 本 110 行、paths 指定はゼロ。
+    その証拠に、markdown 文書しか扱わないこの計画セッションでも、UI の美学指針 (frontend-aesthetics) やビルド・テスト規約 (build-test-protocol) が注入されている。
+  </p>
+
+  <table>
+    <thead><tr><th>RULE</th><th>行数</th><th>役割 (一言)</th><th>ISSUE #110 の原案</th><th>本計画の判定</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">decisive-answers</td><td class="score-cell">31</td><td>断定回答・先頭ヘッジ禁止</td><td>注入維持</td><td><span class="mark mark-na">注入維持 (核)</span></td></tr>
+      <tr><td class="cat-name">command-handoff</td><td class="score-cell">27</td><td>コマンド手渡しのゲート</td><td>注入維持</td><td><span class="mark mark-na">注入維持 (核)</span></td></tr>
+      <tr><td class="cat-name">multi-agent-safety</td><td class="score-cell">12</td><td>並行エージェント安全規約</td><td>注入維持</td><td><span class="mark mark-na">注入維持 (核)</span></td></tr>
+      <tr><td class="cat-name">critical-thinking-checklist</td><td class="score-cell">11</td><td>根本原因修正・反迎合</td><td>注入維持</td><td><span class="mark mark-na">注入維持 (核)</span></td></tr>
+      <tr><td class="cat-name">citation-format</td><td class="score-cell">3</td><td>出典を機械的に解決可能に</td><td>注入維持</td><td><span class="mark mark-na">注入維持 (核)</span></td></tr>
+      <tr><td class="cat-name">harness-modification-policy</td><td class="score-cell">5</td><td>協調ハーネス改修の判断基準</td><td>paths: <code>~/.claude/**</code></td><td><span class="mark mark-pass">PATHS 化 (glob 再設計)</span></td></tr>
+      <tr><td class="cat-name">build-test-protocol</td><td class="score-cell">4</td><td>検証不可なら出荷不可</td><td>paths: テストファイル</td><td><span class="mark mark-pass">PATHS 化 (glob 拡大)</span></td></tr>
+      <tr><td class="cat-name">frontend-aesthetics</td><td class="score-cell">4</td><td>UI 制作の美学指針</td><td>paths: <code>**/*.{tsx,css,scss}</code></td><td><span class="mark mark-pass">PATHS 化</span></td></tr>
+      <tr><td class="cat-name">plan-workflow</td><td class="score-cell">7</td><td>plan の出力先・5 フェーズ</td><td>paths: <code>.docs/plans/**</code></td><td><span class="mark mark-warn">保留 → hook 併用設計</span></td></tr>
+      <tr><td class="cat-name">research-phase</td><td class="score-cell">6</td><td>重い調査の外部化先</td><td>paths 候補</td><td><span class="mark mark-warn">保留 → hook 併用設計</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">02</span>なぜ Progressive Disclosure か — 根拠の要約</h2>
+
+  <p>
+    Progressive Disclosure (段階的開示 — 詳細を外部ファイルへ置き、必要な時にだけ読み込ませる設計パターン) を rules/ に適用する根拠は、
+    調査ドキュメント <code>.docs/research/progressive-disclosure-adoption-rationale.md</code> (note 7 記事の横断調査) に集約済み。要点は 4 つ:
+  </p>
+
+  <ul class="plain">
+    <li><b>帯域はゼロサム</b> — コンテキストの枠に入る情報量には上限があり、ある情報を入れると別の集中力が薄まる (260405「机のたとえ」)。</li>
+    <li><b>足すほど守られなくなる</b> — 指示 10 個で遵守率 約90%、50 個以上で急落。無関係なルールの常駐は、核ルールの遵守率まで下げる。</li>
+    <li><b>遅延ロードが原則</b> — 「重要な情報は早めに外部化し、必要な情報は遅延ロードする」(260405)。Anthropic 自身が Skills の中核原則としている (260501)。</li>
+    <li><b>paths は準決定論</b> — 「必要な時に Read してくれるか」というモデルの確率的判断を、<strong>ファイルマッチによる機械注入</strong>へ置き換えられる。ただし後述の通り発火条件に重大な制約がある。</li>
+  </ul>
+
+  <h2><span class="no">03</span>公式仕様の裏取り — 計画を左右した 2 つの制約</h2>
+
+  <p>
+    glob の書き方を推測で決めると事故るため (前セッションでツール結果の捏造が多発した反省もある)、
+    公式ドキュメントと GitHub の既知問題を調査エージェントで裏取りした。結果は以下の通り:
+  </p>
+
+  <table>
+    <thead><tr><th>確認項目</th><th>判明した内容</th><th>状態</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">構文</td><td>YAML 配列で glob を列挙。<code>{ts,tsx}</code> のような複数拡張子の一括指定 (brace expansion) も可</td><td><span class="mark mark-pass">記載あり</span></td></tr>
+      <tr><td class="cat-name">発火条件</td><td>「パターンにマッチするファイルを <strong>Claude が Read した時</strong>」に発火。ツール使用ごとの評価ではない</td><td><span class="mark mark-warn">重要制約</span></td></tr>
+      <tr><td class="cat-name">Write / Edit 時</td><td><strong>発火しない</strong>。Read のみ (GitHub Issue #23478 で報告)</td><td><span class="mark mark-fail">重要制約</span></td></tr>
+      <tr><td class="cat-name">起動時の消費</td><td>paths 付き rule は起動時に載らず、マッチ Read 時に遅延注入 (paths 無しは無条件で全注入)</td><td><span class="mark mark-pass">記載あり</span></td></tr>
+      <tr><td class="cat-name">グローバル rule の glob 解決基準</td><td>project root 基準か home 基準か、<strong>公式に記載なし</strong></td><td><span class="mark mark-fail">要実測</span></td></tr>
+      <tr><td class="cat-name">git worktree での挙動</td><td>記載なし</td><td><span class="mark mark-fail">要実測</span></td></tr>
+      <tr><td class="cat-name">subagent への注入</td><td>記載なし (rules が subagent に届くか不明)</td><td><span class="mark mark-fail">要実測</span></td></tr>
+      <tr><td class="cat-name"><code>paths:</code> の信頼性</td><td>一部構成で効かず、非公式の <code>globs:</code> 形式が動くという報告あり (GitHub Issue #17204)</td><td><span class="mark mark-warn">要実測</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="card" style="margin-top:18px;">
+    <h3><span class="sev sev-fail">CRITICAL</span>「Write 時に発火しない」が原案を崩す</h3>
+    <div class="kv"><b>意味</b>rule は「マッチするファイルを読んだ時」にしか現れない。<strong>これから新規ファイルを書く</strong>作業では、書く前に Read が起きないため rule は永遠に注入されない。</div>
+    <div class="kv"><b>影響</b>plan-workflow (「plan は <code>.docs/plans/</code> へ書け」) と research-phase (「調査は <code>.docs/research/</code> へ外部化せよ」) は、<strong>まさに新規ファイルの書き先を指示する rule</strong>。paths を付けた瞬間、いちばん効いてほしい場面 (新規作成の直前) で確実に不在になる。鶏と卵の関係 — rule が発火するには rule が指示する場所にファイルが既に必要。</div>
+    <div class="kv"><b>出典</b><a href="https://github.com/anthropics/claude-code/issues/23478">anthropics/claude-code #23478</a> / <a href="https://code.claude.com/docs/en/memory.md">公式 memory ドキュメント</a></div>
+  </div>
+
+  <h2><span class="no">04</span>仕分けの意見 — issue #110 原案からの修正 5 点</h2>
+
+  <p>
+    原案は「26 行を paths 化」だが、上記の制約を踏まえると <strong>一括適用は過適用</strong>。
+    先行して paths 化してよいのは 3 本 13 行 (Tier A)、残り 2 本 13 行 (Tier B) は paths 単独では成立しないため hook (ツール実行に連動して決定論的に発動する仕組み) との併用設計へ分離する。
+  </p>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">TIER A</span>frontend-aesthetics (4 行) — そのまま paths 化</h3>
+    <div class="kv"><b>提案 glob</b><code>**/*.{tsx,jsx,css,scss,html}</code></div>
+    <div class="kv"><b>理由</b>UI 作業は既存コンポーネントの Read が先行することがほとんどで、Read 発火と相性が良い。新規ファイルをいきなり書く隙間は、常駐している designing-beautiful-frontends skill の説明文が補完する。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">TIER A</span>build-test-protocol (4 行) — paths 化するが glob を拡大 <span class="chip">原案修正</span></h3>
+    <div class="kv"><b>原案</b>テストファイルのみ (例: <code>**/*.test.ts</code>)</div>
+    <div class="kv"><b>修正案</b>コード全域: <code>**/*.{ts,tsx,js,jsx,mjs,cjs,py,go,rs,sh}</code></div>
+    <div class="kv"><b>理由</b>この規約が必要なのは「コードを書いて出荷する時」全般。テストを読まないセッションこそ検証をサボる危険が高く、発火の門をテストファイルに置くのは本末転倒。コード全域なら実装作業では確実に発火し、markdown だけのセッション (本プロジェクトのような学習・文書作業) では消えて帯域を節約できる。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">TIER A</span>harness-modification-policy (5 行) — paths 化するが glob を相対レイアウト基準に <span class="chip">原案修正</span></h3>
+    <div class="kv"><b>原案</b><code>~/.claude/**</code> (home 配下の絶対パス)</div>
+    <div class="kv"><b>修正案</b>ハーネスリポジトリの構造に相対マッチ: <code>{skills,agents,hooks,essence,rules}/**</code></div>
+    <div class="kv"><b>理由</b>glob の解決基準 (project root か home か) は公式に記載がなく、home 絶対 glob は worktree (<code>~/.worktrees/.claude/issue-XX/</code>) でマッチしない恐れがある。ハーネス改修は worktree で行うのが規約ゆえ、<strong>worktree でこそ発火しない glob は最悪の選択</strong>。リポジトリ内の相対レイアウトなら本体でも worktree でも同型にマッチする。Phase 0 の実測で確定させる。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">TIER B</span>plan-workflow (7 行) — paths 単独では成立しない。保留し hook 併用を別設計 <span class="chip">原案修正</span></h3>
+    <div class="kv"><b>原案</b><code>.docs/plans/**</code></div>
+    <div class="kv"><b>問題</b>新規 plan の作成は Write であり発火しない (制約 #23478)。発火するのは既存 plan を Read する場面 (引き継ぎ時など) だけで、rule の主目的「書く前に出力先とフェーズを伝える」に効かない。</div>
+    <div class="kv"><b>代替案</b>当面は注入維持 (7 行)。恒久策は plan モード終了 (ExitPlanMode) への PreToolUse hook で規約を決定論注入する設計 — 「hook はモデルの気まぐれに左右されない」(260321 の !構文と同じ思想)。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">TIER B</span>research-phase (6 行) — 同型の鶏卵問題。保留 <span class="chip">原案修正</span></h3>
+    <div class="kv"><b>問題</b>調査成果物を <code>.docs/research/</code> へ「これから書く」場面で発火し得ない。</div>
+    <div class="kv"><b>代替案</b>当面は注入維持 (6 行)。conducting-research-phase skill の説明文が常駐の想起トリガーとして既に機能しており、重複度を観測してから注入を外すか判断する。</div>
+  </div>
+
+  <p style="margin-top:22px;">修正点のまとめ:</p>
+
+  <ul class="plain">
+    <li><b>1. 削減幅を 26 行 → 13 行に半減</b> — Tier B 13 行は据え置き。誇張せず、成立する分だけを正直に見積もる。</li>
+    <li><b>2. build-test-protocol の glob をテスト限定 → コード全域へ</b> — 発火の門を「検証をサボりやすい場面」に合わせる。</li>
+    <li><b>3. harness-modification-policy の glob を home 絶対 → リポジトリ相対へ</b> — worktree での不発リスクを回避。</li>
+    <li><b>4. plan-workflow / research-phase は hook 併用の別設計へ分離</b> — paths の Read 限定発火と構造的に不整合。</li>
+    <li><b>5. Phase 0 (実測検証) を必須ゲート化</b> — 公式未記載の 3 点 (glob 解決基準・worktree・subagent) と <code>paths:</code> の信頼性を、合言葉方式で確認してから適用。</li>
+  </ul>
+
+  <h2><span class="no">05</span>実装フェーズ計画</h2>
+
+  <ul class="plain">
+    <li><b>Phase 0: 仕様の実測検証 (必須ゲート)</b> — worktree + <code>CLAUDE_CONFIG_DIR</code> 隔離環境に、合言葉入りの canary rule (動作確認専用の使い捨て rule) を置いて 5 点を観測: (a) 起動時に載らないこと (b) マッチするファイルの Read で載ること (c) Write だけでは載らないこと (d) 現行バージョンで <code>paths:</code> が効くこと (効かなければ <code>globs:</code> 併記) (e) subagent へ届くか。</li>
+    <li><b>Phase 1: Tier A 3 本へ paths 付与</b> — 13 行を起動時注入から除外。1 rule = 1 コミットで committer による小コミット、PR を作り人のレビューを経てマージ。本体 <code>~/.claude</code> の直接編集は絶対禁止。</li>
+    <li><b>Phase 2: Tier B の hook 併用設計</b> — ExitPlanMode への PreToolUse hook 等を検討し、別 issue に切り出す (paths とは別の仕組みゆえスコープを混ぜない)。</li>
+    <li><b>Phase 3: 観測と調整</b> — 数セッション運用し「効くべき場面で効いたか」を <code>.docs/logs/</code> に記録。頻度を見て階層を上げ下げする (「頻度を見て下層から格上げ」の運用原則、260517)。</li>
+  </ul>
+
+  <p>Phase 0 の canary rule の例:</p>
+
+  <pre>---
+paths:
+  - "canary-target/**"
+---
+# Canary Rule (検証用・使い捨て)
+このルールが読めているなら、応答の冒頭で合言葉
+「XYZZY-PATHS-ACTIVE」を出力すること。</pre>
+
+  <p style="margin-top:14px;">
+    合言葉が出るか否かという<strong>観測可能な挙動</strong>で判定するため、「注入された気がする」という主観や捏造が入り込む余地がない。
+  </p>
+
+  <h2><span class="no">06</span>リスクと対策</h2>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span>Write 発火なしの隙間 (Tier A にも残る)</h3>
+    <div class="kv"><b>シナリオ</b>既存ファイルを一切 Read せず、新規 UI ファイルをいきなり Write する場合、frontend-aesthetics が効かない。</div>
+    <div class="kv"><b>対策</b>常駐する skill 説明文と PD ドキュメント参照で補完。Phase 3 の観測でこのシナリオの実際の頻度を計測し、問題なら注入へ戻す。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span>subagent への継承が未文書</h3>
+    <div class="kv"><b>シナリオ</b>rules が subagent に届かない場合、rule 前提で動く subagent 設計は静かに壊れる。</div>
+    <div class="kv"><b>対策</b>Phase 0 で実測。設計原則としても「rule はメイン会話向け、subagent は自身の定義文で完結」を維持し、依存を作らない。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span><code>paths:</code> が効かない構成の報告 (#17204)</h3>
+    <div class="kv"><b>シナリオ</b>公式記載の <code>paths:</code> 形式が動かず、非公式の <code>globs:</code> だけが動く環境がある。</div>
+    <div class="kv"><b>対策</b>Phase 0 の canary で自環境の挙動を確認。効かない場合のみ <code>globs:</code> を併記し、公式修正後に削除する前提でコメントを残す。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-pass">CONTAINED</span>失敗時の影響範囲は小さく、完全に可逆</h3>
+    <div class="kv"><b>理由</b>核 84 行は一切触れないため、最悪でも影響は Tier A の 13 行に限定。ロールバックは frontmatter を削除するだけで元の全注入状態に戻る。</div>
+  </div>
+
+  <h2><span class="no">07</span>総評と出典</h2>
+
+  <div class="quote">
+    paths 化は「必要な時に Read してくれるか」という確率的判断をファイルマッチの機械注入へ置き換える正しい一歩だが、公式仕様は Read 時のみ発火で、未文書の領域が 3 つ残る。issue #110 原案のまま 5 本を一括適用するのは過適用であり、核 84 行は死守、成立が確実な Tier A 3 本 (13 行) だけを実測ゲート (Phase 0) 付きで先行適用し、鶏卵問題を抱える Tier B 2 本は hook 併用の別設計へ分離する — これが可逆性と遵守率を両立する最小リスクの進め方である。
+  </div>
+
+  <p style="margin-top:22px;">出典 (機械的に解決可能な導線):</p>
+
+  <ul class="plain">
+    <li><b>採用根拠の調査</b> — <code>260530プロジェクト/.docs/research/progressive-disclosure-adoption-rationale.md</code> (note 7 記事横断、一次 URL・行番号付き)。note 記事正本: <code>~/.claude/.docs/references/note-articles/NNNNNN_*/source.pdf</code></li>
+    <li><b>実装タスクの原案</b> — <a href="https://github.com/kaijutale/claude-harness/issues/110">kaijutale/claude-harness #110</a> (親: <a href="https://github.com/kaijutale/claude-harness/issues/94">#94</a> CLAUDE.md 60 行化)</li>
+    <li><b>公式仕様</b> — <a href="https://code.claude.com/docs/en/memory.md">code.claude.com/docs/en/memory.md</a> (rules と paths frontmatter)</li>
+    <li><b>既知の制限</b> — <a href="https://github.com/anthropics/claude-code/issues/23478">anthropics/claude-code #23478</a> (Write 非発火) / <a href="https://github.com/anthropics/claude-code/issues/17204">#17204</a> (paths: 信頼性)</li>
+    <li><b>rules/ の実測</b> — 2026-07-08 に <code>wc -l ~/.claude/rules/*.md</code> + frontmatter 検査で確認 (10 本 110 行・paths ゼロ)</li>
+  </ul>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.08 19:44 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
