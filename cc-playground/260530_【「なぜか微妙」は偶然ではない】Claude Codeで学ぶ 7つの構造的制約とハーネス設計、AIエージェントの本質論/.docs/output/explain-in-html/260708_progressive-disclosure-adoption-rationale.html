@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progressive Disclosure 採用理由の徹底調査（note 7記事横断）</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">RESEARCH · Progressive Disclosure 採用可否 · 2026.07.08</div>
+  <h1>Progressive Disclosure<br>採用理由の<em>徹底調査</em></h1>
+  <div class="meta"><span>2026.07.08</span><span>note まさお氏 7記事横断</span><span>対象 CLAUDE.md 60行化 (#94/#99)</span></div>
+
+  
+
+  <div class="hero grade-a">
+    <div class="grade-box grade-a">
+      <div class="grade-letter">A</div>
+      <div class="grade-pct">採用推奨</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">判定</div>
+      <p>note 7記事 + <strong>Anthropic 自身</strong>が一貫して推す、コンテキスト帯域のゼロサム問題への正解。採用してよい。ただし<strong>成否は「どのルールを外に出すか」の仕分けに懸かる</strong>。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>なぜコンテキストを節約すべきか(問題)</h2>
+  <p>大前提は <strong>C-1「コンテキスト帯域は有限・ゼロサム」</strong>(机のたとえ、260405)。机に参考書を広げるほど書類を書く場所が減るように、ある情報を入れると別の情報への集中力が薄まる。CLAUDE.md を肥大化させると個々のルールが「任意」扱いされ<strong>遵守率が落ちる</strong> ——「百科事典を渡された旅行者は、結局何も読まない」。核心テーゼは「<em>帯域は減る一方だ。必要な情報は遅延ロードする</em>」(260405)。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">指示10個</div><div class="v">遵守 約90%</div></div>
+    <div class="stat"><div class="k">指示50個以上</div><div class="v">遵守率が急落</div></div>
+    <div class="stat"><div class="k">MCP ツール定義</div><div class="v">23〜50k トークン</div></div>
+    <div class="stat"><div class="k">一貫追従の上限</div><div class="v">約 150〜200</div></div>
+  </div>
+  <p>他にも <strong>Lost in the Middle</strong>(長い文脈の中盤を読み落とす) と <strong>注意の汚染</strong>(途中で捨てた古い前提が判断に混ざる)が、肥大化の害として繰り返し挙げられる。</p>
+
+  <h2><span class="no">02</span>Progressive Disclosure の根拠</h2>
+  <table>
+    <thead><tr><th>根拠</th><th>出典</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">設計パターン明示</td><td>CLAUDE.md は60行の地図、詳細はポインタ先、必要時だけ Read (260405 K-2.1)</td><td><span class="mark mark-pass">中核</span></td></tr>
+      <tr><td class="cat-name">Anthropic の中核原則</td><td>「Anthropic 自身も Skills の中核原則としている」。UI/UX 由来を context に適用 (260501)</td><td><span class="mark mark-pass">血統</span></td></tr>
+      <tr><td class="cat-name">3層モデル</td><td>入口=常駐 / SKILL.md 本文=タスク関連時 / 補助ファイル=能動 Read 時 (260501)</td><td><span class="mark mark-pass">構造</span></td></tr>
+      <tr><td class="cat-name">4記憶層</td><td>CLAUDE.md常駐 / refスキル圧縮記憶 / docs残す記憶 / メタデータ。頻度で格上げ (260517)</td><td><span class="mark mark-pass">運用</span></td></tr>
+      <tr><td class="cat-name">Skill 遅延ロード</td><td>呼ばれるまで context に入らず、非使用時の帯域消費はゼロ = ポインタ化と同原理 (260405)</td><td><span class="mark mark-pass">同型</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>かいじゅうの疑問への回答 — 「必要時 Read は誰の判断か」</h2>
+  <p>「必要なときだけ Read」の<em>必要なとき</em>を判断するのはモデル自身 —— つまり確率的で、読み損ねれば詳細ルールは効かぬ。これは重要なトレードオフじゃが、記事群を横断すると答えが見えてくる。</p>
+  <div class="card">
+    <h3><span class="sev sev-warn">盲点</span>元記事はトレードオフに言及していない</h3>
+    <div class="kv"><b>260405</b>Progressive Disclosure を「遵守率が向上」する善策として無条件に推奨。ポインタ先が読まれないリスクの但し書きは無い。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">対策1</span>読まれないポインタは「存在しない」と自覚する</h3>
+    <div class="kv"><b>260501</b>「ポインタが書かれていない補助ファイルは、モデルから見れば存在しないのと同じだ」。→ 想起トリガー(いつ読むか)を明記せよ、の含意。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">対策2</span>確実に効かせたいものは hook で強制参照</h3>
+    <div class="kv"><b>260517</b>「コンテキストが腐る場合は、特定のツールやコマンドの使用時に hook で強制的に ref を参照させる手がある」。→ Read 依存を決定論に寄せる。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">対策3</span>決定論 vs 確率的の線引き</h3>
+    <div class="kv"><b>260404</b>「1を入れて必ず1が返る → スクリプト化。確実でない → LLM に委ねる」。確実に効かせたい核は決定論(hook / !構文)側へ。</div>
+  </div>
+
+  <h2><span class="no">04</span>別解 — context:fork(別コンテキストに逃がす)</h2>
+  <p>詳細を外に出すもう一つの手が <code>context:fork</code>(親の会話履歴を引き継がない独立コンテキストで実行する仕組み、260426「コンテキスト分離の道具」)。ただし<strong>用途が違う</strong> —— fork は<strong>重い実行の分離</strong>、Progressive Disclosure は<strong>参照情報の遅延ロード</strong>じゃ。記事は「役割か手順か」で選べと言う(参照情報なら fork せず Skill 参照が正しい)。</p>
+
+  <h2><span class="no">05</span>採用結論と「仕分け」</h2>
+  <ul class="plain">
+    <li><b>採用は Yes</b> — 帯域ゼロサムへの正解。だが成否は「仕分け」に懸かる。</li>
+    <li><b>確実に効かせたい核</b>(人格・応答契約・安全規約) → 本文に死守、または hook で決定論化。</li>
+    <li><b>読み損ねても致命的でない詳細</b>(手順・規約) → `.docs/` へポインタ化。</li>
+    <li><b>既存の設計判断と完全一致</b> — わらわらが決めた「憲法 verbatim / Tools 安全2行 inline / 詳細 .docs/ / 必要なら hook」を、記事群が外側から裏書きした。</li>
+  </ul>
+
+  <h2><span class="no">06</span>出典 (citation)</h2>
+  <p>全記事の著者: <strong>まさお@未経験からプロまでAI活用</strong>(note: masa_wunder)。ローカル正本は各 <code>source.pdf</code>(`~/.claude/.docs/references/note-articles/`)。</p>
+  <table>
+    <thead><tr><th>prefix</th><th>記事タイトル</th><th>公開日</th><th>一次URL</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">260405</td><td>7つの構造的制約とハーネス設計、AIエージェントの本質論</td><td class="score-cell">2026-04-05</td><td><a href="https://note.com/masa_wunder/n/n4aca70992988">n/n4aca70992988</a></td></tr>
+      <tr><td class="cat-name">260222</td><td>私たちを待ち受ける、次なるAIエージェントの飛躍</td><td class="score-cell">2026-02-22</td><td><a href="https://note.com/masa_wunder/n/na69f0258359a">n/na69f0258359a</a></td></tr>
+      <tr><td class="cat-name">260321</td><td>もう一つの設計層 — 未公開ハックと隠された構造</td><td class="score-cell">2026-03-21</td><td><a href="https://note.com/masa_wunder/n/n437340205161">n/n437340205161</a></td></tr>
+      <tr><td class="cat-name">260404</td><td>AIエージェントにメタ認知を与える</td><td class="score-cell">2026-04-04</td><td><a href="https://note.com/masa_wunder/n/nf03564a8d638">n/nf03564a8d638</a></td></tr>
+      <tr><td class="cat-name">260426</td><td>SubAgentの本質と分け方とは？</td><td class="score-cell">2026-04-26</td><td><a href="https://note.com/masa_wunder/n/nc9fd6a561289">n/nc9fd6a561289</a></td></tr>
+      <tr><td class="cat-name">260501</td><td>Agent Skill大全 — オーケストレーション設計の概念体系</td><td class="score-cell">2026-05-01</td><td><a href="https://note.com/masa_wunder/n/n21463cd133c7">n/n21463cd133c7</a></td></tr>
+      <tr><td class="cat-name">260517</td><td>Skill設計の本質と"境界"とは？</td><td class="score-cell">2026-05-17</td><td><a href="https://note.com/masa_wunder/n/ne5ad528165fb">n/ne5ad528165fb</a></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">Progressive Disclosure は帯域ゼロサムへの正解であり、採用してよい。だが真の設計判断は「60行にするか」ではなく「どのルールが Read 依存に耐えるか」の線引きにある。確実性が要るものは決定論(hook)へ寄せ、詳細だけをポインタ化する。かいじゅうの「必要時 Read は誰の判断か」という問いは、記事群が別々に持ちながら接続し損ねていた盲点を突き、その線引きの正しさを外側から裏書きした。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.08 11:12 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
