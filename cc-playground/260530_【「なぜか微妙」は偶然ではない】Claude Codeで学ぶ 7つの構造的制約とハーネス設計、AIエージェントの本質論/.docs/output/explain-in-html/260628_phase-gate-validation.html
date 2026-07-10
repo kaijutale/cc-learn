@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase分割 + ゲート検証 — 解説とハーネス実装状況</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">PATTERN · 2026.06.28 · PHASE分割 + ゲート検証</div>
+  <h1>Phase分割 + ゲート検証<br>解説と<em>ハーネス実装状況</em></h1>
+  <div class="meta"><span>2026.06.28</span><span>記事解説 + 実装照合</span><span>note パターン2 / 乗算劣化</span></div>
+
+  <div class="hero grade-a">
+    <div class="grade-box grade-a">
+      <div class="grade-letter">A</div>
+      <div class="grade-pct">実装済み</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">ハーネス実装状況</div>
+      <p>記事の「Phase分割 + ゲート検証」は、そなたのハーネスの<strong>中核として完全実装済み</strong>。むしろ記事の例(型チェック / テスト / E2E)を超えて、多層のゲートで固められておる。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>記事「Phase分割 + ゲート検証」とは</h2>
+  <p>複雑なワークフローを番号付きの Phase(段階)に分割し、<strong>各 Phase の境界にゲート(機械的な合否チェック)</strong>を置く設計じゃ。ゲートを通過しなければ次の Phase に進めない。バグをその Phase で食い止め、後続への伝播を断つのが狙い。</p>
+
+  <h2><span class="no">02</span>核心 — 乗算劣化の「分母を変える」</h2>
+  <p>各ステップの成功率が 95% でも、長く繋げば全体の成功率は掛け算で落ちていく。ゲートを挟むと、この劣化の構造そのものを変えられる:</p>
+  <div class="stats">
+    <div class="stat"><div class="k">20ステップ 通し</div><div class="v">0.95^20 ≈ 36%</div></div>
+    <div class="stat"><div class="k">1フェーズ(5ステップ)</div><div class="v">0.95^5 ≈ 77%</div></div>
+    <div class="stat"><div class="k">フェーズ間の伝播</div><div class="v">ゲートで ゼロ</div></div>
+    <div class="stat"><div class="k">実効成功率</div><div class="v">大幅向上</div></div>
+  </div>
+  <p>20 ステップを一気に通すと全体 36%。だが 5 ステップ × 4 フェーズに割り、各フェーズの末尾でゲート検証してエラーを<strong>その場で修正</strong>すれば、フェーズ間にバグが伝播しない。<em>失敗が積み上がらない</em>ぶん、実効成功率が跳ね上がる ── これが「分母を変える」の意味じゃ。</p>
+
+  <h2><span class="no">03</span>Before / After</h2>
+  <table>
+    <thead><tr><th></th><th>Before(通し実行)</th><th>After(Phase分割 + ゲート)</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">流れ</td><td>Step1 → … → Step10 → 「完了しました」</td><td>Phase ごとに区切り、各末尾でゲート検証</td></tr>
+      <tr><td class="cat-name">Step3 にバグが出たら</td><td><span class="mark mark-fail">Step4-10 が全てバグの上に構築 → 全体やり直し</span></td><td><span class="mark mark-pass">そのフェーズのゲートで検出・修正 → 伝播ゼロ</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">04</span>ハーネスでの実装 — どのハーネスか</h2>
+  <p>このパターンは、そなたのハーネスの<strong>2つの中核 skill</strong> に深く実装されておる:</p>
+  <div class="card">
+    <h3><span class="sev sev-pass">中核 1</span>enforcing-strict-tdd-cycle / coder</h3>
+    <div class="kv"><b>フェーズ</b>RED → GREEN → VERIFY の各段にゲート</div>
+    <div class="kv"><b>RED ゲート</b>全テストが正しく失敗するか(All RED ✅ / 失敗理由チェック ✅)</div>
+    <div class="kv"><b>VERIFY ゲート</b>独立した検証担当(team-tester)がフレッシュな状態で GREEN 判定(自己申告でなく第三者検証)</div>
+    <div class="kv"><b>テスト改ざん防止</b>RED 時点のテスト指紋と照合(exit 0 = 不変)。偽 GREEN を弾く</div>
+    <div class="kv"><b>カバレッジ</b>line 80% / branch 75% を物理検証</div>
+    <div class="kv"><b>ループ予算</b>3周以内・飛び番なし・GREEN 後追加なしを第三者監査</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">中核 2</span>orchestrating-team-development</h3>
+    <div class="kv"><b>フェーズゲート</b>spec策定 → デザイン → テスト設計 → 実装 → 検証 → レビュー → FB反映 → 統合 を、タスク依存関係で<strong>順序を構造的に強制</strong>(口頭指示でなく依存でゲート)</div>
+    <div class="kv"><b>behavior oracle(振る舞い検証)</b>テスト全 PASS + lint exit 0 + spec 照合 Missing=0(自己申告は完了の証拠にしない)</div>
+    <div class="kv"><b>二層検証</b>behavior(振る舞い)+ structure(ファイルサイズ / 関数長 / 循環依存 / 重複)の両方通過で合格</div>
+    <div class="kv"><b>外部基準ゲート</b>Google Engineering Practices 基準で GO / NO-GO を機械判定。NO-GO なら差し戻し</div>
+  </div>
+
+  <h2><span class="no">05</span>記事の After 例 ↔ ハーネスの対応</h2>
+  <table>
+    <thead><tr><th>記事の Phase → ゲート</th><th>ハーネスの対応</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">Phase0 計画 → 受入基準チェック</td><td>spec-based-development の受入基準 / orchestrating Step 1</td></tr>
+      <tr><td class="cat-name">Phase1 設計 → 型チェック(tsc)</td><td>structure oracle(型・構造退行の検査)</td></tr>
+      <tr><td class="cat-name">Phase2 実装 → test + health 200</td><td>behavior oracle(test / lint)</td></tr>
+      <tr><td class="cat-name">Phase3 フロント → E2E pass</td><td>verify-test-fork の Playwright E2E 自動実行</td></tr>
+      <tr><td class="cat-name">PhaseN 統合 → 全テスト + lint 0</td><td>Step 5.5 behavior oracle + Step 7 外部基準ゲート</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">06</span>総評</h2>
+  <div class="quote">記事の「Phase分割 + ゲート検証」は、そなたのハーネスが<strong>最も得意とする領域</strong>じゃ ── enforcing-strict-tdd-cycle と orchestrating-team-development が、TDD の RED→GREEN→VERIFY ゲートから behavior/structure の二層検証、外部基準まで多層にゲート化しておる。しかも記事の例(型チェック / テスト / E2E)を超えて、テスト改ざん防止・カバレッジ・ループ予算まで機械的に検証する。「乗算劣化の分母を変える」を、口約束ではなく <code>exit code</code>(コマンドの成否を表す終了コード)で体現しておる ── 前回の「Phase 0 調査の欠け」とは対照的に、こちらは完成度が高い。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.06.28 02:48 JST
+  </footer>
+
+</div>
+</body>
+</html>

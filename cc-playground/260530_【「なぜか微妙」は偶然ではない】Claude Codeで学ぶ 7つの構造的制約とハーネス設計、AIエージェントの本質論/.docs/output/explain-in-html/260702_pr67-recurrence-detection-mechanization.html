@@ -1,0 +1,302 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PR #67 解説 — スキル進化サイクル②「再発検知」の機械化</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">PR EXPLAINER · CLAUDE-HARNESS #67 · 2026.07.02</div>
+  <h1>スキル進化サイクル②<br><em>再発検知</em>を機械の目に置き換える</h1>
+  <div class="meta"><span>2026.07.02</span><span>kaijutale/claude-harness PR #67 · OPEN</span><span>+898 &minus;6 · 23 files · closes #66</span></div>
+
+  
+
+    <h2><span class="no">01</span>この PR は何をするものか</h2>
+  <p>note 260405 K-1「スキル進化サイクル」は、失敗を起点に記憶を強制へ昇格させる循環じゃ: <strong>失敗 → Gotcha 追記 (自然言語の注意喚起) → 再発 → lint / script に昇格 (決定論的強制) → Gotcha 削除</strong>。2026-07-02 のハーネス照合で、4 段のうち <em>②再発検知だけが人間の記憶依存</em> — 「この失敗、前も起きたよな」と気づく行為に機械の裏付けがない — と判明した (issue #66)。</p>
+  <p>この PR はその穴を <strong>2 系統のセンサー</strong>で埋める。Sensor A は「昇格済みルールが破られかけた瞬間」を hook の発火として台帳 (ledger) に記録する。Sensor B は「まだ昇格していない Gotcha が再び破られた事実」をレビュー反映フローの中で照合しマークする。どちらも<strong>観測に徹し、昇格の実行判断は人間に残す</strong> (HITL = Human-in-the-Loop、人間の承認を挟む運用)。</p>
+
+  <h2><span class="no">02</span>変更の全体像 — 23 ファイル・6 commit</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">変更ファイル</div><div class="v">23</div></div>
+    <div class="stat"><div class="k">追加 / 削除</div><div class="v">+898 / &minus;6</div></div>
+    <div class="stat"><div class="k">COMMIT</div><div class="v">6 (機能と設定 drift を分離)</div></div>
+    <div class="stat"><div class="k">テスト</div><div class="v">25/25 + 28/28 全 green</div></div>
+  </div>
+  <p style="margin-top:14px;">内訳を役割別に見ると、実装本体よりも<strong>テストとドキュメントが厚い</strong>のがこの PR の性格じゃ (実装 ~210 行に対しテスト ~360 行 + 文書 ~230 行)。</p>
+  <table>
+    <thead><tr><th>役割</th><th>ファイル</th><th>規模</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">Sensor A 中核 (新規)</td><td><code>hooks/lib/ledger_append.sh</code> (発火を 1 行記録する共有部品) / <code>hooks/lib/ledger_aggregate.sh</code> (rule 別に発火数を集計) / <code>hooks/hook_session_start_hook_fire_report.sh</code> (セッション開始時の月次閾値レポート)</td><td class="score-cell">+144</td></tr>
+      <tr><td class="cat-name">Sensor A 計装 (改修)</td><td><code>hook_stop_words.sh</code> / <code>hook_post_emoji_check.sh</code> / <code>hook_pre_generated_comment_ban.sh</code> / <code>hook_pre_plans_redirect.sh</code> — 発火分岐の内側に記録呼出を 2 行ずつ追加</td><td class="score-cell">+17</td></tr>
+      <tr><td class="cat-name">Sensor B (改修 + 新規)</td><td><code>accumulating-reviewer-feedback/SKILL.md</code> (段階 2.5「再発照合」を追加) / <code>scripts/check-gotcha-recurrence.sh</code> (マーク計数の決定論部) / <code>references/gotcha-format-guideline.md</code> (再発マーク形式の規約)</td><td class="score-cell">+109 &minus;3</td></tr>
+      <tr><td class="cat-name">テスト</td><td>新規 3 本 (ledger_append / ledger_aggregate / session_start レポート) + 計装 hook 4 本のテスト強化 + skill 側 13 ケース追加</td><td class="score-cell">+360 &minus;2</td></tr>
+      <tr><td class="cat-name">ドキュメント</td><td><code>.docs/hook-authoring-guide.md</code> へ ledger 規約を追記 + plan + 作業ログ</td><td class="score-cell">+213</td></tr>
+      <tr><td class="cat-name">設定</td><td><code>settings.json</code> (SessionStart へレポート hook を配線。model 既定値などのセッション設定 drift は機能と混ぜず別 commit に分離) / <code>.gitignore</code> (台帳は実行時データとして追跡除外)</td><td class="score-cell">+13 &minus;1</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>Sensor A — hook 発火台帳: 「防いだ瞬間」を記録する</h2>
+  <p>block/warn 系 hook の発火は「決定論の壁が再発未遂を防いだ」観測そのものじゃ。センサーは既に存在し、<strong>記録だけが無かった</strong>。この PR は発火の瞬間に <code>$HOME/.claude/.docs/hook-fire-ledger/YYYY-MM.jsonl</code> (JSONL = 1 行 1 件の JSON を積む記録形式) へ 1 行追記する。実際の計装はこの 2 行定型 — <code>hook_stop_words.sh</code> の本物の差分がこれじゃ:</p>
+  <div class="diff">
+    <div class="diff-head"><span class="file">hooks/hook_stop_words.sh</span>
+      <span class="tally"><span class="add">+6</span><span class="del">&minus;0</span></span></div>
+    <div class="diff-body">
+      <div class="diff-hunk">@@ -65,6 +65,12 @@</div>
+      <div class="diff-row"><span class="ln">65</span><span class="ln new">65</span><span class="mk"> </span><span class="code">                    HIT_CMD=(grep -qiwF -- "$keyword")</span></div>
+      <div class="diff-row"><span class="ln">66</span><span class="ln new">66</span><span class="mk"> </span><span class="code">                fi</span></div>
+      <div class="diff-row"><span class="ln">67</span><span class="ln new">67</span><span class="mk"> </span><span class="code">                if echo "$SCAN_TEXT" | "${HIT_CMD[@]}"; then</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">68</span><span class="mk">+</span><span class="code">                    # hook-fire ledger (issue #66 Sensor A): 発火観測を 1 行記録。</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">69</span><span class="mk">+</span><span class="code">                    # helper は沈黙 + 常に exit 0 (fail-open) ゆえ判定・stdout JSON へ影響しない。</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">70</span><span class="mk">+</span><span class="code">                    _LEDGER="$(dirname "${BASH_SOURCE[0]}")/lib/ledger_append.sh"</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">71</span><span class="mk">+</span><span class="code">                    [ -f "$_LEDGER" ] &amp;&amp; bash "$_LEDGER" hook_stop_words "$RULE_NAME" block \</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">72</span><span class="mk">+</span><span class="code">                        "$keyword: $(echo "$SCAN_TEXT" | grep -F -m1 -- "$keyword" 2&gt;/dev/null)" &gt;/dev/null 2&gt;&amp;1 || true</span></div>
+      <div class="diff-row add"><span class="ln"> </span><span class="ln new">73</span><span class="mk">+</span><span class="code"></span></div>
+      <div class="diff-row"><span class="ln">68</span><span class="ln new">74</span><span class="mk"> </span><span class="code">                    # エラーメッセージを構成 (macOS bash 3.2 の多バイト隣接バグ回避で [] 使用)</span></div>
+    </div>
+  </div>
+  <p>短い 2 行に見えて、設計判断が濃く詰まっておる:</p>
+  <ul class="plain">
+    <li><b>沈黙契約</b> — 記録部品は標準出力にも標準エラーにも一切出力しない。<code>hook_stop_words</code> のような hook は標準出力の JSON が判定結果そのものを運ぶため、1 バイトの混入も判定を壊す。呼出側も <code>&gt;/dev/null 2&gt;&amp;1 || true</code> で二重に封じる。</li>
+    <li><b>fail-open (失敗しても本来の処理を止めない設計)</b> — 記録部品は常に exit 0。台帳が書けなくても hook 本来のブロック判定は無傷。理由は明快で、<strong>台帳は観測センサーであって防御ゲートではない</strong>から。防御系の「失敗したら閉じる」規約とは意図的に逆に倒しておる。</li>
+    <li><b>発火分岐の内側だけで記録</b> — 問題なしで通過した時は絶対に呼ばない。「記録ゼロ = 発火ゼロ」が集計の前提になる。</li>
+    <li><b>受入検証はバイト単位</b> — 計装前後で hook の標準出力・標準エラーが完全一致することを diff 比較で実測済み (発火経路・通過経路の両方)。</li>
+  </ul>
+  <p style="margin-top:14px;">集計側は <code>ledger_aggregate.sh</code> が rule 別発火数を降順で出し、SessionStart 配線の <code>hook_session_start_hook_fire_report.sh</code> が<strong>当月に閾値 (既定 3 回) を超えた rule だけ</strong>をセッション冒頭で報せる。報告は 1 日 1 回に絞られ、しかも<strong>検知した文言そのもの (matched_context) は報告に載せない</strong> — 禁止語を報告文に含めると、その報告自体がまた stop-words hook に引っかかる自家中毒 (self-poisoning) を防ぐためじゃ。</p>
+
+  <h2><span class="no">04</span>Sensor B — 未昇格 Gotcha の再発照合 (段階 2.5)</h2>
+  <p>hook を持たない自然言語だけの Gotcha は、破られても何も発火しない — 再発を観測する装置が構造的に無かった。この PR は既存のフィードバック反映 skill <code>accumulating-reviewer-feedback</code> (5 段階フロー: 読込 → 分類 → 人間判断 → 反映 → 記録) に、<strong>段階 2.5「再発照合」を純加法で挿入</strong>する。既存の入出力契約・呼出方法は一切変えない後方互換改修じゃ。</p>
+  <p>段階 2.5 の中身は 3 手順:</p>
+  <ul class="plain">
+    <li><b>1. 照合 (LLM の意味判断)</b> — 新しく検出された問題が既存 Gotcha 項目と「同じ失敗の再来」かを、文字列一致でなく根因の同一性で判定する。曖昧なら<strong>非再発に倒す</strong> (過剰マークは昇格候補のノイズになる)。</li>
+    <li><b>2. 再発マーク (事実記録、人間承認は不要)</b> — 再発した Gotcha 行の末尾へ <code>(再発: YYYY-MM-DD)</code> を追記する。「再発が起きた」は観測事実であって判断ではないから HITL を経ない。Edit は「既存行全体 → 同一行 + マーク」の完全一致形式に固定し、<strong>本文を書き換える事故を構造的に不可能にする</strong>。</li>
+    <li><b>3. 昇格候補の決定論抽出</b> — <code>check-gotcha-recurrence.sh</code> がマーク数を機械計数する (コード例の中や Gotcha セクション外の偽物は数えない)。閾値は既定 1 マーク = 初回失敗 + 再発 1 回 = <strong>通算 2 回目で昇格候補</strong>。候補は段階 3 の人間判断 (AskUserQuestion) へ「提案」として持ち込まれる — <em>自動昇格は実装しない</em>。</li>
+  </ul>
+  <p style="margin-top:14px;">マークの見た目はこうなる (例):</p>
+  <pre>- **must**: ファイル名の日付は常にログ記録時刻を使う (理由: ...) (再発: 2026-07-02)</pre>
+  <p>もう 1 つの要が<strong>冪等性ゲート</strong> (冪等性 = 何度実行しても結果が変わらない性質) じゃ。人間判断の中断や持越しで同じレビュー結果が再処理されると、同じ再発に二重マークが付き通算回数が水増しされる。そこで「この self-eval 記録を処理した痕跡が既に履歴にあるか」を決定論で判定し、再走行では照合・マークを skip して計数だけやり直す。これは後述のレビューで検出された High 指摘への修正でもある。</p>
+
+  <h2><span class="no">05</span>品質保証 — 受入基準 5/5・テスト 53 green・3 verifier レビュー</h2>
+  <table>
+    <thead><tr><th>受入基準 (issue #66)</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td>計装 hook の発火が台帳に 1 行 append (判定・exit code 不変)</td><td><span class="mark mark-pass">PASS</span> 計装前後で stdout/stderr バイト同一を実測</td></tr>
+      <tr><td>集計スクリプトで rule/hook 別発火数を出力</td><td><span class="mark mark-pass">PASS</span> 降順 + 閾値フィルタ</td></tr>
+      <tr><td>再発照合 Step が存在し、再発時に Gotcha へマーク</td><td><span class="mark mark-pass">PASS</span> 計数実測 (1 マーク→通算 2 / 2 マーク→通算 3)</td></tr>
+      <tr><td>閾値超え項目を「昇格候補」として報告 (提案どまり)</td><td><span class="mark mark-pass">PASS</span> SessionStart 報告 + 1 日 throttle も実測</td></tr>
+      <tr><td><code>hook_stop_words.sh</code> を意図的に発火させ実測</td><td><span class="mark mark-pass">PASS</span> 台帳記録と集計出力を確認</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px;">テストは hooks 側が <code>run-all.sh</code> 27 ファイル全 green (カバレッジ 25/25、新規 3 ケース追加)、skill 側が 28/28 (再発計数だけで 13 ケース)。既存テスト 4 本には台帳の出力先を一時ディレクトリへ隔離する環境変数を仕込み、<strong>テスト実行が本物の台帳を汚染しない</strong>ようにしてある。</p>
+  <p>さらに merge 前に 3 つの独立レビュアー (harness-essentials / skill-essentials / code-reviewer) を並列で走らせ、<strong>High 1 件 + Medium 5 件を検出して全て修正済み</strong>:</p>
+  <div class="card">
+    <h3><span class="sev sev-fail">HIGH</span>持越し再走行でマークが二重計上される (非冪等)</h3>
+    <div class="kv"><b>修正</b>冪等性ゲートを追加 — 処理済み記録の再走行では照合・マークを skip し計数のみ再実行 (§04 参照)</div>
+  </div>
+  <ul class="plain">
+    <li><b>Medium ×5 (全修正)</b> — コード例の中のマークを誤計数する偽陽性 (2 レビュアーが独立に実測) → 計数範囲の限定 + テスト 3 件 / 報告文言が「発火数を減らせ」と誤誘導する Goodhart 問題 → 文言是正 / エラー時挙動の契約不在 → I/O 契約へ明記 / Gotcha 本文の保全 → Edit 完全一致形式で構造保証 / センサーの無音死 → 既知の限界として文書化。</li>
+  </ul>
+
+  <h2><span class="no">06</span>設計上の自覚点と follow-up</h2>
+  <p>この PR は自分の限界を文書に残しておる。ここが読みどころじゃ:</p>
+  <ul class="plain">
+    <li><b>センサー自身の死は観測されない</b> — 台帳が書けなくなっても fail-open ゆえ無音で止まる。「集計ゼロ」と「センサー死亡」が台帳上区別できない。生存確認 (heartbeat) の仕組みが follow-up 候補 1 号。</li>
+    <li><b>発火数の読み方 (Goodhart の法則への防衛)</b> — 指標を目標にすると指標が壊れる。多発火は「上流の自然言語規律が効いていない」サインであって、「発火数を下げる」こと自体を目標化してはならない、と規約に明記された。</li>
+    <li><b>展開は 4/12 本</b> — 計装は issue 明記の 4 hook のみ。残り 8 本の block/warn hook への展開は、共有部品設計により各 2 行 + テストで済む。</li>
+    <li><b>matched_context は書くだけの非信頼データ</b> — 検知文言は実際の禁止語を含むため、セッションへ引用しない前提で台帳にのみ保持。保持方針の再検討が follow-up 候補。</li>
+  </ul>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">
+    この PR で、スキル進化サイクルの 4 段すべてが機械の裏付けを持った。「再発した」という出来事は、人間の記憶ではなく台帳 (Sensor A) と照合マーク (Sensor B) が覚える。一方で昇格の実行は今までどおり人間が決める — 観測の自動化と判断の人間占有をきれいに分けたのがこの実装の背骨じゃ。実装 210 行に対しテスト 360 行・規約文書 230 行という配分、3 verifier レビューでの High/Medium 全修正、そして「センサー自身の死は見えない」という限界の自己申告まで含めて、note の言う「覚えていなくても守られる構造」への最後のピースが正しく埋まっておる。
+  </div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.02 16:07 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

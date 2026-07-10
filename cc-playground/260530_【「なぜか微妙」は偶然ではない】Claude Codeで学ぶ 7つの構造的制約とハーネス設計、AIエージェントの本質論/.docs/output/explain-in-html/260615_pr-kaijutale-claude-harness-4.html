@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PR #4 解説 — Critical 3 検証器修正 / claude-harness</title>
+<style>
+  :root{
+    --bg:#f4efe6; --surface:#fbf8f2; --surface-2:#efe8db; --ink:#2a241c; --muted:#7a6f5e;
+    --line:#e3dac9; --line-strong:#d4c8b2;
+    --red:#b5402a; --red-bg:rgba(181,64,42,.10); --red-edge:#cf5a40;
+    --green:#3f7d3a; --green-bg:rgba(63,125,58,.12); --green-edge:#5a9b52;
+    --amber:#b07818; --amber-bg:rgba(176,120,24,.12);
+    --blue:#3a6b8c;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#17130d; --surface:#201a12; --surface-2:#2a2217; --ink:#ece2d0; --muted:#9d917b;
+      --line:#352b1d; --line-strong:#473a26;
+      --red:#e87358; --red-bg:rgba(232,115,88,.13); --red-edge:#a8492f;
+      --green:#84c172; --green-bg:rgba(132,193,114,.13); --green-edge:#4e7a3f;
+      --amber:#e0a83f; --amber-bg:rgba(224,168,63,.13);
+      --blue:#7fb4d6;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.7;font-size:16px;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 96px}
+  a{color:var(--blue);text-decoration:none}
+  a:hover{text-decoration:underline}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:3px}
+
+  /* hero */
+  .hero{padding:48px 0 28px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  .hero h1{font-size:clamp(25px,4.3vw,38px);line-height:1.22;margin:0 0 6px;letter-spacing:-.01em;font-weight:780}
+  .hero .sub{color:var(--muted);font-size:15px;margin:10px 0 22px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:20px}
+  .chip{font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--muted);white-space:nowrap}
+  .chip.state{background:var(--green-bg);color:var(--green);border-color:var(--green-edge);font-weight:700}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;margin-bottom:6px}
+  .branch{padding:3px 9px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line)}
+  .branch.head{color:var(--green)} .branch.base{color:var(--blue)}
+  .arrow{color:var(--muted)}
+  .meta{display:flex;flex-wrap:wrap;gap:18px;margin-top:18px;font-size:13.5px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:680}
+  .stat-add{color:var(--green);font-family:var(--mono);font-weight:700}
+  .stat-del{color:var(--red);font-family:var(--mono);font-weight:700}
+
+  section{padding-top:40px}
+  h2{font-size:22px;letter-spacing:-.01em;margin:0 0 4px;font-weight:760;display:flex;align-items:center;gap:10px}
+  h2 .num{font-family:var(--mono);font-size:14px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber);width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;flex:none}
+  .lead{color:var(--muted);font-size:15px;margin:6px 0 22px;max-width:70ch}
+  h3{font-size:16.5px;margin:26px 0 10px;font-weight:700}
+
+  /* context callout */
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:10px;padding:16px 18px;margin:18px 0}
+  .callout p{margin:0 0 8px} .callout p:last-child{margin:0}
+  .callout.note{border-left-color:var(--blue)}
+  .callout strong{color:var(--ink)}
+
+  /* overview cards */
+  .cards{display:grid;grid-template-columns:1fr;gap:14px;margin:22px 0}
+  @media(min-width:680px){.cards{grid-template-columns:repeat(3,1fr)}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 16px 18px;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--red)}
+  .card .tag{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.05em}
+  .card h4{font-family:var(--mono);font-size:13.5px;margin:6px 0 12px;font-weight:700;word-break:break-all;line-height:1.4}
+  .card .row{display:flex;gap:8px;align-items:baseline;margin:7px 0;font-size:13.5px}
+  .card .k{flex:none;width:42px;font-family:var(--mono);font-size:11px;font-weight:700}
+  .card .k.b{color:var(--red)} .card .k.a{color:var(--green)}
+  .card .v{color:var(--ink)}
+
+  /* file diff */
+  .file{border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;margin:18px 0 8px;background:var(--surface)}
+  .file-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;padding:12px 15px;background:var(--surface-2);border-bottom:1px solid var(--line-strong)}
+  .file-head .path{font-family:var(--mono);font-size:13.5px;font-weight:700;word-break:break-all}
+  .file-head .nums{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+  .hunk-label{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding:7px 15px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+  .diff{margin:0;overflow-x:auto;font-family:var(--mono);font-size:12.7px;line-height:1.62}
+  .dl{display:block;white-space:pre;padding:0 15px 0 38px;position:relative;border-left:3px solid transparent}
+  .dl::before{position:absolute;left:14px;width:14px;color:var(--muted);font-weight:700}
+  .dl.ctx{color:var(--muted)} .dl.ctx::before{content:" "}
+  .dl.del{background:var(--red-bg);color:var(--ink);border-left-color:var(--red-edge)} .dl.del::before{content:"-";color:var(--red)}
+  .dl.add{background:var(--green-bg);color:var(--ink);border-left-color:var(--green-edge)} .dl.add::before{content:"+";color:var(--green)}
+  .dl.gap{height:8px;background:repeating-linear-gradient(135deg,transparent,transparent 6px,var(--line) 6px,var(--line) 7px);opacity:.4}
+
+  .why{display:flex;gap:12px;margin:14px 0;align-items:flex-start}
+  .why .badge{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-top:2px}
+  .why.broke .badge{background:var(--red-bg);color:var(--red);border:1px solid var(--red-edge)}
+  .why.fixed .badge{background:var(--green-bg);color:var(--green);border:1px solid var(--green-edge)}
+  .why p{margin:0;font-size:14.5px}
+  .why code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+  ul.tight{margin:10px 0;padding-left:20px} ul.tight li{margin:5px 0;font-size:14.5px}
+  ul.tight code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+
+  footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;font-family:var(--mono);line-height:1.8}
+  .toc{position:sticky;top:0;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px;z-index:5;margin-bottom:-12px}
+  .toc a{font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted)}
+  .toc a:hover{color:var(--ink);text-decoration:none;border-color:var(--line-strong)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">Pull Request 解説 · kaijutale/claude-harness</p>
+    <h1>PR #4 — Critical 3：壊れた「検証器」を動かす</h1>
+    <p class="sub">ハーネス hook 監査で実機再現した 60 件のバグのうち、最も深刻な <strong>Critical 3 件</strong>（検証器 hook 自身が機能不全）を修正。</p>
+    <div class="chips">
+      <span class="chip state">● OPEN</span>
+      <span class="chip">3 commits</span>
+      <span class="chip">3 files</span>
+      <span class="chip"><span class="stat-add">+41</span> / <span class="stat-del">-6</span></span>
+      <span class="chip">author: kaijutale</span>
+      <span class="chip">2026-06-15</span>
+    </div>
+    <div class="flow">
+      <span class="branch head">fix/harness-hooks-critical-3</span>
+      <span class="arrow">──▶</span>
+      <span class="branch base">main</span>
+    </div>
+    <div class="meta">
+      <span><b>URL:</b> <a href="https://github.com/kaijutale/claude-harness/pull/4">github.com/kaijutale/claude-harness/pull/4</a></span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="目次">
+    <a href="#why">なぜ</a>
+    <a href="#overview">3修正の全体像</a>
+    <a href="#f1">emoji</a>
+    <a href="#f2">secret</a>
+    <a href="#f3">essence-gate</a>
+    <a href="#notes">注記</a>
+  </nav>
+
+  <section id="why">
+    <h2>なぜこの PR か</h2>
+    <p class="lead">7 つの subagent + メイン検証による完全監査で、ハーネスの hook 群に <b>60 件</b>のバグを実機再現した（Critical 3 / High 18 / Medium 17 / Low 22）。</p>
+    <div class="callout">
+      <p>問題の本質は個々のバグでなく、<strong>「検証器（hook）自身が機能していない／誤動作している」</strong>点にあった。絵文字検査は検知ゼロ、秘密検査は安全テンプレを誤ブロック、essence-gate は不適格を見逃す。</p>
+      <p><code>/review-harness</code> は「hook が<strong>配線</strong>されているか」までしか見ず「<strong>実装が動くか</strong>」を検証しないため、これらは診断の死角だった。本 PR はその死角＝<strong>Critical 3</strong> を塞ぐ第一弾（Phase 1）。</p>
+    </div>
+  </section>
+
+  <section id="overview">
+    <h2>3 修正の全体像</h2>
+    <p class="lead">いずれも severity = Critical。共通テーマは「検証器を実際に機能させる」。残る 57 件（High/Medium/Low）は別 PR（Phase 2-5）。</p>
+    <div class="cards">
+      <div class="card">
+        <span class="tag">commit e4ac70f</span>
+        <h4>hook_post_emoji_check.sh</h4>
+        <div class="row"><span class="k b">壊</span><span class="v">BSD grep で <code>-P</code> 不発 → 検知ゼロ（fail-open）＋範囲穴</span></div>
+        <div class="row"><span class="k a">直</span><span class="v"><code>/usr/bin/perl</code> 絶対パス＋範囲拡張</span></div>
+      </div>
+      <div class="card">
+        <span class="tag">commit b2200ff</span>
+        <h4>hook_pre_read_secret_check.sh</h4>
+        <div class="row"><span class="k b">壊</span><span class="v">値なしテンプレ（.env.example 等）も誤ブロック</span></div>
+        <div class="row"><span class="k a">直</span><span class="v">テンプレ除外ガードを先に追加</span></div>
+      </div>
+      <div class="card">
+        <span class="tag">commit 035c635</span>
+        <h4>hook_pre_commit_essence_gate.sh</h4>
+        <div class="row"><span class="k b">壊</span><span class="v">古い self-eval を掴み散文の過去値を誤読／fail-open</span></div>
+        <div class="row"><span class="k a">直</span><span class="v">機械可読フィールド優先＋fail-closed</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILE 1 -->
+  <section id="f1">
+    <h2><span class="num">1</span>emoji 検知の移植性＋範囲穴</h2>
+    <div class="why broke"><span class="badge">壊れていた</span><p>hook は <code>grep -P</code>（PCRE）で絵文字を探すが、<b>bare <code>grep</code> は PATH 依存</b>。macOS 標準の <code>/usr/bin/grep</code>（BSD grep）は <code>-P</code> 非対応で、エラーが <code>2&gt;/dev/null</code> に握り潰され、絵文字検知が<b>静かにゼロ</b>になる（fail-open）。加えて Unicode 範囲が狭く、⭐ や c/r/tm 記号・国旗を取りこぼしていた。</p></div>
+    <div class="why fixed"><span class="badge">こう直した</span><p><code>/usr/bin/perl</code>（macOS/Linux 標準の絶対パス）に置換して PATH 非依存化。Unicode 範囲を拡張し、罫線素片（U+2500–257F）は範囲外に置いて誤検知を回避。<code>-CSD</code> で UTF-8 をデコード。</p></div>
+
+    <div class="file">
+      <div class="file-head"><span class="path">hooks/hook_post_emoji_check.sh</span><span class="nums"><span class="stat-add">+5</span> <span class="stat-del">-1</span></span></div>
+      <div class="hunk-label">@@ -6,7 +6,11 @@ 絵文字検出エンジンの差し替え</div>
+      <code class="diff">
+<span class="dl ctx"> [ -z "$FILE_PATH" ] || [ ! -f "$FILE_PATH" ] &amp;&amp; exit 0</span>
+<span class="dl ctx"> [[ ! "$FILE_PATH" =~ \.(js|ts|jsx|tsx|mjs|cjs|py|go|rs|sh)$ ]] &amp;&amp; exit 0</span>
+<span class="dl ctx"> </span>
+<span class="dl del">EMOJI_LINES=$(grep -nP '(//|#|/\*|\*).*[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' "$FILE_PATH" 2&gt;/dev/null | head -3)</span>
+<span class="dl add"># perl 絶対パスで検出 (bare grep は PATH 依存。BSD grep は -P 非対応で fail-open=検知ゼロ)。</span>
+<span class="dl add"># 範囲: 00A9/00AE/2122 (c/r/tm) + 2600-27BF (misc/dingbats) + 2B00-2BFF (star/arrows)</span>
+<span class="dl add"># + 1F000-1FAFF (pictographic 全般, 国旗 1F1E6-1F1FF 含む) + FE0F (emoji variation selector)。</span>
+<span class="dl add"># box-drawing(2500-257F)等は範囲外に置き誤検知を避ける。-CSD で UTF-8 デコード。</span>
+<span class="dl add">EMOJI_LINES=$(/usr/bin/perl -CSD -ne 'print "$.:$_" if m{(?://|#|/\*|\*).*[\x{00A9}\x{00AE}\x{2122}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}\x{1F000}-\x{1FAFF}\x{FE0F}]}' "$FILE_PATH" 2&gt;/dev/null | head -3)</span>
+<span class="dl ctx"> if [ -n "$EMOJI_LINES" ]; then</span>
+<span class="dl ctx">   FIRST=$(echo "$EMOJI_LINES" | head -1)</span>
+      </code>
+    </div>
+    <p class="lead" style="margin-top:14px">検証：😀 ⭐ © 国旗 ™ ✅ を全検知／コード行・無絵文字コメント・矢印（-&gt;）・罫線は誤検知ゼロ／非コード拡張子は skip。</p>
+  </section>
+
+  <!-- FILE 2 -->
+  <section id="f2">
+    <h2><span class="num">2</span>secret hook の環境変数テンプレ誤ブロック</h2>
+    <div class="why broke"><span class="badge">壊れていた</span><p>本物の環境変数ファイルをブロックする正規表現 <code>/\.env(\.[^/]+)?$</code> が、<b>値なしテンプレート</b>（<code>.env.example</code> / <code>.sample</code> / <code>.template</code> / <code>.dist</code>）まで巻き込んで DENY していた。これは CLAUDE.md「値なしテンプレは読み書き可」と<b>矛盾</b>する over-block。</p></div>
+    <div class="why fixed"><span class="badge">こう直した</span><p>本物の <code>.env</code> 判定の<b>前に</b>テンプレート除外ガードを 1 行追加。実 secret（<code>.env</code> / <code>.env.local</code> 等）は DENY を維持する。</p></div>
+
+    <div class="file">
+      <div class="file-head"><span class="path">hooks/hook_pre_read_secret_check.sh</span><span class="nums"><span class="stat-add">+3</span> <span class="stat-del">-0</span></span></div>
+      <div class="hunk-label">@@ -39,6 +39,9 @@ テンプレート除外ガードを先頭に挿入</div>
+      <code class="diff">
+<span class="dl ctx"> [[ "$FILE_PATH" =~ /id_dsa(\.pub)?$ ]] &amp;&amp; deny "id_dsa SSH鍵"</span>
+<span class="dl ctx"> </span>
+<span class="dl ctx"> # 2. .env 系 (環境変数ファイル)</span>
+<span class="dl add"># 値なしテンプレートは許可 (.env.example/.sample/.template/.dist — CLAUDE.md L56 と整合)。</span>
+<span class="dl add"># .env 判定の前に置き誤ブロックを防ぐ。実 secret (.env / .env.local 等) は下行で DENY 維持。</span>
+<span class="dl add">[[ "$FILE_PATH" =~ /\.env\.(example|sample|template|dist)$ ]] &amp;&amp; exit 0</span>
+<span class="dl ctx"> [[ "$FILE_PATH" =~ /\.env(\.[^/]+)?$ ]] &amp;&amp; deny ".env 環境変数ファイル"</span>
+<span class="dl ctx"> </span>
+<span class="dl ctx"> # 3. クラウドクレデンシャル</span>
+      </code>
+    </div>
+    <p class="lead" style="margin-top:14px">検証：テンプレ 4 種 → ALLOW／<code>.env</code>・<code>.env.local</code>・<code>.env.production</code> → DENY／SSH 鍵・<code>.npmrc</code>・クラウド資格情報・サフィックス命名 → DENY 維持。over-block と見逃しの両方向で 0。</p>
+  </section>
+
+  <!-- FILE 3 -->
+  <section id="f3">
+    <h2><span class="num">3</span>essence-gate の 3 バグ一括（命名ドリフト＋散文誤読＋fail-open）</h2>
+    <p class="lead">essence-gate は「skill/agent/hook を触る commit」を直近の essence レビュー verdict で gate する hook。ここに 3 つのバグが重なっていた。</p>
+    <ul class="tight">
+      <li><b>(a) 命名ドリフト</b>：glob <code>*_self-eval-v*.md</code> が最新命名（<code>&lt;date&gt;_&lt;slug&gt;.md</code>）を取りこぼし、<b>古い self-eval を掴む</b>。</li>
+      <li><b>(b) 散文の過去値誤読</b>：verdict を散文 grep で抽出 → 本文中の過去値（例 "Critical 1 / High 3"）を誤って拾う。</li>
+      <li><b>(c) fail-open</b>：新フォーマットで件数が取れないと <code>0/0</code> と仮定して <b>approve</b>（見逃し）。</li>
+    </ul>
+    <div class="why fixed"><span class="badge">こう直した</span><p>glob を <code>*.md</code> 化して最新命名に追従／機械可読フィールド <code>critical_count</code>・<code>high_count</code>（出力テンプレに既存）を<b>行頭アンカー</b>で優先抽出／取れなければ散文ペアに fallback／それも無ければ <b>fail-closed（block）</b>。orchestrator の出力契約は既にフィールドを持つため <b>契約変更なし（後方互換）</b>。</p></div>
+
+    <div class="file">
+      <div class="file-head"><span class="path">hooks/hook_pre_commit_essence_gate.sh</span><span class="nums"><span class="stat-add">+33</span> <span class="stat-del">-5</span></span></div>
+      <div class="hunk-label">@@ -65,7 +65,9 @@ (a) glob を最新命名に追従</div>
+      <code class="diff">
+<span class="dl ctx"> # 直近の self-eval ファイル取得</span>
+<span class="dl ctx"> SELFEVAL_DIR="$HOME/.claude/.docs/essence-review-runs"</span>
+<span class="dl del">LATEST_SELFEVAL=$(ls -t "$SELFEVAL_DIR"/*_self-eval-v*.md 2&gt;/dev/null | head -1)</span>
+<span class="dl add"># 命名規約追従: 旧 glob '*_self-eval-v*.md' は最新命名 (&lt;date&gt;_&lt;slug&gt;.md, _self-eval-v 無し) を</span>
+<span class="dl add"># 取りこぼし古い self-eval を掴む (fail-open/誤判定の温床)。当 dir は essence-review 出力専用ゆえ *.md で最新を採る。</span>
+<span class="dl add">LATEST_SELFEVAL=$(ls -t "$SELFEVAL_DIR"/*.md 2&gt;/dev/null | head -1)</span>
+      </code>
+      <div class="hunk-label">@@ -82,10 +84,36 @@ (b)(c) 散文 grep → 機械可読優先 ＋ fail-closed</div>
+      <code class="diff">
+<span class="dl del"># Verdict 抽出 (verdict: GO|CONDITIONAL|NO-GO 形式 or "Critical X / High Y" 表記)</span>
+<span class="dl del">VERDICT_LINE=$(grep -E "verdict:|Critical [0-9]+ / High [0-9]+" "$LATEST_SELFEVAL" | head -3)</span>
+<span class="dl del">CRITICAL_COUNT=$(echo "$VERDICT_LINE" | grep -oE 'Critical[[:space:]]+[0-9]+' | head -1 | grep -oE '[0-9]+')</span>
+<span class="dl del">HIGH_COUNT=$(echo "$VERDICT_LINE" | grep -oE 'High[[:space:]]+[0-9]+' | head -1 | grep -oE '[0-9]+')</span>
+<span class="dl add"># Verdict 抽出: 機械可読フィールド優先 (output-format.md Observability template の</span>
+<span class="dl add"># critical_count/high_count を行頭アンカーで採り、散文の過去値混入を防ぐ — 根因1)。</span>
+<span class="dl add">CRITICAL_COUNT=$(grep -oE '^[[:space:]]*critical_count:[[:space:]]*[0-9]+' "$LATEST_SELFEVAL" 2&gt;/dev/null | head -1 | grep -oE '[0-9]+$')</span>
+<span class="dl add">HIGH_COUNT=$(grep -oE '^[[:space:]]*high_count:[[:space:]]*[0-9]+' "$LATEST_SELFEVAL" 2&gt;/dev/null | head -1 | grep -oE '[0-9]+$')</span>
+<span class="dl add"></span>
+<span class="dl add"># フォールバック: 機械可読フィールド非搭載の legacy self-eval は散文 "Critical N / High M" を採る</span>
+<span class="dl add"># (co-located パターン限定で単独 'Critical n' の散文誤検出を避ける)。</span>
+<span class="dl add">if [ -z "$CRITICAL_COUNT" ] &amp;&amp; [ -z "$HIGH_COUNT" ]; then</span>
+<span class="dl add">  VERDICT_PAIR=$(grep -oE 'Critical[[:space:]]+[0-9]+[[:space:]]*/[[:space:]]*High[[:space:]]+[0-9]+' "$LATEST_SELFEVAL" 2&gt;/dev/null | head -1)</span>
+<span class="dl add">  CRITICAL_COUNT=$(echo "$VERDICT_PAIR" | grep -oE 'Critical[[:space:]]+[0-9]+' | grep -oE '[0-9]+')</span>
+<span class="dl add">  HIGH_COUNT=$(echo "$VERDICT_PAIR" | grep -oE 'High[[:space:]]+[0-9]+' | grep -oE '[0-9]+')</span>
+<span class="dl add">fi</span>
+<span class="dl add"></span>
+<span class="dl add"># 根因2 (fail-open -&gt; fail-closed): 機械可読も散文も取れない = verdict 判定不能。</span>
+<span class="dl add"># 0/0 と仮定して approve せず block (検証器の責務は gate。不能時は安全側へ)。</span>
+<span class="dl add">if [ -z "$CRITICAL_COUNT" ] &amp;&amp; [ -z "$HIGH_COUNT" ]; then</span>
+<span class="dl add">  REASON=$(cat &lt;&lt;EOF</span>
+<span class="dl add">[essence-gate] block: 直近の self-eval から verdict を判定できません (...フィールド不在、散文も検出不可)。</span>
+<span class="dl add">...</span>
+<span class="dl add">EOF</span>
+<span class="dl add">)</span>
+<span class="dl add">  ESCAPED=$(echo "$REASON" | jq -Rs '.')</span>
+<span class="dl add">  echo "{\"hookSpecificOutput\": {... \"permissionDecision\": \"deny\" ...}}"</span>
+<span class="dl add">  exit 0</span>
+<span class="dl add">fi</span>
+<span class="dl ctx"> </span>
+<span class="dl ctx"> CRITICAL_COUNT=${CRITICAL_COUNT:-0}</span>
+<span class="dl ctx"> HIGH_COUNT=${HIGH_COUNT:-0}</span>
+      </code>
+    </div>
+    <p class="lead" style="margin-top:14px">検証：機械可読優先で散文の過去値を排除（C0/H0）／legacy は散文 fallback（C0/H2）／判定不能で fail-closed／glob 最新化。<code>bash -n</code> 全 OK。<br><span style="color:var(--muted);font-size:13px">※ essence-gate ブロックの長い deny メッセージ部は本図で <code>...</code> に簡約（実コードは完全版）。</span></p>
+  </section>
+
+  <section id="notes">
+    <h2>注記</h2>
+    <div class="callout note">
+      <p><strong>essence-gate の副作用（意図的）：</strong>本修正で gate が<b>実際に機能し始める</b>。最新 self-eval は High&gt;0 ゆえ、今後 skill/agent/hook を触る commit は正しく block される。皮肉にも<b>この PR の commit 自体が、未修正の gate に阻まれた</b>（chicken-and-egg）— ゆえに commit は端末側で実施した。</p>
+      <p><strong>既知の follow-up（Phase 1 スコープ外）：</strong>emoji hook の <code>additionalContext</code> は行内容を jq エスケープしないため、引用符を含むコメントで JSON 破損の余地。Phase 4/5 で対処予定。</p>
+      <p><strong>スコープ：</strong>Phase 2-5（High 18 / Medium 17 / Low 22、stop-words 部分一致 over-block 等）は別 PR。本 PR は Critical 3 のみ。</p>
+    </div>
+  </section>
+
+  <footer>
+    生成元: PR #4 (kaijutale/claude-harness) — gh pr view + gh pr diff<br>
+    検証: 全修正を /tmp で reproduce → fix → verify → 正常系維持 の 4 段で実機確認後、worktree 成果物が検証済みファイルと byte-identical を確認<br>
+    visualizing-as-html · pr mode · 2026-06-15
+  </footer>
+
+</div>
+</body>
+</html>

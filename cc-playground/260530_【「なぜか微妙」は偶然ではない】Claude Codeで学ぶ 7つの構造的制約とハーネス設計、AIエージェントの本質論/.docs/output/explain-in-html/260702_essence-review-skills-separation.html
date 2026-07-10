@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ハーネス改善系 skill の棲み分け — 3つの検査装置と1つの反映装置</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · HARNESS-IMPROVEMENT SKILLS · 2026.07.02</div>
+  <h1>ハーネス改善系 skill の<em>棲み分け</em><br>3つの検査装置と1つの反映装置</h1>
+  <div class="meta"><span>2026.07.02</span><span>review-agent-essence / review-harness / essence-reviewing-orchestrator / accumulating-reviewer-feedback</span></div>
+
+  
+
+    <h2><span class="no">01</span>結論の地図 — 3つの「検査装置」と1つの「反映装置」</h2>
+  <p>4つの skill は同じ「ハーネス改善」の住人だが、役割は明確に分かれておる。<strong>review-agent-essence / review-harness / essence-reviewing-orchestrator の3つは検査装置</strong> (対象を評価してレポートを返す)、<strong>accumulating-reviewer-feedback だけが反映装置</strong> (検査の結果を skill 本体へ書き戻す) じゃ。そして質問への直答 — <em>accumulating は orchestrator の「一部」ではない</em>。別々に起動される独立 skill で、永続化ファイルという郵便受けだけで繋がる別工程ぞ (§04 で詳説)。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">review-agent-essence</div><div class="v">単眼レビュー · fork×1</div></div>
+    <div class="stat"><div class="k">review-harness</div><div class="v">構成の健康診断 · fork×1</div></div>
+    <div class="stat"><div class="k">essence-reviewing-orch.</div><div class="v">3領域複眼 · fork×3 + 統合</div></div>
+    <div class="stat"><div class="k">accumulating-r-feedback</div><div class="v">反映工程 · fork×0 + 人間判断</div></div>
+  </div>
+
+  <h2><span class="no">02</span>検査装置3つの比較表</h2>
+  <table>
+    <thead><tr><th>観点</th><th>review-agent-essence</th><th>review-harness</th><th>essence-reviewing-orchestrator</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">何を見るか</td><td>単一の対象 (skill・コード・設計文書) の<strong>設計品質</strong></td><td>プロジェクトの<strong>ハーネス構成全体</strong> (CLAUDE.md・settings・Skills・Hooks・Memory・MCP)</td><td>評価対象 (skill / diff / 設計) を<strong>3領域の原則すべて</strong>に照合</td></tr>
+      <tr><td class="cat-name">評価基準</td><td>skill 同梱の <code>agent-essence.md</code> (構造的制約 C-1〜C-7 + 設計原則)</td><td><code>diagnosis-rubric.md</code> の <strong>25 アンチパターン指標</strong> + 成熟度判定</td><td>正本 <code>essence-docs/{harness,skill,ui}-essentials.md</code> の<strong>全原則</strong> (原則数は実行時に正本から数える)</td></tr>
+      <tr><td class="cat-name">実行形態</td><td>fork (分岐コンテキスト) ×1 体</td><td>fork ×1 体</td><td><strong>master + fork×3 並列</strong> (各 fork が専任 subagent に委譲) + Lead (統合判断役) が集約</td></tr>
+      <tr><td class="cat-name">出力</td><td>md + HTML レポート (<code>~/.claude/output/</code>)、両方 open</td><td>診断レポート md + HTML (スコア + 改善案)、両方 open</td><td>構造化 Markdown の統合判断 + <strong>機械可読の永続化ファイル</strong> (<code>essence-review-records/</code>)</td></tr>
+      <tr><td class="cat-name">下流の消費者</td><td>なし (人間が読んで終わり)</td><td>なし (人間が読んで終わり)</td><td><strong>あり</strong> — essence-gate hook (commit 時の verdict 源) と accumulating-reviewer-feedback (self-eval 収集)</td></tr>
+      <tr><td class="cat-name">起動の重さ</td><td>「設計レビュー」「原則チェック」で気軽に</td><td>「ハーネス診断」で気軽に</td><td>高コストゆえ<strong>「3領域」「全領域」の明示語のみ</strong>で発動 (誤発火防止のため汎用語トリガーを意図的に撤去済み)</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px;">見分けの軸は3つ — <strong>対象の広さ</strong> (1つの skill か、構成全体か)、<strong>基準の正本性</strong> (skill 同梱の原則集か、essence-docs 正本か)、<strong>結果が機械に読まれるか</strong> (人間向けレポートで完結か、下流工程への入力になるか)。</p>
+
+  <h2><span class="no">03</span>それぞれの人物像</h2>
+  <div class="card">
+    <h3><span class="sev sev-pass">単眼</span>review-agent-essence — 町医者の設計相談</h3>
+    <div class="kv"><b>役割</b>1つの対象を汎用原則に照らし、強み・弱み・改善案を返す。対象は直接修正しない。</div>
+    <div class="kv"><b>特徴</b>関連する原則だけを選定して当てる (全原則の機械的照合はしない)。1 fork で完結し、コンテキストの連続性を保つ。</div>
+    <div class="kv"><b>注意</b>orchestrator とは<strong>意図的併存</strong> (Gotcha に must として明記)。旧世代の残骸ではなく、軽量な相談窓口として現役じゃ。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">診断</span>review-harness — 人間ドックの検査技師</h3>
+    <div class="kv"><b>役割</b>skill 単体でなく<strong>ハーネスという環境そのもの</strong>を 25 のアンチパターン指標で採点し、文脈を考慮した改善案を出す。</div>
+    <div class="kv"><b>特徴</b>成熟度で出力を分岐する (設定ゼロの初心者環境にはセットアップガイド、成熟環境には本診断)。診断レポートの見た目が explain-in-html の美学の原典でもある。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-fail">複眼</span>essence-reviewing-orchestrator — 3科合同の精密検査</h3>
+    <div class="kv"><b>役割</b>ハーネス/skill/UI の3領域 fork を並列起動し、正本の全原則照合を Lead が統合判断。結果を機械可読形式で <code>essence-review-records/</code> へ永続化する。</div>
+    <div class="kv"><b>特徴</b>検査の前に「基準そのものが古びていないか」を確認する同期検証 (check-essence-sync) を内蔵。進捗 JSON・エラー4分岐・self-eval 起動条件まで備えた最重装備じゃ。</div>
+    <div class="kv"><b>唯一性</b>3つの中で<strong>結果が機械の入力になる</strong>のはこれだけ — ここが accumulating との接続点になる。</div>
+  </div>
+
+  <h2><span class="no">04</span>accumulating-reviewer-feedback は「一部」か？ — No、郵便受けで繋がる別工程</h2>
+  <p>直答: <em>orchestrator の構成要素ではない</em>。根拠は3つ — (1) orchestrator の依存リストに accumulating は無い (依存は sub-skill 3体と評価基準のみ)、(2) orchestrator の副作用は「永続化ファイル書出のみ」で反映はしない、(3) accumulating は「明示呼出専用・自動誘発なし」でそなたが別途起動する。つまり<strong>検査 (orchestrator) と治療 (accumulating) は別の診察日</strong>じゃ。接続の実体はこの配管ぞ:</p>
+  <pre>[検査工程]  essence-reviewing-orchestrator (そなたが明示起動)
+              ├─ harness-essentials-reviewer-fork ┐
+              ├─ skill-essentials-reviewer-fork   ├─ Lead が統合判断
+              └─ ui-essentials-reviewer-fork      ┘
+              ▼ 書き置き (file-as-message = ファイルを郵便受けにした非同期連携)
+            ~/.claude/.docs/essence-review-records/
+              ├─ &lt;TS&gt;_&lt;target&gt;.md               → essence-gate hook が commit 時に読む
+              └─ &lt;TS&gt;_&lt;skill&gt;_self-eval-v&lt;N&gt;.md → accumulating が収集・版管理
+
+[反映工程]  accumulating-reviewer-feedback (そなたが別途、明示起動)
+              records を読む → severity 分類 → 再発照合 (段階2.5、PR #67)
+              → 人間判断 (accept/defer/dismiss) → Gotcha 反映 → 二重記録</pre>
+  <p>2つの skill は<strong>互いを呼ばない</strong>。繋がりは records ディレクトリと、self-eval ファイルの命名契約 <code>_self-eval-v&lt;N&gt;</code> (accumulating がこの命名で収集・版管理すると orchestrator 側の出力仕様書に明記) だけじゃ。さらに念の入ったことに、accumulating の改修禁止リストには orchestrator を含む協調ハーネス中核が載っており、<strong>反映装置が検査装置を書き換える事故は構造的に封じられておる</strong>。</p>
+
+  <h2><span class="no">05</span>使い分け早見</h2>
+  <ul class="plain">
+    <li><b>「この skill の設計、どう思う？」</b> — review-agent-essence。軽く1 fork、レポートで完結。</li>
+    <li><b>「このプロジェクトのハーネス、健康か？」</b> — review-harness。構成全体を 25 指標で採点。</li>
+    <li><b>「本気の全原則照合をして、記録も残したい」</b> — essence-reviewing-orchestrator。fork×3 の重装備ゆえ「3領域 essence レビュー」と明示して呼ぶ。</li>
+    <li><b>「溜まった検査結果を skill に反映したい」</b> — accumulating-reviewer-feedback。records を読んで severity 分類し、そなたの決裁を経て Gotcha へ書き戻す。</li>
+  </ul>
+
+  <h2><span class="no">06</span>総評</h2>
+  <div class="quote">
+    3つの検査装置は「対象の広さ × 基準の正本性 × 結果を機械が読むか」で棲み分けられ、Gotcha にも意図的併存が must として明文化されておる。そして accumulating-reviewer-feedback は orchestrator の部品ではなく、検査記録の郵便受け (essence-review-records) を介して繋がる独立した反映工程 — 検査と治療を別 skill に分け、反映側には人間の決裁 (HITL) と改修禁止リストの二重の安全装置を付ける。この分離こそが、自己改修ハーネスが暴走しないための設計じゃ。
+  </div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.02 16:33 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

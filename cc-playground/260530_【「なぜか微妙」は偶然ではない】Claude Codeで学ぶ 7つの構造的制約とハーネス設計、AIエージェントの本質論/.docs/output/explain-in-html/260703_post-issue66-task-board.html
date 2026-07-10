@@ -1,0 +1,264 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>issue #66 完了後の残タスク盤面</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">TASK BOARD · POST ISSUE-66 · 2026.07.03</div>
+  <h1>issue #66 完了後の<em>残タスク盤面</em></h1>
+  <div class="meta"><span>2026.07.03</span><span>kaijutale/claude-harness</span><span>PR #67 merged · 即時 1 / バックログ 3 / 候補 2</span></div>
+
+  
+
+    <h2><span class="no">01</span>現在地 — issue #66 は完全にクローズ済み</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">完了項目</div><div class="v">8 / 9</div></div>
+    <div class="stat"><div class="k">即時タスク</div><div class="v">残り 1 (worktree 削除)</div></div>
+    <div class="stat"><div class="k">バックログ issue</div><div class="v">3 (OPEN)</div></div>
+    <div class="stat"><div class="k">未起票候補</div><div class="v">2 (判断待ち)</div></div>
+  </div>
+  <p style="margin-top:14px;">issue #66「再発検知の機械化」は、実装から本番反映・記録・バックログ化まで一巡した。済んだ項目の確認から:</p>
+  <table>
+    <thead><tr><th>項目</th><th>状態</th><th>証跡</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">PR #67 merge</td><td><span class="mark mark-pass">DONE</span></td><td>merge commit <code>2953e13</code> (7/2 15:52 UTC)</td></tr>
+      <tr><td class="cat-name">本番 (live) への反映と実測検証</td><td><span class="mark mark-pass">DONE</span></td><td>設定の配線確認・テスト 27 file 全 green・実発火 1 行記録を実測</td></tr>
+      <tr><td class="cat-name">計画ファイルの完了処理</td><td><span class="mark mark-pass">DONE</span></td><td>plan を completed 化し archived へ移動 (<code>f7226d5</code>)</td></tr>
+      <tr><td class="cat-name">レビュー記録の永続化</td><td><span class="mark mark-pass">DONE</span></td><td>self-eval record commit (<code>29ff861</code>、Critical 0 / High 0 / Medium 0 / Low 4)</td></tr>
+      <tr><td class="cat-name">follow-up の issue 化</td><td><span class="mark mark-pass">DONE</span></td><td>#68 (heartbeat) / #69 (残り 8 本展開) を起票</td></tr>
+      <tr><td class="cat-name">作業ログ + Gotcha 4 件</td><td><span class="mark mark-pass">DONE</span></td><td><code>2026-07-02_issue-66-*.md</code> に merge 後の live 反映まで追記済み</td></tr>
+      <tr><td class="cat-name">ハーネス repo の push</td><td><span class="mark mark-pass">DONE</span></td><td>2 回 (<code>a6bcc78</code> → <code>5dd6f67</code>)、リモートと完全同期</td></tr>
+      <tr><td class="cat-name">未追跡ログの回収</td><td><span class="mark mark-pass">DONE</span></td><td>note-articles ログを <code>5dd6f67</code> で commit</td></tr>
+      <tr><td class="cat-name">worktree 削除</td><td><span class="mark mark-fail">残り</span></td><td>削除前の安全確認は済み。実行だけが残る (§02)</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">02</span>即時タスク — worktree 削除 (最後の 1 手)</h2>
+  <div class="card">
+    <h3><span class="sev sev-fail">残り</span>issue-66 の worktree を片付ける<span class="chip">2 分</span></h3>
+    <div class="kv"><b>現況</b>worktree は存置中。削除前の安全確認 3 点 (未保存の変更なし・未 push の commit なし・branch は merge 済み) は確認済み。</div>
+    <div class="kv"><b>手順 1</b>worktree 側のペインで開いている Claude セッションがあれば先に閉じる (セッションの足元ごと消すのを防ぐ)。</div>
+    <div class="kv"><b>手順 2</b>削除を実行する。自分で打つなら:</div>
+    <pre>git -C ~/.claude gtr rm issue-66-recurrence-detection-mechanization</pre>
+    <div class="kv"><b>代替</b>Claude に「worktree 消せ」と指示すれば、削除直前にもう一度検分してから実行する。</div>
+  </div>
+
+  <h2><span class="no">03</span>バックログ — OPEN issue 3 件 (推奨着手順)</h2>
+  <table>
+    <thead><tr><th>順</th><th>issue</th><th>中身</th><th>規模感</th></tr></thead>
+    <tbody>
+      <tr><td class="score-cell">1</td><td class="cat-name">#69 台帳を残り 8 本へ展開</td><td>発火記録の計装が現状 4/12 本。残り 8 本 (遮断系 4 + 警告系 4) へ 2 行定型 + テストを追加し、観測範囲を 3 倍にする。共有部品のおかげで機械作業</td><td class="score-cell">小<div class="bar high"><i style="width:30%"></i></div></td></tr>
+      <tr><td class="score-cell">2</td><td class="cat-name">#68 センサー heartbeat</td><td>「集計ゼロ = 平和」と「集計ゼロ = センサー死亡」を見分ける自己診断。セッション開始時レポートに軽量な生存確認を相乗りさせる。台帳への依存が深まる前の保険</td><td class="score-cell">中<div class="bar"><i style="width:50%"></i></div></td></tr>
+      <tr><td class="score-cell">3</td><td class="cat-name">#49 副作用系 skill の誤起動防止</td><td>issue #66 とは無関係の既存バックログ (6/25 起票)。画像生成・シークレット受取 skill に人間確認の門を付ける</td><td class="score-cell">中<div class="bar"><i style="width:50%"></i></div></td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px;">#69 を先に推す理由: 安い機械作業で<strong>観測データが今日から集まり始める</strong>。#68 の保険は、台帳への依存が実際に深まってからで間に合う。</p>
+
+  <h2><span class="no">04</span>未起票の候補 — そなたの判断待ち 2 件</h2>
+  <ul class="plain">
+    <li><b>matched_context の保持方針再検討</b> — PR #67 の follow-up 候補 3 号 (未起票)。台帳に記録される「検知した文言」は書くだけで読まれない非信頼データ。保持し続けるか、切り詰めるかの方針決め。</li>
+    <li><b>review-agent-essence の評価基準を同期検証の網に入れる</b> — skill 品質ランキング (7/3) で挙がった改善案。同 skill の <code>agent-essence.md</code> は基準の鮮度チェック機構 (check-essence-sync) の突合対象外で、陳腐化しても機械が気づかない。既存の検証 script に突合対象を 1 つ足す形で解消できる。</li>
+  </ul>
+
+  <h2><span class="no">05</span>タスクではなく「待ち」— センサー 2 系統の運用開始</h2>
+  <ul class="plain">
+    <li><b>Sensor A (hook 発火台帳)</b> — 実台帳はまだ空 (= 本番発火ゼロ、正常)。普段の作業で発火が溜まり、月 3 回の閾値を超えた rule があればセッション開始時に報告が来る。<strong>やることは無い、待つだけ</strong>。</li>
+    <li><b>Sensor B (Gotcha 再発照合)</b> — 次回 accumulating-reviewer-feedback を起動した時に段階 2.5 が初稼働する。ただし直近の検査記録は Low 4 件のみ (Low = 記録のみのルーティング) ゆえ、<strong>急ぎの決裁日は不要</strong>。Medium が 3 件溜まった頃が起動の目安。</li>
+  </ul>
+
+  <h2><span class="no">06</span>総評</h2>
+  <div class="quote">
+    issue #66 は「実装 → 3 verifier レビュー → merge → 本番反映の実測 → 記録 → バックログ化」の全行程を証跡つきで一巡し、残るは worktree 削除の 1 手だけになった。この後の主戦場はバックログの #69 → #68 で、両方閉じれば発火台帳は「12 本すべての壁を、生存確認つきで見張る」完成形に到達する。センサー自体は既に本番で目を開けており、そなたが次に禁止語を踏んだ瞬間が実台帳の第 1 号になる。
+  </div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.03 09:03 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

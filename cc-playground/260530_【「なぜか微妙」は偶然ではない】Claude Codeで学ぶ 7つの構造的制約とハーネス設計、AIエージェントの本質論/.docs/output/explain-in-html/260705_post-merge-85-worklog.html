@@ -1,0 +1,266 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PR #85 マージ後の作業ログ — baseline取得7runと次のタスク</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">WORK LOG · 2026.07.04–05</div>
+  <h1>PR #85 マージ後、<em>何が行われたか</em><br>後始末 → 物差し作り → 本線の入口</h1>
+  <div class="meta"><span>2026.07.04 夜〜07.05 未明</span><span>baseline 7 run / 成果物13ファイル</span><span>次: issue #73</span></div>
+
+  
+
+    <h2><span class="no">01</span>全体像 — マージが起点、物差し作りが本体</h2>
+  <p>PR #85 のマージ確認を受けて、事前に合意していた自動シーケンス (後始末 → 準備 → baseline 取得) を一気に実行した。中心は <strong>baseline 取得</strong> — レビュー系 skill を改修する前の「現在の実力と自然なブレ幅」を、実際に7回走らせて記録する作業である。これが今後の全 PR の合否を測る物差しになる。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">merge 検証</div><div class="v">MERGED (ab44586)</div></div>
+    <div class="stat"><div class="k">本体 main 更新</div><div class="v">常駐導線 稼働開始</div></div>
+    <div class="stat"><div class="k">worktree 後始末</div><div class="v">検証つき削除 完了</div></div>
+    <div class="stat"><div class="k">plan 状態</div><div class="v">implementing へ更新</div></div>
+    <div class="stat"><div class="k">baseline 走行</div><div class="v">7 run (レビュー系3種)</div></div>
+    <div class="stat"><div class="k">確保した成果物</div><div class="v">13 ファイル</div></div>
+    <div class="stat"><div class="k">新発見</div><div class="v">High 1件 (logging 衝突)</div></div>
+    <div class="stat"><div class="k">工程検証</div><div class="v">9/9 step + 整合 exit 0</div></div>
+  </div>
+
+  <h2><span class="no">02</span>実行タイムライン</h2>
+  <table>
+    <thead><tr><th>順</th><th>作業</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td class="score-cell">1</td><td>merge の検証と本体更新 — PR #85 の状態を機械確認し、ハーネス本体の main を fast-forward で更新</td><td>常駐ルール <code>rules/research-phase.md</code> が全セッションで発効 (research routing の防御線が休眠から起動)</td></tr>
+      <tr><td class="score-cell">2</td><td>worktree の後始末 — 削除前検証 (作業ツリーが空 + コミットがリモート保全済み) を通してから <code>gtr rm</code></td><td>ブランチ用の作業コピーを撤去、本体はクリーン</td></tr>
+      <tr><td class="score-cell">3</td><td>実行計画 (plan) の状態更新 — planning → implementing、調査ファイルへの逆リンクも追記</td><td>3点セット引き継ぎ (git log + 進捗 + 計画) の計画側が現役化</td></tr>
+      <tr><td class="score-cell">4</td><td><strong>baseline 取得 7 run</strong> — ハーネス診断×4・エッセンスレビュー×2・3領域統合レビュー×1 を直列実行し、成果物を <code>.docs/baselines/review-skills-2026-07/</code> へラベル付き確保</td><td>13 ファイル。詳細は次セクション</td></tr>
+      <tr><td class="score-cell">5</td><td>3領域統合レビューでは本エージェントが指揮者 (Lead) として 9 step の手順契約を完走 — 並列 fork 3体・領域間の severity 食い違い裁定・永続化・機械検証まで</td><td>9/9 step 完走、判定数値の整合検証も exit 0 (正常)</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>baseline の実測結果 — 「総点は安定、個別判定は揺れる」</h2>
+  <table>
+    <thead><tr><th>run</th><th>対象</th><th>結果</th><th>ブレの観測</th></tr></thead>
+    <tbody>
+      <tr><td class="score-cell">1-2</td><td>ハーネス診断 → ~/.claude 本体</td><td class="score-cell">S / 96% ×2回</td><td>総点は完全一致。ただし警告 (⚠️) の中身が入替わり (A4+D1 → A2+A4)</td></tr>
+      <tr><td class="score-cell">3-4</td><td>ハーネス診断 → 本プロジェクト</td><td class="score-cell">S / 96% → S / 98%</td><td>±1点。警告は<strong>完全に入替わり</strong> (A4+D3 → D1)。診断係自身が「採点範囲の解釈が最大の揺れ源」と申告</td></tr>
+      <tr><td class="score-cell">5-6</td><td>エッセンスレビュー → logging skill</td><td class="score-cell">部分適合 8件 → 6件</td><td>同一原則 (S-1.1 出所隔離) の判定が<strong>「最優先の改善点」⇔「強みの白眉」で真逆に反転</strong></td></tr>
+      <tr><td class="score-cell">7</td><td>3領域統合レビュー → logging skill</td><td class="score-cell">🟡 条件付き適合<br>Critical 0 / High 1 / Medium 6 / Low 4</td><td>初の logging 対象 run (比較元として記録)</td></tr>
+    </tbody>
+  </table>
+  <p>7 run から読み取れた規則性: <em>総点・最終判定 (verdict) は安定しているが、指標・原則レベルの個別判定は大きく揺れる</em>。したがって改修後の合格判定は「総点がブレ幅内に収まる」+「個別判定の変動がその PR の意図で説明できる」の二段で見る必要がある — 事前調査で指摘した「再現性の欠落」が、数字で裏付けられた形である。</p>
+
+  <h2><span class="no">04</span>発見と保留事項</h2>
+  <div class="card">
+    <h3><span class="sev sev-fail">新 High</span>logging skill の配置先ルール衝突 (issue 未登録の新発見)</h3>
+    <div class="kv"><b>内容</b>logging skill の「shared/ への直接書込は禁止」と、本プロジェクト CLAUDE.md の「全ログを shared/ へ」が無裁定のまま衝突しており、どちらが勝つかが確率的な判断に委ねられている。ハーネス領域と skill 領域のレビュー係が独立に同じ問題を検出した。</div>
+    <div class="kv"><b>皮肉な符合</b>これは先日 kaiju が指摘した「層の区別 (サンドボックス ≠ ハーネス)」と同型の問題を、レビュー装置が独立に言い当てた形。</div>
+    <div class="kv"><b>実務上の含意</b>この High を含む記録は commit 前検問 (essence-gate) の判定源になるため、<strong>次のハーネス本体への commit が差し止められる可能性がある</strong>。#73 の commit 前に扱いを決める必要がある。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">保留 1</span>self-eval (装置の自己点検) 推奨が発火</h3>
+    <div class="kv"><b>内容</b>3領域統合レビュー skill 自身の自己点検条件が2つ該当 (skill 改修後 + 直近11回の通常レビュー)。手順契約上、実施可否は kaiju への確認事項。急ぎではない。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">保留 2</span>High の処遇 — 新 issue 化の推奨</h3>
+    <div class="kv"><b>推奨</b>「プロジェクト CLAUDE.md が配置先を明示する場合はそちらが優先」という override (優先順位) 契約の1行を logging skill に足すだけの軽い修正。#73 と並行できる独立の玉として新 issue に切るのが良い、というのが本エージェントの意見 (決定は kaiju)。</div>
+  </div>
+
+  <h2><span class="no">05</span>次のタスク</h2>
+  <ul class="plain">
+    <li><b>本線: issue #73 に着手</b> — グレード定義の3ファイル不一致 (確定バグ) の修正。worktree + ブランチ作成 → 修正 → 機械検証 (3ファイル突合) → PR 作成 → kaiju のレビューと merge、のサイクル1周目。物差し (baseline) は確保済みで前提は全て整っている。</li>
+    <li><b>並行の判断待ち (kaiju)</b> — ①新 High を issue 化するか (推奨: する)。②self-eval を実施するか。③essence-gate が High で commit を差し止めた場合の扱い (①の修正を先に通すのが素直)。</li>
+    <li><b>以後の並び</b> — #74 → #75 → #78 (人間確認必須) → #76 → #77 → #79 (人間確認必須) → #80 → #81 → #82。#83/#84 は隙間で。</li>
+  </ul>
+
+  <h2><span class="no">06</span>総評</h2>
+  <div class="quote">マージ後の作業は「片付け → 物差し作り → 本線の入口」まで計画通り進んだ。収穫は2つある。第一に、7回の実測が「総点は安定・個別判定は揺れる」という装置の性格を数字で確定させ、以後の合否判定の読み方を決めた。第二に、baseline のつもりで回した統合レビューが未登録の High を1件掘り当て、レビュー装置が実働で価値を出すことを図らずも実証した。次の一手は #73 — ただし High の処遇を決めてから commit するのが安全である。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.05 09:33 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
