@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness Diagnosis: ~/.claude (ハーネス本体)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">HARNESS DIAGNOSIS</div>
+  <h1>~/.claude （ハーネス本体）</h1>
+  <div class="meta">
+    <span>診断日: 2026-07-05-0007</span>
+    <span>対象: /Users/camone/.claude</span>
+    <span>評価基準: diagnosis-rubric (25指標)</span>
+  </div>
+
+  <div class="hero grade-wrap grade-s">
+    <div class="grade-box grade-s">
+      <div class="grade-letter">S</div>
+      <div class="grade-pct">96% (48/50)</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT</div>
+      <p>ハーネス設計が<strong>成熟</strong>。25指標中23が満点で、B・C・D・E の4カテゴリは全て満点。essence-docs という原則体系を自ら保持し、それに沿って構築された自己参照的な設計。残る改善余地は帯域効率（A）に集中し、いずれも「壊れている」ではなく「もう一段絞れる」種類。微調整のフェーズ。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>ハーネス構成サマリ</h2>
+  <div class="stats">
+    <div class="stat">
+      <div class="k">CLAUDE.MD</div>
+      <div class="v">112行 / ポインタ主体 / インライン手順ほぼゼロ</div>
+    </div>
+    <div class="stat">
+      <div class="k">PERMISSIONS</div>
+      <div class="v">allow 約42 / deny 約51 / ask 約28</div>
+    </div>
+    <div class="stat">
+      <div class="k">HOOKS</div>
+      <div class="v">Pre 約9 / Post 約9 / Stop 6 / Compact 5 / SessionStart 3</div>
+    </div>
+    <div class="stat">
+      <div class="k">SKILLS</div>
+      <div class="v">90件（辞書 / ワークフロー / fork / reviewer 型）</div>
+    </div>
+    <div class="stat">
+      <div class="k">MCP</div>
+      <div class="v">5接続（brave / chrome-devtools / claude-in-chrome / context7 / firecrawl）</div>
+    </div>
+    <div class="stat">
+      <div class="k">MEMORY</div>
+      <div class="v">手動運用（autoMemory off）/ project別 index 化</div>
+    </div>
+    <div class="stat">
+      <div class="k">AGENTS</div>
+      <div class="v">カスタム 32件（team / debater / reviewer 系）</div>
+    </div>
+    <div class="stat">
+      <div class="k">PLUGINS</div>
+      <div class="v">有効2（ralph-loop / typescript-lsp）・補助的</div>
+    </div>
+  </div>
+
+  <h2><span class="no">02</span>スコアサマリ</h2>
+  <table>
+    <thead>
+      <tr><th>カテゴリ</th><th>指標</th><th>スコア</th><th>小計</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="cat-name">A. 帯域効率</td>
+        <td>
+          <span class="mark mark-pass">A1</span><span class="mark mark-warn">A2</span><span class="mark mark-pass">A3</span><span class="mark mark-warn">A4</span><span class="mark mark-pass">A5</span>
+        </td>
+        <td class="score-cell">8/10</td>
+        <td class="score-cell">80%<div class="bar high"><i style="width:80%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">B. 検証の堅牢性</td>
+        <td>
+          <span class="mark mark-pass">B1</span><span class="mark mark-pass">B2</span><span class="mark mark-pass">B3</span><span class="mark mark-pass">B4</span><span class="mark mark-pass">B5</span>
+        </td>
+        <td class="score-cell">10/10</td>
+        <td class="score-cell">100%<div class="bar high"><i style="width:100%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">C. 権限と信頼境界</td>
+        <td>
+          <span class="mark mark-pass">C1</span><span class="mark mark-pass">C2</span><span class="mark mark-pass">C3</span><span class="mark mark-pass">C4</span><span class="mark mark-pass">C5</span>
+        </td>
+        <td class="score-cell">10/10</td>
+        <td class="score-cell">100%<div class="bar high"><i style="width:100%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">D. 知識と記憶</td>
+        <td>
+          <span class="mark mark-pass">D1</span><span class="mark mark-pass">D2</span><span class="mark mark-pass">D3</span><span class="mark mark-pass">D4</span><span class="mark mark-pass">D5</span>
+        </td>
+        <td class="score-cell">10/10</td>
+        <td class="score-cell">100%<div class="bar high"><i style="width:100%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">E. 環境設計</td>
+        <td>
+          <span class="mark mark-pass">E1</span><span class="mark mark-pass">E2</span><span class="mark mark-pass">E3</span><span class="mark mark-pass">E4</span><span class="mark mark-pass">E5</span>
+        </td>
+        <td class="score-cell">10/10</td>
+        <td class="score-cell">100%<div class="bar high"><i style="width:100%"></i></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>検出されたアンチパターン</h2>
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span>A2. ツール接続は帯域コストに見合っているか</h3>
+    <div class="kv"><b>検出事実</b>MCP 5接続常駐。chrome-devtools・claude-in-chrome・context7 は代替不能で必然性明確。一方 brave-search は組込 WebSearch、firecrawl は組込 WebFetch と機能重複（CLAUDE.md で品質理由の明示選択）。</div>
+    <div class="kv"><b>影響</b>MCP のツール定義は毎セッション常駐。組込で代替可能な2接続分の帯域を、品質差というマージナルな利得のために払い続けている。実害は小さいが釣り合いに温度差。</div>
+    <div class="kv"><b>関連原則</b>(→C-1) コンテキスト帯域は有限でゼロサム。組込で賄える機能への追加ツール定義は帯域の純増。</div>
+    <div class="kv"><b>改善案</b></div>
+    <pre>brave-search / firecrawl の常駐価値を実測で棚卸し:
+  - WebSearch/WebFetch への優位を体感できている → 現状維持で正当
+  - 体感差が曖昧 → 2接続を外して組込に寄せると帯域が軽くなる
+※ chrome-devtools / claude-in-chrome / context7 は据え置き推奨（代替不能）</pre>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span>A4. エージェントの選択肢が不必要に広がっていないか</h3>
+    <div class="kv"><b>検出事実</b>skill 90件が全て model-invocable。disable-model-invocation: true を持つ実 SKILL は2件のみ。fork/reviewer 型は description の「明示呼出専用」文言で抑制しており、構造的発火抑止ではない。permissions.allow は厳密スコープ済み（良好）。</div>
+    <div class="kv"><b>影響</b>90件の description が毎セッション「注文メニュー」に載る。fork/reviewer skill は本来 Skill ツールからの明示呼出専用だが、自動発火候補として推論リソースを消費し得る。</div>
+    <div class="kv"><b>関連原則</b>(→V-1.3) 選択肢は推論前に絞る, (→C-1.1) コンテキストの能動的管理。</div>
+    <div class="kv"><b>改善案</b></div>
+    <pre># 各 fork / reviewer 系 skill の frontmatter に追加
+# （明示 Skill(name) 呼出は維持。自動発火候補からのみ除外）
+disable-model-invocation: true
+
+# 対象: *-fork 系, essence-reviewing-orchestrator,
+#       gep-*-reviewer-fork, framing-advocate-*-fork,
+#       llm-debate-* fork 群, review-harness の内部 fork 等</pre>
+  </div>
+
+  <h2><span class="no">04</span>強み</h2>
+  <ul class="plain">
+    <li><b>C1: 品質のものさし自体が deny 二重封鎖</b> — lint/test/CI 設定に加え、hooks/* と hooks/rules/*、settings* まで deny。「測定器」も「測定器を守るルール」もエージェントは改変できず、報酬ハッキング（→C-5）経路が構造封鎖されている。</li>
+    <li><b>E3: 生成者と評価者を context:fork で物理分離</b> — essence reviewer 群・TDD red/verify fork・framing-advocate・llm-debate が全てフレッシュな subagent で走る。自己採点による迎合（→C-3）を設計で回避し、レビューの信頼性を構造で担保。</li>
+    <li><b>B系: 失敗パターンの仕組み化が徹底</b> — emoji-in-code 禁止・生成コメント禁止・frontmatter schema・file line limit・secret read が全て決定論 hook に昇格済み。「〜禁止」を自然言語で終わらせず再発不能にしている（→V-1.1）。</li>
+  </ul>
+
+  <h2><span class="no">05</span>Quick Wins — 今日できる改善</h2>
+  <div class="card">
+    <h3>1. fork/reviewer skill の自動発火抑止<span class="chip">15分</span></h3>
+    <p>fork 系・reviewer 系 skill の frontmatter に disable-model-invocation: true を一括付与。明示 Skill(name) 呼出は維持されるため機能は不変で、90件メニューからノイズだけを削れる。</p>
+    <pre># 対象確認（明示呼出専用と description に書いてある skill を洗い出す）
+grep -rl "明示呼出専用\|自動誘発なし\|context: fork" ~/.claude/skills/*/SKILL.md
+# 各該当 SKILL.md の frontmatter に disable-model-invocation: true を追加</pre>
+  </div>
+  <div class="card">
+    <h3>2. brave-search / firecrawl の常駐価値を実測判定<span class="chip">10分</span></h3>
+    <p>組込 WebSearch/WebFetch と重複する2接続について直近の使用実感を棚卸しし、「品質優位を体感できているか」で常駐継続/外しを決める。曖昧なら組込に寄せて帯域を軽くする。</p>
+  </div>
+
+  <h2><span class="no">06</span>次のステップ — 中期的な改善</h2>
+  <ul class="plain">
+    <li><b>project-level settings.json の保護レベル再考（C3の残り）</b>: ~/.claude/settings* はユーザーレベルで deny 済みだが、**/.claude/settings.json（プロジェクトレベル）は現状 ask。自己改変の中核パスは deny で完全に閉じており実害は小さいが、rubric の厳密な ✅ 条件（両レベル deny）に揃えるなら deny 化を検討。ただし新規PJ setup の利便性とのトレードオフがあり ask 維持も合理的。</li>
+    <li><b>90 skill のライフサイクル管理</b>: skills-disabled/ を活用した定期棚卸しの仕組み化。skill 数の漸増でメニュー圧が増すため、四半期ごとの棚卸しトリガー（SessionStart hook でのリマインド等）を検討。</li>
+  </ul>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">~/.claude は 96%（Grade S）の成熟ハーネスで、25指標中23が満点。B・C・D・E の4カテゴリが全て満点という結果は、essence-docs という原則体系を自ら保持し、それに沿って構築された自己参照的な設計を反映している。品質のものさしと hooks/settings 自体を deny で二重封鎖した信頼境界、決定論 hook 群による失敗の仕組み化、context:fork による生成/評価の物理分離が特に強い。改善余地は帯域効率の A カテゴリに集中し、いずれも「壊れている」ではなく「もう一段絞れる」種類の ⚠️。本診断はファイルベースの静的解析であり、hook の実行時発火・90 skill の description による自動発火抑止の実効性・暗黙知の真の網羅性は測定範囲外である点は留保する。（本レポートは baseline 変動幅測定の run 2/2 として、過去診断を参照せず独立実行した。）</div>
+
+  <footer>
+    Generated by review-harness skill / Claude Code<br>
+    Markdown版: ~/.claude/output/harness-diag-2026-07-05-0007.md
+  </footer>
+
+</div>
+</body>
+</html>

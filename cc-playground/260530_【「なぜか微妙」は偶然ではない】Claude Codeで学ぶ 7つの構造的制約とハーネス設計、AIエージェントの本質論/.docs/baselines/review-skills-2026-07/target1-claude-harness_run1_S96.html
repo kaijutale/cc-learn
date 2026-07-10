@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness Diagnosis: ~/.claude (ハーネス本体)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">HARNESS DIAGNOSIS</div>
+  <h1>~/.claude (ハーネス本体)</h1>
+  <div class="meta">
+    <span>診断日: 2026-07-04-1809</span>
+    <span>対象: /Users/camone/.claude</span>
+    <span>評価基準: diagnosis-rubric (25指標)</span>
+  </div>
+
+  <div class="hero grade-wrap grade-s">
+    <div class="grade-box grade-s">
+      <div class="grade-letter">S</div>
+      <div class="grade-pct">96% (48/50)</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT</div>
+      <p><strong>ハーネス設計が成熟。微調整のフェーズ。</strong> C（権限）・B（検証）・E（環境）が満点。構造的な穴（❌）はゼロ。残る改善余地は <strong>A4</strong>（89件スキルの決定面がソフト抑制依存）と <strong>D1</strong>（排除宣言の薄さ）の⚠️2点のみで、いずれも Quick Wins で今日クローズ可能。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>ハーネス構成サマリ</h2>
+  <div class="stats">
+    <div class="stat">
+      <div class="k">CLAUDE.MD</div>
+      <div class="v">112行 / rules 10本 + .docs/progressive-disclosure へ退避 / インラインは高頻度手順のみ</div>
+    </div>
+    <div class="stat">
+      <div class="k">PERMISSIONS</div>
+      <div class="v">allow 41 / deny 68 / ask 28（defaultMode: default）</div>
+    </div>
+    <div class="stat">
+      <div class="k">HOOKS</div>
+      <div class="v">Pre 9 / Post 9 / Stop 6 / PostCompact 5 / SessionStart 3 / 他。自作 約24本</div>
+    </div>
+    <div class="stat">
+      <div class="k">SKILLS</div>
+      <div class="v">89件（fork/manual-only 29件は明示呼出専用マーク付き、8件 disabled 退避）</div>
+    </div>
+    <div class="stat">
+      <div class="k">MCP</div>
+      <div class="v">4-5接続。ENABLE_TOOL_SEARCH=true で tool 定義は deferred（常駐せず）</div>
+    </div>
+    <div class="stat">
+      <div class="k">MEMORY</div>
+      <div class="v">6PJ。~/.claude は index 付き4エントリ。autoMemoryEnabled: false（手動キュレーション）</div>
+    </div>
+    <div class="stat">
+      <div class="k">AGENTS</div>
+      <div class="v">カスタム 32件（team-* / debater-* / fork verifier 体系）</div>
+    </div>
+    <div class="stat">
+      <div class="k">PLUGINS</div>
+      <div class="v">ralph-loop=有効 / typescript-lsp=有効 / claude-mem=無効</div>
+    </div>
+  </div>
+
+  <h2><span class="no">02</span>スコアサマリ</h2>
+  <table>
+    <thead>
+      <tr><th>カテゴリ</th><th>指標</th><th>スコア</th><th>小計</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="cat-name">A. 帯域効率</td>
+        <td>
+          <span class="mark mark-pass">A1</span><span class="mark mark-pass">A2</span><span class="mark mark-pass">A3</span><span class="mark mark-warn">A4</span><span class="mark mark-pass">A5</span>
+        </td>
+        <td class="score-cell">9/10</td>
+        <td class="score-cell">90%<div class="bar high"><i style="width:90%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">B. 検証の堅牢性</td>
+        <td>
+          <span class="mark mark-pass">B1</span><span class="mark mark-pass">B2</span><span class="mark mark-pass">B3</span><span class="mark mark-pass">B4</span><span class="mark mark-pass">B5</span>
+        </td>
+        <td class="score-cell">10/10</td>
+        <td class="score-cell">100%<div class="bar high"><i style="width:100%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">C. 権限と信頼境界</td>
+        <td>
+          <span class="mark mark-pass">C1</span><span class="mark mark-pass">C2</span><span class="mark mark-pass">C3</span><span class="mark mark-pass">C4</span><span class="mark mark-pass">C5</span>
+        </td>
+        <td class="score-cell">10/10</td>
+        <td class="score-cell">100%<div class="bar high"><i style="width:100%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">D. 知識と記憶</td>
+        <td>
+          <span class="mark mark-warn">D1</span><span class="mark mark-pass">D2</span><span class="mark mark-pass">D3</span><span class="mark mark-pass">D4</span><span class="mark mark-pass">D5</span>
+        </td>
+        <td class="score-cell">9/10</td>
+        <td class="score-cell">90%<div class="bar high"><i style="width:90%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">E. 環境設計</td>
+        <td>
+          <span class="mark mark-pass">E1</span><span class="mark mark-pass">E2</span><span class="mark mark-pass">E3</span><span class="mark mark-pass">E4</span><span class="mark mark-pass">E5</span>
+        </td>
+        <td class="score-cell">10/10</td>
+        <td class="score-cell">100%<div class="bar high"><i style="width:100%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">総合</td>
+        <td><span class="mark mark-pass">❌ 0</span><span class="mark mark-warn">⚠️ 2</span><span class="mark mark-pass">✅ 23</span></td>
+        <td class="score-cell">48/50</td>
+        <td class="score-cell">96%<div class="bar high"><i style="width:96%"></i></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>検出されたアンチパターン</h2>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span>A4. エージェントの選択肢が不必要に広がっていないか</h3>
+    <div class="kv"><b>検出事実</b>skills が 89件。29件が description に「明示呼出専用・自動誘発なし」を明記して<em>ソフト</em>抑制するが、<code>disable-model-invocation: true</code> で<em>構造的</em>抑制するのは 2件のみ。fork skill は description の文言に依存している。</div>
+    <div class="kv"><b>影響</b>89件の description は毎セッション「自動発動候補メニュー」としてコンテキストに載る。description 抑制は確率的でガードにならず、メニュー幅そのものが判断リソースを消費する。allow はスコープ済・8件は disabled 退避のため、実害は mis-invocation でなく「決定面の幅」に限定。</div>
+    <div class="kv"><b>関連原則</b>(→V-1.3) 選択肢は推論前に絞る / (→C-1.1) コンテキストの能動的管理 / (→V-1.1) 仕組みで塞ぐ</div>
+    <div class="kv"><b>改善案</b>manual-only / fork の未フラグ分に <code>disable-model-invocation: true</code> を追加。自動発動のみ止め、master→fork の明示呼出は壊さない。</div>
+    <pre>---
+name: framing-advocate-merit-fork
+context: fork
+subagent: framing-advocate-merit
+disable-model-invocation: true   # 追加: 自動発動を構造的に遮断
+---</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span>D1. 暗黙の前提に頼っていないか</h3>
+    <div class="kv"><b>検出事実</b>CLAUDE.md の Stack 節は主要技術（TypeScript/ESM, Next.js App Router）を明示するが、非主流選択を排除する「〜ではない」宣言がない。deny/ask に jest/vitest/prettier/eslint が個別登場し暗黙に示唆はするが明文でない。</div>
+    <div class="kv"><b>影響</b>統治対象 PJ で新セッションの Claude が pkg manager や test FW を訓練データ最頻値（npm・Jest 側）へ寄せる余地が残る。per-repo 委譲は正当だが、global 既定の排除宣言があればフォールバック品質が安定する。</div>
+    <div class="kv"><b>関連原則</b>(→C-6) 訓練データの断崖 / (→C-2) 暗黙のデフォルトは入力バイアス</div>
+    <div class="kv"><b>改善案</b>Stack 節に allow と整合した排除宣言を1〜2行追記。</div>
+    <pre>## Stack
+- Primary: TypeScript(ESM), Next.js(App Router). pkg manager→リポジトリ指定
+- 既定(per-repo で上書き可): pnpm(npm/yarn ではない) / Vitest(Jest ではない)</pre>
+  </div>
+
+  <h2><span class="no">04</span>強み</h2>
+  <ul class="plain">
+    <li><b>信頼境界が「金庫の鍵を机に置かない」水準で閉じている（C1/C3 満点）</b>: settings.json・CLAUDE.md・hooks・hooks/rules が deny 保護。エージェントは自分の deny リスト・品質のものさし（eslint/tsconfig/vitest/jest/prettier/biome/CI）を書き換えられない。project 版は ask、user 版は hard deny の二層設計。</li>
+    <li><b>生成者≠評価者を「文言」でなく「構造」で分離（E3/T-1.1）</b>: reviewer・verifier・advocate 系が context: fork + subagent で親から物理隔離され、block-team-in-macro / restrict-macro-writes hook が Macro 層の Task 発火・書込を機械的に禁止。迎合レビューの経路そのものを塞ぐ。</li>
+    <li><b>過去の失敗が prompt でなく hook に昇格済（B5/V-1.1）</b>: emoji-in-code 禁止・生成コメント禁止・ハードコードパス検査・500行検査・skill frontmatter schema・stop-words 検査を hook で決定論的に強制。再注意ではなく再発不能化。</li>
+    <li><b>帯域を積極管理（A2/A5）</b>: ENABLE_TOOL_SEARCH=true で重い MCP tool 定義を常駐から外し ToolSearch でオンデマンド化。長セッション対策も handoff/pickup/logging/plans/Memory + PostCompact での再検証・handoff 復元まで揃う。</li>
+  </ul>
+
+  <h2><span class="no">05</span>Quick Wins — 今日できる改善</h2>
+
+  <div class="card">
+    <h3>1. manual-only / fork スキルに disable-model-invocation を付与<span class="chip">15-30分</span></h3>
+    <p>下記コマンドで「manual-only を謳うが hard フラグ未設定」の skill を洗い出し、frontmatter に1行追加。89件メニューの決定面を実効的に狭める最短手。master→fork の明示呼出は壊れない。</p>
+    <pre>comm -23 \
+  &lt;(grep -rl '明示呼出専用\|自動誘発なし' ~/.claude/skills/*/SKILL.md | sort) \
+  &lt;(grep -rl 'disable-model-invocation: *true' ~/.claude/skills/*/SKILL.md | sort)</pre>
+  </div>
+
+  <div class="card">
+    <h3>2. CLAUDE.md Stack に排除宣言を追記<span class="chip">5分</span></h3>
+    <p>D1 改善案の2行を追加し、allow に実在する pnpm/Vitest と整合させる。※CLAUDE.md は自身が deny 保護対象のため、かいじゅう自身の編集が必要。</p>
+  </div>
+
+  <div class="card">
+    <h3>3. バックアップ残骸を trash<span class="chip">5分</span></h3>
+    <p>settings.json.bak / skills.backup-2026-05-05/ / *.bak-260521 / settings 未参照の孤児 hook 疑い（hook_stop_plan_promote_reminder.sh 等）が蓄積。E4 の GC 機構は稼働中だが対象の掃除は手動。rm 事故防止のため trash で除去。</p>
+    <pre>grep -o 'hook_[a-z_]*\.sh' ~/.claude/settings.json | sort -u   # 参照される hook
+ls ~/.claude/hooks/*.sh ~/.claude/*.bak ~/.claude/skills.backup-* 2>/dev/null
+# 差分を確認のうえ: trash &lt;孤児ファイル&gt;</pre>
+  </div>
+
+  <h2><span class="no">06</span>次のステップ — 中期的な改善</h2>
+  <ul class="plain">
+    <li><b>スキルライブラリの定期棚卸し（A4 の構造対応）</b>: 89件は個人ハーネスとして最大級。「直近90日で発動0回」のスキルを skills-disabled へ退避する運用を managing-skills skill に組み込み、決定面の自然増を GC する。</li>
+    <li><b>排除宣言を統治テンプレートに昇格（D1 の横展開）</b>: 単発追記でなく authoring-claude-md skill の Stack 雛形に「排除宣言（〜ではない）」を必須項目化し、以後生成される全 project CLAUDE.md で一貫させる。</li>
+  </ul>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">本ハーネスは 96%・グレード S の成熟した設計で、権限・信頼境界（C）／検証（B）／環境設計（E）が満点。とりわけ「自分の deny リスト・品質のものさし・CLAUDE.md を書き換えられない」自己改変防御と、context: fork + hook による生成者/評価者の物理分離は、迎合と報酬ハッキングの経路を構造レベルで断っている。残る改善余地は A4（89件スキルの決定面が description のソフト抑制依存、hard フラグは2件だけ）と D1（主要技術は宣言済だが排除宣言が薄い）の⚠️2点のみで、いずれも Quick Wins で今日クローズ可能。診断はファイルベースの静的解析ゆえの限界がある——89スキルの休眠率、fork 委譲時の実ワークフロー品質、暗黙知の真の網羅性は静的には測れず、run 2/2（対象②）との突合と実運用ログでの裏取りを推奨する。</div>
+
+  <footer>
+    Generated by review-harness skill / Claude Code<br>
+    Markdown版: ~/.claude/output/harness-diag-2026-07-04-1809.md
+  </footer>
+
+</div>
+</body>
+</html>

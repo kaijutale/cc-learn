@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness Diagnosis: 260530 学習サンドボックス</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">HARNESS DIAGNOSIS</div>
+  <h1>260530 学習サンドボックス — 7つの構造的制約</h1>
+  <div class="meta">
+    <span>診断日: 2026-07-05 0016</span>
+    <span>対象: 260530_学習サンドボックス</span>
+    <span>評価基準: diagnosis-rubric (25指標)</span>
+    <span>baseline run 1/2</span>
+  </div>
+
+  <div class="hero grade-wrap grade-s">
+    <div class="grade-box grade-s">
+      <div class="grade-letter">S</div>
+      <div class="grade-pct">96% (48/50)</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT</div>
+      <p>学習サンドボックスを自称しつつ、継承するユーザーレベル・ハーネスが <strong>7つの構造的制約への防御を体系実装した成熟ハーネス</strong>。権限境界・検証堅牢性・環境設計は満点。検出2件はいずれも構造的欠陥ではなく最適化余地 (A4=汎用ハーネスの休眠メニュー / D3=共有ログの索引不在)。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>ハーネス構成サマリ</h2>
+  <div class="stats">
+    <div class="stat">
+      <div class="k">CLAUDE.MD</div>
+      <div class="v">PJ 16行 (ポインタ1/インライン1) + ユーザーレベル継承</div>
+    </div>
+    <div class="stat">
+      <div class="k">PERMISSIONS</div>
+      <div class="v">allow ~46 / deny ~55 / ask ~30 (ユーザーレベル)</div>
+    </div>
+    <div class="stat">
+      <div class="k">HOOKS</div>
+      <div class="v">Pre 8+ / Post 6+ / Stop 6 / PostCompact 5 / SessionStart 3</div>
+    </div>
+    <div class="stat">
+      <div class="k">SKILLS</div>
+      <div class="v">60+ (辞書/ワークフロー/fork。高コスト系は明示呼出専用)</div>
+    </div>
+    <div class="stat">
+      <div class="k">MCP</div>
+      <div class="v">5接続 (brave / chrome-devtools / claude-in-chrome / context7 / firecrawl)。ToolSearch 遅延ロード</div>
+    </div>
+    <div class="stat">
+      <div class="k">MEMORY</div>
+      <div class="v">型付きMemory 0 (autoMemory:false)。共有ログ 60+ (git追跡) + handoff-state</div>
+    </div>
+    <div class="stat">
+      <div class="k">AGENTS</div>
+      <div class="v">30+ (team-* / debater-* / framing-* / reviewer 系)</div>
+    </div>
+    <div class="stat">
+      <div class="k">PLUGINS</div>
+      <div class="v">ralph-loop / typescript-lsp (有効) / claude-mem (無効)</div>
+    </div>
+  </div>
+
+  <h2><span class="no">02</span>スコアサマリ</h2>
+  <table>
+    <thead>
+      <tr><th>カテゴリ</th><th>指標</th><th>スコア</th><th>小計</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="cat-name">A. 帯域効率</td>
+        <td>
+          <span class="mark mark-pass">A1</span><span class="mark mark-pass">A2</span><span class="mark mark-pass">A3</span><span class="mark mark-warn">A4</span><span class="mark mark-pass">A5</span>
+        </td>
+        <td class="score-cell">9/10</td>
+        <td class="score-cell">90%<div class="bar high"><i style="width:90%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">B. 検証の堅牢性</td>
+        <td>
+          <span class="mark mark-pass">B1</span><span class="mark mark-pass">B2</span><span class="mark mark-pass">B3</span><span class="mark mark-pass">B4</span><span class="mark mark-pass">B5</span>
+        </td>
+        <td class="score-cell">10/10</td>
+        <td class="score-cell">100%<div class="bar high"><i style="width:100%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">C. 権限と信頼境界</td>
+        <td>
+          <span class="mark mark-pass">C1</span><span class="mark mark-pass">C2</span><span class="mark mark-pass">C3</span><span class="mark mark-pass">C4</span><span class="mark mark-pass">C5</span>
+        </td>
+        <td class="score-cell">10/10</td>
+        <td class="score-cell">100%<div class="bar high"><i style="width:100%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">D. 知識と記憶</td>
+        <td>
+          <span class="mark mark-pass">D1</span><span class="mark mark-pass">D2</span><span class="mark mark-warn">D3</span><span class="mark mark-pass">D4</span><span class="mark mark-pass">D5</span>
+        </td>
+        <td class="score-cell">9/10</td>
+        <td class="score-cell">90%<div class="bar high"><i style="width:90%"></i></div></td>
+      </tr>
+      <tr>
+        <td class="cat-name">E. 環境設計</td>
+        <td>
+          <span class="mark mark-pass">E1</span><span class="mark mark-pass">E2</span><span class="mark mark-pass">E3</span><span class="mark mark-pass">E4</span><span class="mark mark-pass">E5</span>
+        </td>
+        <td class="score-cell">10/10</td>
+        <td class="score-cell">100%<div class="bar high"><i style="width:100%"></i></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>検出されたアンチパターン</h2>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span>A4. エージェントの選択肢が不必要に広がっていないか</h3>
+    <div class="kv"><b>検出事実</b>ユーザーレベルに 60+ Skill と 30+ Subagent が常駐。高コスト系 (fork/debate/framing) は「明示呼出専用・自動誘発なし」で抑制され allow もワイルドカードなし・Bash粒度で最小化。ただし本PJの日常作業 (docs/HTML/ログ/ハーネス学習) から見ると、TDD・PR・監査系など多数の description が「使わないメニュー」として視界に残る。</div>
+    <div class="kv"><b>影響</b>自動発動可能な Skill 群の description が常駐し、実作業に対して考慮すべき選択肢が過剰。gating が効くため誤発動リスクは低いが、汎用ハーネスゆえの帯域コストが本PJ視点では休眠メニューとして存在。</div>
+    <div class="kv"><b>関連原則</b>(→V-1.3) 選択肢は推論前に絞る / (→C-1.1) コンテキストの能動的管理</div>
+    <div class="kv"><b>改善案</b></div>
+    <pre>これは「グローバルハーネスの設計トレードオフ」であり本PJ固有の欠陥ではない。
+明示呼出専用マーキング + 最小 allow で既に構造的に抑制済み。
+本PJ限定で Skill を無効化すると汎用性を損なうため、現状維持を推奨。
+→ グローバルハーネスとしては実質 ✅ 相当。積極対処は不要。</pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="sev sev-warn">WARN</span>D3. セッション間の記憶が腐っていないか</h3>
+    <div class="kv"><b>検出事実</b>autoMemoryEnabled:false で本PJに型付きMemoryは無し。継続は (1) .docs/logs/shared の 60+ git追跡ログ (日付+トピック命名) と (2) handoff-state.md (機械可読・ただし gitignore=ローカル限定) が担う。陳腐化フラグは実践 (handoff内で「gap-analysis.md の記述は乖離、再センサスで最新化済」と明示) だが、60+ログを束ねる単一インデックスが無く、陳腐化した原ログは残置される。</div>
+    <div class="kv"><b>影響</b>新規セッションが handoff-state (ローカルのみ) を読まず shared を grep 着手した場合、索引不在で関連ログ発見に手間がかかり、訂正前の陳腐化ログに先に当たるリスク。pickup skill + hook が復元を支え実害は緩和されるが、ログ層に索引と陳腐化マークの構造化余地。</div>
+    <div class="kv"><b>関連原則</b>(→K-1.2) 記憶は保存前に監査・修復する / (→K-2) 古い情報はノイズ / (→K-1.1) Restartable Handoff</div>
+    <div class="kv"><b>改善案</b></div>
+    <pre># .docs/logs/shared/INDEX.md を新設 (10分)
+## C-4 外部検証器
+- 2026-06-02_c4-...-implementation.md [現行]
+- 2026-05-30_note-harness-gap-analysis.md [⚠️ 一部陳腐化 → 07-01/07-02 で最新化]
+## 記憶4型 / auto-memory
+- 2026-07-02_k1-typed-memory-4types-harness-recensus.md [現行・最新]
+
+# または陳腐化した原ログ冒頭に訂正ポインタを1行追記 (5分)</pre>
+  </div>
+
+  <h2><span class="no">04</span>強み</h2>
+  <ul class="plain">
+    <li><b>C カテゴリ全項目 ✅ (権限と信頼境界 100%)</b>: deny が不可逆操作 (rm/sudo/git reset・rebase・checkout・switch/push) と評価基準ファイル (eslint/tsconfig/vitest/jest/prettier/biome/workflows) を網羅ブロックし、~/.claude/settings*・CLAUDE.md・hooks も deny で「自分のルールを書き換えられない」(C3)。sandbox denyRead/denyWrite + 3層シークレットモデルで秘密を構造遮断。テスト改ざんは deny でなく C-4 指紋照合オラクル + 所有権分離で守る強い防御 (C1)。</li>
+    <li><b>E3 生成と評価の物理分離 ✅</b>: essence-reviewing-orchestrator・各 *-reviewer-fork・team-reviewer (フレッシュコンテキスト)・detecting-framing-bias (独立2fork)・llm-debate (5fork)・TDDサイクルが context:fork / subagent で生成者と評価者を分離。本PJは C-3 迎合性への防御そのものを研究・実装。</li>
+    <li><b>B5 失敗の仕組み化 ✅</b>: 過去の失敗 (絵文字混入・ハードコードパス・秘密読取・生成コメント・plans誤配置・skill frontmatter崩れ) が Pre/PostToolUse Hook に昇格済。「二度注意」を Hook で置換する哲学が一貫し、Gotcha 蓄積運用で継続昇格。</li>
+  </ul>
+
+  <h2><span class="no">05</span>Quick Wins — 今日できる改善</h2>
+
+  <div class="card">
+    <h3>1. 共有ログのインデックス新設<span class="chip">D3 / 10分</span></h3>
+    <p>.docs/logs/shared/INDEX.md を作り、60+ ログをテーマ別 (C-4検証 / 記憶4型 / Hook検証 / essence更新 等) に分類。各エントリに [現行] / [⚠️ 上書き済→後継ログ] を付す。新規セッションの再開起点となり、陳腐化ログへの誤着地を防ぐ。</p>
+  </div>
+
+  <div class="card">
+    <h3>2. 陳腐化した原ログへの訂正ポインタ追記<span class="chip">D3 / 5分</span></h3>
+    <p>2026-05-30_note-harness-gap-analysis.md 冒頭に「本ログのXX記述は 2026-07-01/07-02 の再センサスで最新化済」の1行を追記。grep で先に当たっても即座に最新版へ誘導できる。</p>
+  </div>
+
+  <div class="card">
+    <h3>3. (対処不要の確認) A4 は現状維持が最適<span class="chip">A4 / 0分</span></h3>
+    <p>A4 の ⚠️ は「汎用ハーネスを学習サンドボックスから見た休眠メニュー」の指摘であり、明示呼出専用マーキング + 最小 allow で既に構造的に抑制済。本PJ限定で Skill を無効化するとハーネスの汎用性を損なうため、積極対処しないことを推奨。</p>
+  </div>
+
+  <h2><span class="no">06</span>次のステップ — 中期的な改善</h2>
+  <ul class="plain">
+    <li><b>handoff-state のトラッキング方針の再検討</b>: 現状 handoff-state.md は gitignore (ローカル限定) のため別マシン/別クローンからの再開では失われる。「git追跡ログを正とする」方針なら、handoff の要点 (current-state ポインタ) を .docs/logs/shared 側にも二重化すると、D3 のインデックス役を handoff が兼ねられる。</li>
+    <li><b>ログ層の「型付き記憶」への部分昇格検討</b>: 60+ 学習ログのうち恒常参照される結論 (C-4 検証結果・記憶4型定義など) は、時系列ログと別に「知識層」(establishing-knowledge-persistence 構造) へ蒸留すると、時系列ノイズから恒久知識を分離できる。</li>
+  </ul>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">本PJは「学習サンドボックス」を自称しつつ、継承するユーザーレベル・ハーネス (~/.claude/) が 7つの構造的制約 (C-1〜C-7) への防御を体系的に実装した S グレード (96%) の成熟ハーネスである。権限境界・検証堅牢性・環境設計の3カテゴリは満点で、特に「自分のルールを書き換えられない」deny 設計 (C3)、生成と評価の fork 分離 (E3)、失敗の Hook 昇格 (B5) は教科書的。検出2件はいずれも構造的欠陥ではなく最適化余地: A4 は汎用ハーネスを本PJ視点で見た休眠メニュー (対処不要)、D3 は 60+ 共有ログの索引不在 (インデックス新設で解消可)。<strong>診断の限界</strong>: 本スコアは「プロジェクト設定 + 継承ユーザーハーネス」の合成体を評価したものであり、プロジェクト固有 .claude/ 単体は意図的に薄い。またファイルベース静的解析ゆえ、実際のワークフロー品質・fork レビューの実効性・暗黙知の真の有無は検出範囲外である。</div>
+
+  <footer>
+    Generated by review-harness skill / Claude Code<br>
+    Markdown版: ~/.claude/output/harness-diag-2026-07-05-0016.md
+  </footer>
+
+</div>
+</body>
+</html>
