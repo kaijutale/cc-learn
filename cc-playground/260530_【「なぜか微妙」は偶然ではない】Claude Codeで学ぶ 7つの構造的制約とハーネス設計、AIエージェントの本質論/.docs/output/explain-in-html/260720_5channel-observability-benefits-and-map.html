@@ -1,0 +1,281 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5チャネル観測面設計 — メリット・実装場所・機能する部品</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · NOTE K-2.3 · 5-CHANNEL OBSERVABILITY</div>
+  <h1>5チャネル観測面設計<br>— メリット・実装場所・<em>誰が機能させるか</em></h1>
+  <div class="meta"><span>2026.07.20</span><span>note K-2.3 Q&amp;A (3問構成)</span><span>対象: グローバルハーネス</span></div>
+
+  
+
+  
+  <h2><span class="no">01</span>前提 — 5チャネル観測面設計とは</h2>
+  <p>note K-2.3 の設計パターン。エージェントが世界を認識する経路は 5 つしかない、という整理よ: <strong>ファイルシステム</strong> (ファイルを読む) / <strong>コマンド</strong> (実行結果と終了コードを見る) / <strong>ログ</strong> (実行時の挙動記録を読む) / <strong>API</strong> (外部への問い合わせ結果を見る) / <strong>UI</strong> (画面を見る)。この 5 経路を「意識的に」設計せよ — 観測できないチャネルがあると、エージェントはそこで起きる異常に気づけない。たとえは車のダッシュボード: 燃料計が無ければ、ガス欠に気づくのはエンストしてからよ。</p>
+
+  <h2><span class="no">02</span>Q1: 設計するとどんなメリットがあるか</h2>
+  <ul class="plain">
+    <li><b>「たぶん大丈夫」が消える</b> — 観測手段が無いエージェントは自己申告 (「コードを書いたので動くはずです」) しかできない。観測面があれば「200 が返り、ログに記録され、テストも緑」と<strong>実測で完了報告</strong>できる。報告の信頼性が根本から変わる。</li>
+    <li><b>直す→確かめる、のループが成立する</b> — 観測できないものは制御できない。修正の効果を観測できて初めて「修正→観測→再修正」の検証ループが回る。観測面は自動修復・自動検証の前提条件。</li>
+    <li><b>沈黙死に気づける</b> — 「配備した = 動いてる」は思い込み。アンタのハーネスは 07-16 に sandbox 設定202本が実は死んでいた等の「配備≠実効」を 3 クラス同日に踏んだ — それを拾えたのも、観測面 (実測・台帳) があったからよ。エンスト前に警告灯が点く。</li>
+    <li><b>改修の判断材料が数字で届く</b> — hook 発火台帳の月次集計が「rule X が今月 N 回発火 = 注意書きが効いてないサイン」を機械supply する。どこを直すべきかを勘でなく数字で決められる。</li>
+    <li><b>後から他人 (未来の自分・別エージェント) が検証できる</b> — 構造化された記録 (1行1JSON の台帳・証跡文書) が残るから、セッションを跨いだ引き継ぎや第三者レビューで「本当にそうだったか」を遡って確認できる。</li>
+  </ul>
+
+  <h2><span class="no">03</span>Q2: どこで実装されているか (場所マップ)</h2>
+  <p>ハーネス自身を観測する面の実装場所よ (全部実測済み、2026-07-20):</p>
+  <table>
+    <thead><tr><th>チャネル</th><th>実装場所</th><th>実測値</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="cat-name">ファイルシステム</td>
+        <td><code>hooks/hook_&lt;イベント&gt;_&lt;名&gt;.sh</code> / <code>skills/*/SKILL.md</code> / <code>.docs/</code> の型別ディレクトリ — 命名規約そのものが観測面</td>
+        <td class="score-cell">hooks 31/31本 規約準拠</td>
+      </tr>
+      <tr>
+        <td class="cat-name">コマンド</td>
+        <td><code>verify-adr.sh</code> の終了コード意味論 (0=合格 / 1=検証失敗 / 2=実行不能) + <code>hooks/test/cases/</code> のテスト群</td>
+        <td class="score-cell">テスト 47ケース</td>
+      </tr>
+      <tr>
+        <td class="cat-name">ログ</td>
+        <td><code>.docs/hook-fire-ledger/2026-07.jsonl</code> — hook 発火を 1行1JSON で記録する台帳 (時刻 / hook名 / 判定 / センサー種)</td>
+        <td class="score-cell">今月 658行</td>
+      </tr>
+      <tr>
+        <td class="cat-name">API (等価物)</td>
+        <td><code>.docs/hook-liveness/</code> (「本当に発火する」の実測証跡) + <code>hook_session_start_hook_fire_report.sh</code> 内の heartbeat (死活監視。観測装置自体の自己診断)</td>
+        <td class="score-cell">ゼロ=平和/死亡を機械区別</td>
+      </tr>
+      <tr>
+        <td class="cat-name">UI (等価物)</td>
+        <td>statusline (画面下部の状態表示、<code>settings.json</code>) + セッション開始時の自動レポート 3種 (未commit/未push件数 / hook発火の月次集計 / 認証情報の孤児検出)</td>
+        <td class="score-cell">SessionStart hook 6本中 3本が報告系</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px;">開発対象のプロダクトを観測する面はこっち: UI は <strong>Chrome DevTools MCP + claude-in-chrome MCP</strong> (ブラウザを実際に動かして画面を見る) と <code>capturing-ui-evidence</code> skill (desktop/tablet/mobile の3視点でスクリーンショット証跡化)、API は curl と接続済み MCP 群、コマンド/ログは Bash が標準装備よ。</p>
+
+  <h2><span class="no">04</span>Q3: どのハーネス部品で機能するか</h2>
+  <p>観測面は 1 つの部品じゃなく、<strong>「装置が作り、規律が使わせ、skill と subagent が消費する」3 層</strong>で機能してるわ。</p>
+  <div class="card">
+    <h3><span class="sev sev-pass">装置</span>hooks — 観測面を「作る」側</h3>
+    <div class="kv"><b>報告系 hook 3本</b>セッション開始のたびに git 同期状況・hook 発火月次集計・認証情報の孤児を自動報告 (今セッションも「未push 1件」が発火→アンタが push して解消)</div>
+    <div class="kv"><b>計装済み hook 20本</b>発火のたびに台帳 (JSONL) へ 1 行追記する記録装置を内蔵</div>
+    <div class="kv"><b>heartbeat</b>観測センサー自体の死活を自己診断する二階の観測面</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">規律</span>rules — 観測を「強制する」側</h3>
+    <div class="kv"><b>critical-thinking</b>「状態変更は成功メッセージを信じず、独立確認 (コミットID・ファイル存在・件数) で着地を検証してから完了報告」— 観測面を使わない完了報告を禁止する</div>
+    <div class="kv"><b>probe-before-persist</b>知識を保存する直前に外部事実 (Read/ls/Bash) で裏を取れ、と hook が発火して要求する。さっき handoff の誤記 (「gitignore側」) を実際に捕まえた</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">消費者</span>skills — 観測チャネルを「使う」側</h3>
+    <div class="kv"><b>verify / run</b>変更後にアプリを実際に動かして挙動を観測する (テストだけで済ませない)</div>
+    <div class="kv"><b>capturing-ui-evidence</b>UI チャネルの証跡化 (3視点スクショ + メタデータ)</div>
+    <div class="kv"><b>review-harness</b>ハーネス構成を 25 指標で診断 — 設定ファイルという観測面を読む</div>
+    <div class="kv"><b>auditing-aio / auditing-nextjs-security</b>live URL・ソースを実検査する監査系</div>
+    <div class="kv"><b>pickup / handoff / logging</b>git 状態・作業状態を機械パース可能な形式 (frontmatter/JSONL) で残し、次セッションの観測面にする</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">検証者</span>subagents — ツール付与 = 観測チャネルの割当</h3>
+    <p>ここが面白いところ。検証系 subagent (team-auditor / team-tester / code-reviewer / 各 essentials-reviewer) には <code>Read, Grep, Glob, Bash</code> が付与されてる — これは note の 5 チャネルのうち<strong>ファイルシステム + コマンド + ログ</strong>をそのまま渡してるということ。逆に team-ui-designer や debater-pm には Bash が無い (<code>Read, Grep, Glob</code> のみ) = コマンド実行の観測チャネルを意図的に絞ってる。<strong>「subagent に与えるツール一覧」とは「そのエージェントが観測できる世界の定義」そのもの</strong>なのよ。</p>
+  </div>
+
+  <h2><span class="no">05</span>総評</h2>
+  <div class="quote">
+    5チャネル観測面設計のメリットは一言で「<strong>自己申告を実測に置き換えられること</strong>」— 完了報告の信頼性、検証ループの成立、沈黙死の検出、改修判断の数字化、セッション横断の検証可能性が全部ここから生まれる。かいじゅうのハーネスでは、hooks が観測面を作り (台帳658行/月・報告系3本・heartbeat)、rules が観測面の使用を強制し (独立確認・保存前裏取り)、skills と subagents が観測チャネルを消費する — という 3 層分業で実装されている。subagent へのツール付与が観測チャネルの割当そのものになっている点は、note の表をハーネス設計に翻訳した時の一番きれいな対応よ。
+  </div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.20 05:56 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
