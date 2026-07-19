@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日常skillの観測ステップ × noteの5チャネル対応表</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · NOTE K-2.3 · CHANNEL MAPPING</div>
+  <h1>日常 skill の観測ステップは<br>5 チャネルの<em>どれに当たるか</em></h1>
+  <div class="meta"><span>2026.07.20</span><span>note K-2.3 深掘り Q&amp;A</span><span>対象: commit / logging / handoff / pickup / explain-in-html</span></div>
+
+  
+
+  
+  <h2><span class="no">01</span>分類の物差し — 「道具」ではなく「何を見ているか」で振る</h2>
+  <p>note の 5 チャネル表をよく見ると、チャネルの境界は<strong>使う道具ではなく観測対象</strong>で引かれてるの。同じ Bash でも、<code>tail</code> でアプリの挙動記録を見れば「ログ」チャネル、<code>curl</code> で外部に問い合わせれば「API」チャネルに分類されてる。だから以下の対応付けも「そのステップは<em>何を見ているか</em>」で振るわ: ファイル構造・内容を見る = <strong>ファイルシステム (FS)</strong> / コマンドの出力・終了コードを見る = <strong>コマンド</strong> / 実行時の挙動記録を見る = <strong>ログ</strong> / 外部サービスの応答を見る = <strong>API</strong> / 画面を見る = <strong>UI</strong>。</p>
+
+  <div class="stats">
+    <div class="stat"><div class="k">対応付けた観測ステップ</div><div class="v">17 個</div></div>
+    <div class="stat"><div class="k">FS チャネル</div><div class="v">7 回</div></div>
+    <div class="stat"><div class="k">コマンドチャネル</div><div class="v">8 回</div></div>
+    <div class="stat"><div class="k">API / UI チャネル</div><div class="v">2 回 / 1 回</div></div>
+  </div>
+
+  <h2><span class="no">02</span>対応表 — 日常 skill の観測ステップ × 5 チャネル</h2>
+  <table>
+    <thead><tr><th>skill</th><th>内蔵の観測ステップ</th><th>何を見ているか</th><th>チャネル</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name" rowspan="3">commit</td>
+        <td>編集前の <code>git status</code> / <code>git diff</code> (他エージェントの作業と衝突しないか)</td><td>作業ツリーの状態 = CLI 出力</td><td><span class="mark">コマンド</span></td></tr>
+      <tr><td>commit 後の <code>git log</code> (コミットIDの変化) + <code>git ls-files</code> (追跡化の確認)</td><td>着地の証拠 = CLI 出力と終了コード</td><td><span class="mark">コマンド</span></td></tr>
+      <tr><td>staging 対象ファイルの内容確認 (何を commit に含めるか)</td><td>ファイルの中身</td><td><span class="mark">FS</span></td></tr>
+      <tr><td class="cat-name" rowspan="4">logging</td>
+        <td><code>date</code> で現在日時を実測 (記憶で書かない)</td><td>CLI 出力</td><td><span class="mark">コマンド</span></td></tr>
+      <tr><td>既存ログ一覧を <code>ls</code> (local/ と shared/ の両方)</td><td>ファイル構造 (重複・命名の確認)</td><td><span class="mark">FS</span></td></tr>
+      <tr><td>書込先の正本を <code>git rev-parse</code> で解決 (worktree でも本体を指す)</td><td>CLI 出力</td><td><span class="mark">コマンド</span></td></tr>
+      <tr><td>関連する既存ログを読んで矛盾・重複を避ける</td><td>ファイルの中身</td><td><span class="mark">FS</span></td></tr>
+      <tr><td class="cat-name" rowspan="3">handoff</td>
+        <td><code>git status -sb</code> / 未 push の有無 / gitignore 登録判定</td><td>作業ツリーの状態 = CLI 出力</td><td><span class="mark">コマンド</span></td></tr>
+      <tr><td><code>gh pr view</code> で PR と CI (自動テスト) の状態確認</td><td>GitHub への問い合わせ応答</td><td><span class="mark">API</span></td></tr>
+      <tr><td>probe-before-persist の裏取り (保存直前に Read / ls / Bash で外部事実に当てる)</td><td>ファイルの中身 + CLI 出力</td><td><span class="mark">FS</span> <span class="mark">コマンド</span></td></tr>
+      <tr><td class="cat-name" rowspan="4">pickup</td>
+        <td>handoff の frontmatter (ファイル冒頭のメタ情報欄) を <code>awk</code> で機械パース</td><td>構造化ファイルの中身</td><td><span class="mark">FS</span></td></tr>
+      <tr><td>git 実態と handoff の <code>session_commits</code> を突合 (乖離検出)</td><td>CLI 出力 vs 記録の照合</td><td><span class="mark">コマンド</span></td></tr>
+      <tr><td><code>gh pr view --json</code> で PR / CI 状態を復元</td><td>GitHub への問い合わせ応答</td><td><span class="mark">API</span></td></tr>
+      <tr><td>CLAUDE.md・関連ドキュメントの確認</td><td>ファイルの中身</td><td><span class="mark">FS</span></td></tr>
+      <tr><td class="cat-name" rowspan="3">explain-in-html</td>
+        <td>生成スクリプトの終了コード + placeholder 残存チェック (assert)</td><td>終了コード</td><td><span class="mark">コマンド</span></td></tr>
+      <tr><td>自己診断 <code>grep</code> (italic 禁止 / palette 固定 / copy ボタン実在)</td><td>生成ファイルの中身</td><td><span class="mark">FS</span></td></tr>
+      <tr><td><code>open</code> でブラウザ表示</td><td>画面 — ただし<strong>観測者はかいじゅう (人間)</strong>。エージェント自身は画面を見ない</td><td><span class="mark">UI</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">03</span>チャネル別の分業サマリ — 出てこないチャネルには理由がある</h2>
+  <table>
+    <thead><tr><th>チャネル</th><th>日常 skill 内蔵での登場</th><th>担い手</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">FS</td><td><span class="mark mark-pass">主戦場</span>5 skill 全部に登場 (7 回)</td><td>skill 内蔵ステップ — 書く前の実測 + 書いた後の検査</td></tr>
+      <tr><td class="cat-name">コマンド</td><td><span class="mark mark-pass">主戦場</span>5 skill 全部に登場 (8 回)</td><td>skill 内蔵ステップ — git / date / 終了コード</td></tr>
+      <tr><td class="cat-name">API</td><td><span class="mark mark-warn">スポット</span>handoff / pickup の 2 箇所 (+ PR 作成系 skill)</td><td><code>gh</code> (GitHub CLI) 経由で PR・CI 状態を観測</td></tr>
+      <tr><td class="cat-name">ログ</td><td><span class="mark mark-na">内蔵なし</span>日常 skill のステップには現れない</td><td><strong>常設の hook 計装が分業</strong> — skill と無関係に発火のたび台帳 (1行1JSON) へ記録、今月 658 行。skill が持つ必要がない</td></tr>
+      <tr><td class="cat-name">UI</td><td><span class="mark mark-na">人間向けのみ</span>explain-in-html の <code>open</code> はかいじゅうに画面を開く行為</td><td><strong>専門 skill が分業</strong> — capturing-ui-evidence (3 視点スクショ証跡) / run (アプリを実際に動かして見る) がエージェント自身の UI 観測を担う</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px;">つまり「日常 skill にログと UI が出てこない」のは欠落じゃなくて<strong>分業</strong>よ。ログは常設装置 (hook) が全セッション横断で記録する方が正確だし、UI 観測はブラウザ操作という重装備が要るから専門 skill に切り出されてる。note 自身も「5 つ全部を最初から設計する必要はない」と言ってる — 大事なのは、どのチャネルを誰が担ってるかを把握してること。</p>
+
+  <h2><span class="no">04</span>総評</h2>
+  <div class="quote">
+    日常 skill の内蔵観測ステップは、5 チャネルのうち <strong>FS とコマンドの 2 つが主戦場</strong> (17 ステップ中 15) で、API は <code>gh</code> 経由のスポット参戦 (2)、ログと UI は skill の外の担い手 (常設 hook 計装 / 専門 skill) への分業になっている。1 つの skill が 5 チャネル全部を持つのではなく、<strong>「skill ごとに必要なチャネルだけ内蔵し、残りは常設装置と専門 skill に委ねる」</strong>のがかいじゅうのハーネスの実装形 — チャネルの空白ではなく、チャネルの分担表として読むのが正しい。
+  </div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.20 08:29 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
