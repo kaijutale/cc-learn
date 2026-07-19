@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-2.3「観測面を設計する」調査結果 — 取り入れ済み・盲点1件</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · NOTE K-2.3 · OBSERVABILITY</div>
+  <h1>K-2.3「観測面を設計する」調査結果<br>— <em>観測できないものは制御できない</em></h1>
+  <div class="meta"><span>2026.07.20</span><span>取り入れフェーズ第2弾</span><span>対象: グローバルハーネスの観測機構</span></div>
+
+  
+
+  
+  <div class="hero grade-a">
+    <div class="grade-box grade-a">
+      <div class="grade-letter">A</div>
+      <div class="grade-pct">取り入れ済み</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT — K-2.3 取り入れ確認 (取り入れフェーズ第2弾)</div>
+      <p>note の推奨「5チャネル観測面設計」は、ハーネスの文脈に置き換えると<strong>5チャネルすべて実装済み</strong>。原則「観測できないものは制御できない」はルールとして規範化され、さらに<strong>3点が記事水準超え</strong>。残差は 1 件だけで、実害未確定の「自覚済み盲点」として記録した (改修・issue化は見送り)。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>note K-2.3 が求めていること</h2>
+  <p>たとえは<strong>車のダッシュボード</strong>。速度計や燃料計が無ければ、エンジンの異常に気づくのはエンストしてから。エージェントも同じで、観測する手段が無ければ「APIが正しく動いてるか確認して」と頼まれても「たぶん大丈夫です」としか答えられない — この<em>自己申告</em> (制約 C-4) を排除するために、エージェントが世界を認識する 5 つのチャネル (ファイルシステム / コマンド / ログ / API / UI) を意識的に設計せよ、というのが note の推奨よ。</p>
+  <p>note 自身の但し書きも重要: 「5つ全部を最初から設計する必要はない。<strong>何を観測できて何を観測できないかを意識する</strong>ことが出発点。観測できないチャネルに気づいたら、それは設計上の盲点だ」。</p>
+
+  <h2><span class="no">02</span>5チャネル照合スコアカード (全実測)</h2>
+  <p>観測する対象がアプリではなく<strong>ハーネス自身</strong> (hook・skill・設定・認証情報) だから、API と UI は機能の等価物で照合したわ。</p>
+  <table>
+    <thead><tr><th>note のチャネル</th><th>設計のポイント (note)</th><th>ハーネスでの実体 (実測)</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="cat-name">ファイルシステム</td><td>命名規約に従えば発見できる</td>
+        <td>hooks 31本すべて <code>hook_&lt;イベント&gt;_&lt;名&gt;.sh</code> 型、skill は <code>skills/*/SKILL.md</code>、文書は型別ディレクトリ</td>
+        <td><span class="mark mark-pass">充足</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">コマンド</td><td>終了コード (exit code) と構造化出力</td>
+        <td>検証スクリプトの exit 0/1/2 意味論 (「検証失敗」と「実行不能」を混ぜない) + hookテスト 47ケース。「exit code だけ見るテストを書くな」まで明文化</td>
+        <td><span class="mark mark-pass">記事超え</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">ログ</td><td>構造化ログ (JSON) なら検索できる</td>
+        <td><strong>hook 発火台帳</strong> — hook が発火するたび 1行1JSON形式 (JSONL) で記録。今月658行、時刻/hook名/判定/センサー種付き</td>
+        <td><span class="mark mark-pass">充足</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">API</td><td>ヘルスチェックは最低限の観測面</td>
+        <td>HTTPのAPIは無いが等価物2つ: <strong>liveness証跡</strong> (「このhookは本当に発火する」の実測記録) + <strong>heartbeat</strong> (死活監視。観測装置自体の自己診断)</td>
+        <td><span class="mark mark-pass">機能等価</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">UI</td><td>ダッシュボード / 機械可読なUI表現</td>
+        <td>ハーネスにUIは無し。人間向け等価物 = statusline (画面下部の状態表示) + セッション開始時の自動レポート3種 (未push件数 / hook発火の月次集計 / 認証情報の孤児検出)</td>
+        <td><span class="mark mark-pass">機能等価</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px;">セッション開始レポートは今セッションの冒頭でも実際に発火してた (「未push 1件」の通知) — 机上でなく<strong>live で動いてる証拠</strong>を観測済みよ。</p>
+
+  <h2><span class="no">03</span>原則の実装 — 「配備≠実効」の実痛から学んだ</h2>
+  <p>面白いのは、このハーネスが「観測できないものは制御できない」を<strong>教科書からでなく実痛から</strong>学んでいること。07-16 の観測レビューで、「配備した = 動いてる」という思い込みが 3 クラス同時に崩れた: sandbox 設定202本が実は死んでいた / 防御設定 (deny) 7本が不発だった / hook 通知 9本が<em>沈黙死</em>していた。どれも「配備の記録はあるが、実効を観測する面が無かった」ことが原因よ。</p>
+  <p>その対策として作られたのが 02 の liveness 証跡と heartbeat。発火レポート hook のコメントには自己記録がこう残ってる:</p>
+  <pre>「旧実装は jq/aggregator 不在を沈黙 skip しており、
+ それ自体が #68 の指摘した無音死の盲点だった」</pre>
+  <p>note の Before/After (「動くはずです」→ 実測で答える) も、ルール「状態変更は成功メッセージを信じず、独立確認 (コミットIDの変化・ファイル存在・件数) で着地を検証してから完了報告する」として規範化済み。</p>
+
+  <h2><span class="no">04</span>記事に無い上乗せ 3点</h2>
+  <div class="card">
+    <h3><span class="sev sev-pass">超過1</span>二階の観測面 — 観測装置の死を観測する</h3>
+    <p>note は「観測面を作れ」まで。ハーネスは <strong>heartbeat (死活監視)</strong> で「観測面そのものが死んだこと」をセッション開始時に検出する。「集計ゼロ = 平和」と「集計ゼロ = センサー死亡」を機械的に区別する装置で、死亡報告の抑制タイマーを定例報告と分ける理由 (共有すると死亡が沈黙する盲窓が生まれる) まで設計コメントに明文化されてる。</p>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">超過2</span>発火数の意味論 — 数字を目標にしない規律</h3>
+    <p>月次レポートは「rule X が今月 N 回発火 = 自然言語の注意喚起が効いていないサイン」として上流の改修判断材料を機械供給する。同時に「多発火を昇格シグナルと混同しない」と明文化 — 指標を目標にすると指標が壊れる (Goodhart の法則) への警戒が組み込み済み。</p>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">超過3</span>観測面の自己汚染防止</h3>
+    <p>台帳が検出した禁止語の本文を画面に出すと、それがセッションの文脈に入って別の hook を誤発火させる — 「観測装置が観測対象を汚す」事故を、報告は hook 名と件数のみに限定する設計で予防してる。</p>
+  </div>
+
+  <h2><span class="no">05</span>残差 — 自覚済み盲点 1件 (記録のみ)</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">hooks 総数</div><div class="v">31本</div></div>
+    <div class="stat"><div class="k">台帳に記録する仕組み持ち</div><div class="v">20本</div></div>
+    <div class="stat"><div class="k">今月実際に発火</div><div class="v">15本</div></div>
+    <div class="stat"><div class="k">記録装置ありで発火ゼロ</div><div class="v">5本 (レア条件)</div></div>
+  </div>
+  <div class="card" style="margin-top:18px;">
+    <h3><span class="sev sev-warn">盲点</span>レア条件ゲートの沈黙は「平和」と「死亡」を機械区別できない</h3>
+    <div class="kv"><b>事実</b>ADRゲートなど、めったに条件が来ない5本は今月発火ゼロ。ゼロは「平和」が妥当だが、それを「壊れて発火できない」と機械的に見分ける装置は無い (liveness 証跡は 1 本だけ、必要になった時に個別作成する方式)</div>
+    <div class="kv"><b>緩和要素</b>47本のテストケースが機能面を、観測レビューでの実測が配線面をカバーしている</div>
+    <div class="kv"><b>扱い</b>note 自身が「観測できないチャネルに気づいたら、それは設計上の盲点だ」と言う — 気づいて記録すること自体が記事の要求水準。実害未確定のため<strong>記録のみ</strong> (かいじゅう判断 2026-07-20、issue化・改修とも見送り)</div>
+  </div>
+
+  <h2><span class="no">06</span>総評</h2>
+  <div class="quote">
+    K-2.3 の照合結果は「取り入れ済み」— それも、記事が説く原則を<strong>先に痛みで学び、対策を機構化した上で</strong>の充足だった。5チャネルはハーネスの文脈で全部実在し、観測装置自体の死活監視・発火数の意味論の規律・観測面の自己汚染防止という 3 点は記事に無い高さにある。残差「レア条件ゲートの沈黙の非対称」は、記事の言う「気づくべき盲点」をちょうど 1 件見つけて台帳に載せた、という形で決着。詳細な証跡は studyログ (2026-07-20_k-2-3-observability-adoption-check.md、commit 76d6cd6) が正本。
+  </div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.20 03:54 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

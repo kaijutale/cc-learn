@@ -1,0 +1,285 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Layer 2「戦術」と decisions/ — 判断の理由を残す層</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · NOTE K-2.2 · LAYER 2</div>
+  <h1>Layer 2「戦術」と <em>decisions/</em><br>— 判断の理由を残す層</h1>
+  <div class="meta"><span>2026.07.19</span><span>note K-2.2 3層ドキュメント構造</span><span>対象: グローバルハーネス .docs/decisions/</span></div>
+
+  
+
+  
+  <h2><span class="no">01</span>3層の中での Layer 2 の位置</h2>
+  <p>note K-2.2 は「ドキュメントは捨てるのではなく構造化する」ために、文書を<strong>変更頻度</strong>で 3 つの層に分ける。Layer 2「戦術」はその真ん中の層で、答える問いは「<em>どう考えるか</em>」。Layer 1 が「滅多に変わらない信念」、Layer 3 が「毎週変わる今日の手順」だとすると、Layer 2 は<strong>一度決めたら当分従うが、状況が変われば見直す「判断」</strong>を置く場所よ。</p>
+  <table>
+    <thead><tr><th>層</th><th>答える問い</th><th>変更頻度</th><th>note の実装例</th><th>かいじゅうのハーネスでの実体</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="cat-name">Layer 1 原則</td><td>なぜ</td><td class="score-cell">年単位</td>
+        <td><code>docs/principles.md</code></td>
+        <td><span class="mark mark-pass">実在</span>essence-docs 4本 (「数学の公式のように不変」と宣言)</td>
+      </tr>
+      <tr>
+        <td class="cat-name">Layer 2 戦術</td><td><strong>どう考えるか</strong></td><td class="score-cell">四半期〜月</td>
+        <td><code>docs/patterns.md</code> + ADR</td>
+        <td><span class="mark mark-pass">実在</span><strong>decisions/ (ADR の置き場)</strong> — 本ページの主役</td>
+      </tr>
+      <tr>
+        <td class="cat-name">Layer 3 実行</td><td>何をするか</td><td class="score-cell">週〜日</td>
+        <td><code>SKILL.md</code></td>
+        <td><span class="mark mark-pass">実在</span>skills/*/SKILL.md 71本 + 手順書 11本</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">02</span>decisions/ とは — 設計判断の記録 (ADR) の置き場</h2>
+  <p><code>decisions/</code> は <strong>ADR (Architecture Decision Record。設計判断の記録)</strong> を連番で置くディレクトリよ。ADR は「何を決めたか」だけでなく「<em>なぜ決めたか</em>」「<em>何を却下したか</em>」まで書き残す文書。たとえるなら<strong>裁判の判決文</strong>ね — 主文 (結論) だけでなく、判決理由と退けられた主張まで残っているから、後から同じ争点を蒸し返さずに済むの。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">器</div><div class="v">.docs/decisions/</div></div>
+    <div class="stat"><div class="k">中身</div><div class="v">ADR 2本 + テンプレ 1本</div></div>
+    <div class="stat"><div class="k">状態管理</div><div class="v">status 5値で寿命を追跡</div></div>
+    <div class="stat"><div class="k">品質担保</div><div class="v">commit 時に機械検証</div></div>
+  </div>
+  <p style="margin-top:14px;">かいじゅうのハーネスの実物はこうなってるわ (2026-07-19 実測):</p>
+  <pre>~/.claude/.docs/decisions/
+├── _TEMPLATE.md   … ADR の書式テンプレ
+├── 0001-claude-md-detail-placement.md   … 実例1 (accepted)
+└── 0002-adr-gate-deterministic-trigger.md   … 実例2</pre>
+  <p>ADR 1 本の中身は、ファイル冒頭のメタ情報欄 (frontmatter) と 5 つのセクションで構成される:</p>
+  <div class="card">
+    <h3>ADR の構造 (テンプレ実測)</h3>
+    <div class="kv"><b>status</b>この判断が今どの状態かを 5 値で管理: proposed (提案中) → accepted (承認済) / rejected (却下) / deprecated (非推奨化) / superseded (新しい判断に置き換え済)。判断にも寿命があり、それを追跡できる</div>
+    <div class="kv"><b>文脈 / Context</b>どんな状況・制約がこの判断を必要にしたか</div>
+    <div class="kv"><b>決定 / Decision</b>何を選んだか。1-2 文で断定</div>
+    <div class="kv"><b>検討した代替案と却下理由</b><em>ここが ADR の心臓部</em>。「案 B も検討したが、この理由で捨てた」を残す。かいじゅうのハーネスでは<strong>ここが空のまま commit (変更履歴の保存) しようとすると、hook (特定操作をきっかけに自動実行される仕組み) が機械的にブロックする</strong> — note は「書きましょう」止まりだから、記事水準を超えている部分よ</div>
+    <div class="kv"><b>帰結 / Consequences</b>良い影響・悪い影響・トレードオフ</div>
+    <div class="kv"><b>撤退条件 / Reversal</b>どの観測値が出たらこの決定を見直すか。note のテンプレには無い、かいじゅうのハーネス独自の追加セクション</div>
+  </div>
+  <p>実例で見ると分かりやすいわ。ADR-0001 は「CLAUDE.md の詳細をどこへ外出しするか」という判断の記録。<strong>案1: .docs/ を直接指す方式 (採用)</strong> vs 案2: rules/ を経由する方式 — 案2は「rules/ 配下のファイルは起動時に全部読み込まれてしまい、外出しの意味が消える」という<strong>実測</strong>を根拠に却下された。この「なぜ案2じゃないのか」が残っているから、未来のセッションが「rules/ 経由の方が綺麗では?」と提案しても、判断を蒸し返さずに済むの。</p>
+
+  <h2><span class="no">03</span>なぜ patterns.md ではなく decisions/ が該当するのか</h2>
+  <p>note をよく読むと、Layer 2 の実装として <code>docs/patterns.md</code> (考え方のパターン集) と <strong>ADR</strong> の<strong>2 つが並記</strong>されている。つまり ADR はもともと note 自身が挙げる Layer 2 の実装形の 1 つなのよ。</p>
+  <ul class="plain">
+    <li><b>ADR 側 → decisions/ が担う</b> — 「この状況ではこう判断した、理由はこれ」という記録。Layer 2 の核心 (判断とその理由) を専用の器で実装している。</li>
+    <li><b>パターン集側 → 独立ファイルとしては無い</b> — <code>patterns.md</code> という名前のファイルは実在しない。ただし「どう考えるか」の言語化 (例: 曖昧回答の禁止ルール、保存前に検証する手順) は rules/ 配下などに分散して存在する。</li>
+    <li><b>照合は名前でなく機能で行った</b> — K-2.2 の取り入れ確認では「Layer 2 の機能 = 判断の理由の永続化」を満たす器として decisions/ を対応物と判定。名前の一致 (patterns.md があるか) では見ていない。</li>
+  </ul>
+
+  <h2><span class="no">04</span>Layer 2 はどんな時に使用されるのか</h2>
+  <p>使われる場面は 4 つ。<strong>書く・読む・見直す・機械ゲート</strong>で覚えるといいわ。</p>
+  <div class="card">
+    <h3><span class="sev sev-pass">書く</span>分岐点で「決めた」時<span class="chip">四半期〜月</span></h3>
+    <p>「どちらでも動くが、決めないと後で実装が揺れる」選択をした時に書く。例: ADR-0001 の外出し先の選択。逆に、バグ修正や手順の追加は Layer 3 (SKILL.md や hook) の仕事で、ADR は書かない。<strong>毎セッション書くものではない</strong> — 実際 decisions/ は 2026-07-10 に始動してまだ 2 本。判断が起きた時だけ増えるのが正常で、それが「四半期〜月単位」という頻度の意味よ。</p>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">読む</span>同じ論点が再来した時</h3>
+    <p>後のセッションや別のエージェントが<strong>過去の判断と矛盾する変更を提案した時</strong>、ADR を参照して却下できる。note の例: 「セッション管理を PostgreSQL に移行しましょう」という提案が来ても、ADR に「PostgreSQL は検討済みで、この理由で却下した」とあれば議論を最初からやり直さない。<em>過去の失敗を繰り返さない</em>ための読み取り面がここ。</p>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-fail">見直す</span>撤退条件が観測された時</h3>
+    <p>ADR の「撤退条件」に書いた観測値・事象が実際に出たら、status を superseded (置き換え済み) にして新しい ADR を書く。決定は「不変」ではなく、<strong>統制された手続きでだけ変わる</strong>。過去の判断を黙って上書きせず、置き換えの系譜 (どの判断がどの判断を置き換えたか) が残る。</p>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-pass">自動</span>commit の瞬間 (機械ゲート)</h3>
+    <p>人が意識しなくても、decisions/ に触れる commit の瞬間に検証スクリプトが走り、<strong>却下代替案が未記入の ADR はブロックされる</strong>。「書く時に理由を残す」という規律を、散文の約束ではなく機構で強制している。</p>
+  </div>
+  <p>書くタイミングの目安を 1 行で言うなら: <strong>「あとから『なんでこうなってるんだっけ?』と聞きたくなりそうな選択をしたら、それが ADR を書く合図」</strong>よ。</p>
+
+  <h2><span class="no">05</span>総評</h2>
+  <div class="quote">
+    Layer 2「戦術」は、未来の自分とエージェントに宛てた<strong>判断の理由書</strong>を置く層。Layer 1 (滅多に変わらない信念) と Layer 3 (毎週変わる手順) の間で、「決めたこと・その理由・捨てた選択肢」を四半期〜月のリズムで残す。かいじゅうのハーネスではその器が <code>decisions/</code> (ADR) で、判断の心臓部である却下理由の記入を hook が機械強制している点、そして撤退条件まで書かせる点で、note の推奨より一歩先の実装になっている。
+  </div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.19 22:27 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
