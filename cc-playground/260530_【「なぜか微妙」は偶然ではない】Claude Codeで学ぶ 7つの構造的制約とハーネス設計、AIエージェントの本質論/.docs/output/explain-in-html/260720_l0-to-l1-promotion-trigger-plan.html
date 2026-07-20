@@ -1,0 +1,264 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L0→L1 昇格トリガーの改修方針 — rule 1本で最下段を塞ぐ</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">DESIGN PLAN · PROMOTION LADDER · L0→L1</div>
+  <h1>L0→L1 昇格トリガーの改修方針<br>— <em>hook でなく rule</em> で最下段を塞ぐ</h1>
+  <div class="meta"><span>2026.07.20</span><span>設計プラン (未実装)</span><span>対象: グローバルハーネスの rules/</span></div>
+
+  
+
+  
+  <h2><span class="no">01</span>改修の的 — たった一段、L0→L1 の"合図"</h2>
+  <p>直すのは昇格ラダーの最下段の乗り継ぎだけ。L1 以降 (Gotcha → スクリプト → hook) の昇格提案は既に機械化済み。<strong>足すのは「機械トリガー」ではなく「あたしが取りこぼさないための応答規律」</strong>よ。L0 のミスは意味論の判断だから hook では検知できない — だから hook を1本増やすのではなく、<strong>あたしの振る舞いを縛る rule を1本足す</strong>のが改修の本体。</p>
+  <div class="stats">
+    <div class="stat"><div class="k">改修対象</div><div class="v">rule 1本の追加</div></div>
+    <div class="stat"><div class="k">増やす hook</div><div class="v">0 本</div></div>
+    <div class="stat"><div class="k">既存機構の変更</div><div class="v">なし (接続のみ)</div></div>
+    <div class="stat"><div class="k">保証レベル</div><div class="v">確率的 (L1 相当)</div></div>
+  </div>
+
+  <h2><span class="no">02</span>設計判断 — なぜ hook でなく rule なのか</h2>
+  <ul class="plain">
+    <li><b>意味論だから機械化不可</b> — 「さっきと同じミス」の判定は"ミスの意味"の理解が要る。bash の hook は文字列照合しかできないので原理的に無理。</li>
+    <li><b>全自動 auto-capture は逆効果</b> — チャットの指摘を全部 Gotcha 化すると L1 がノイズで肥大し、「毎回コンテキストに入る」L1 の価値が薄まる。「これは昇格の価値があるか」の判断は人 + LLM に残すのが正しい。</li>
+    <li><b>だから rule</b> — 「反復に気づいたら聞く」という規律を rule に置く。rule は毎セッション読み込まれる (起動時注入) から、あたしが毎回思い出せる。皮肉なことに、これ自体が L1 (注意喚起) を1本足す行為よ。</li>
+  </ul>
+
+  <h2><span class="no">03</span>改修の中身 — 足す rule の草案</h2>
+  <p>新規 <code>~/.claude/rules/failure-promotion-trigger.md</code> を作るか、既存の <code>critical-thinking-checklist.md</code> に追記する (rule 本数を増やしたくないなら後者)。中身の草案:</p>
+  <pre># Failure Promotion Trigger (L0→L1 昇格の合図)
+
+- 同じ指摘・同じミスを 2 回受けた / 検知したら、その場で必ず HITL 提案:
+  「これ 2 回目。CLAUDE.md / rules / 該当 skill の Gotcha に昇格させる?」
+- 判断 (昇格するか) は人に委ねる — 全自動で書かない (L1 肥大 = ノイズ化を防ぐ)
+- 昇格を承認されたら Gotcha 形式 (must / should / avoid + bullet) で書き、
+  再発時は行末に (再発: YYYY-MM-DD) を付ける
+  → 既存 check-gotcha-recurrence.sh が L1→L2/L3 昇格を機械計数できる形に揃える
+- L0 は揮発する: 未昇格の反復指摘は handoff に残し、
+  セッションを跨いで拾えるようにする</pre>
+  <p>ポイントは3つ: <strong>①2回で聞く</strong> (note の一律ルール準拠) / <strong>②書式を既存の Gotcha 形式に揃える</strong> (下の 04 に効く) / <strong>③handoff で揮発対策</strong> (L0 がセッションで消える弱点を補う)。</p>
+
+  <h2><span class="no">04</span>既存機構への接続 — 車輪を再発明しない</h2>
+  <p>ここが改修を最小にする肝。新しい L0→L1 の捕捉を、<strong>既存の L1→L2/L3 パイプラインに"流し込む"形</strong>で書く。そうすれば L0 から L3 まで一本の連続した昇格経路になる。</p>
+  <table>
+    <thead><tr><th>段</th><th>担い手</th><th>今回の改修との関係</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">L0→L1</td><td>新規 rule (今回追加)</td><td><span class="mark mark-warn">新設</span>反復に気づき Gotcha 形式で書き出す</td></tr>
+      <tr><td class="cat-name">L1 再発計数</td><td>check-gotcha-recurrence.sh</td><td><span class="mark mark-pass">既存</span>新 rule が <code>(再発:)</code> 表記を守れば、そのまま計数対象になる</td></tr>
+      <tr><td class="cat-name">L1→L2/L3 提案</td><td>accumulating-reviewer-feedback</td><td><span class="mark mark-pass">既存</span>閾値超えを HITL 昇格提案 (変更不要)</td></tr>
+    </tbody>
+  </table>
+  <p>だから改修は「rule 1本追加 + 書式を既存に合わせる」だけ。既存スクリプトも hook も<strong>1行も変えない</strong>。L0 の入口さえ規律で塞げば、残りのラダーが受け取ってくれる。</p>
+
+  <h2><span class="no">05</span>構築手順 — ハーネス本体の改修ゆえ隔離が必須</h2>
+  <p><code>~/.claude</code> 自体の改修だから、この学習用プロジェクトからは直接触らない。worktree (作業用の隔離コピー) で行う:</p>
+  <ul class="plain">
+    <li><b>1. 隔離起動</b> — worktree を作り、環境変数 <code>CLAUDE_CONFIG_DIR</code> と作業ディレクトリの<strong>両方</strong>を worktree に向ける (env = 読むハーネス / cwd = git 操作の基準。裸の commit は本体 branch に着地するので両方要る)。</li>
+    <li><b>2. rule 追加</b> — <code>rules/failure-promotion-trigger.md</code> を新設 (または critical-thinking に追記)。</li>
+    <li><b>3. 自己検証</b> — rule が起動時注入されるか確認。書式が check-gotcha-recurrence.sh の計数対象と噛み合うかを実際に1件流して確かめる。</li>
+    <li><b>4. commit → PR</b> — worktree 内で committer。CLAUDE.md / rules は拒否リスト保護下ゆえ、確定は PR マージのみ。</li>
+    <li><b>5. HITL レビュー + マージ</b> — かいじゅうが PR を見て承認。マージ後に worktree を後始末。</li>
+  </ul>
+
+  <h2><span class="no">06</span>限界 — これは"確率を上げる"改修であって"保証"ではない</h2>
+  <p>正直に言っておくわ。L0→L1 は<strong>確率論フェーズ</strong>の中の話。rule を足しても「気づく確率」が上がるだけで、L1 以降のような決定論の保証 (100% 発火) は付かない。あたしがその rule を読んで従うのも確率的だからよ。それでも、口頭指摘が揮発して永久に失われる今の状態よりは確実に前進する — 「消える確率論 (L0)」を「残る確率論 (L1)」に繋ぐ橋を、規律で架けるのが今回の改修の正体。</p>
+
+  <h2><span class="no">07</span>総評</h2>
+  <div class="quote">
+    改修は「hook を増やす」ではなく「rule を1本足して、既存の昇格パイプラインに L0 の入口を接続する」。意味論の判断 (昇格の是非) は人 + LLM に残し、機械化できる再発計数は既存機構に委ねる — 役割分担を崩さずに、唯一手薄だった最下段だけを塞ぐ最小改修よ。増やす hook はゼロ、既存スクリプトの変更もゼロ。ただし保証は確率的 (L1 相当) で、決定論の 100% ガードレールにはならない点は割り切りが要る。実行するなら worktree 隔離での別作業になる。
+  </div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.20 21:10 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
