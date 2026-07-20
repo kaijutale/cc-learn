@@ -1,0 +1,290 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-2.4「方針の外部化」調査結果 — 取り入れ済み・K-2系全弾完了</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">EXPLAINER · NOTE K-2.4 · POLICY EXTERNALIZATION</div>
+  <h1>K-2.4「ルールをコードに埋め込まず<br>設定ファイルに分ける」調査結果 — <em>方針の外部化</em></h1>
+  <div class="meta"><span>2026.07.20</span><span>取り入れフェーズ第3弾 (K-2系最終)</span><span>対象: グローバルハーネスの設定群</span></div>
+
+  
+
+  
+  <div class="hero grade-a">
+    <div class="grade-box grade-a">
+      <div class="grade-letter">A</div>
+      <div class="grade-pct">取り入れ済み</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT — K-2.4 取り入れ確認 (取り入れフェーズ第3弾・K-2系全弾完了)</div>
+      <p>note の推奨「方針の外部化」は<strong>4 層構造で実装済み</strong>。方針変更は git の差分 (diff) としてレビューされ、「検証可能な構造化文書」は<strong>記事水準を超えて機械検証まで</strong>されている。note の例「テスト緑でなければ commit しない」の全体ゲートだけは不在だが、これは<strong>意図的見送りを記録した判断</strong>であり欠落ではない。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>note K-2.4 が求めていること</h2>
+  <p>たとえは<strong>レシピとオーブン</strong>。「ケーキは180度」をオーブンの内部プログラム (ファームウェア) に焼き込んだら、レシピを変えるたびにオーブンを改造することになる。レシピカード (設定ファイル) に書いておけば、カードを書き換えるだけでいい。ワークフローの方針 —「計画フェーズではコードを編集しない」「テストが通らなければ commit しない」— も同じで、<em>コードに埋め込まず設定ファイルへ外出しせよ</em>、が note の推奨。外出しの利得は 4 つ: <strong>diff 一発で方針比較・別プロジェクトへ移植・監査・バージョン管理</strong>。さらに「SKILL.md も方針の外部化の一形態」と note 自身が明言してるわ。</p>
+
+  <div class="stats">
+    <div class="stat"><div class="k">権限方針 (permissions)</div><div class="v">248 本</div></div>
+    <div class="stat"><div class="k">hook 発火配線</div><div class="v">10 イベント種 50 本</div></div>
+    <div class="stat"><div class="k">判定データ JSON</div><div class="v">3 本 (hook 4 本が読む)</div></div>
+    <div class="stat"><div class="k">SKILL.md + rules</div><div class="v">71 + 11 本</div></div>
+  </div>
+
+  <h2><span class="no">02</span>照合結果 — 方針の外部化は 4 層構造 (全実測)</h2>
+  <table>
+    <thead><tr><th>層</th><th>実体</th><th>外部化されている方針</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="cat-name">権限方針</td>
+        <td><code>settings.json</code> の permissions</td>
+        <td>許可 41 / 拒否 177 / 都度確認 30 = 248 本の宣言的リスト。例: <code>Bash(git push:*)</code> が拒否リストにある = 「push はかいじゅうのみ」という運用方針が<strong>散文でなく設定</strong>として強制されてる</td>
+        <td><span class="mark mark-pass">外部化済み</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">発火方針</td>
+        <td><code>settings.json</code> の hooks 配線</td>
+        <td>どの hook を・どのイベントで・どの対象に発火させるかが設定側。hook スクリプト (オーブン) と発火条件 (レシピ) の分離</td>
+        <td><span class="mark mark-pass">外部化済み</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">判定データ</td>
+        <td><code>hooks/rules/*.json</code> 3 本</td>
+        <td>禁止語リスト・コマンド規則・検査対象パスという<strong>変更頻度の高い方針データ</strong>がコードから分離され、hook 4 本 (stop_words / pre_commands / essence_gate / worktree_bash_write_guard) が読み込む — 参照は grep で実証済み</td>
+        <td><span class="mark mark-pass">外部化済み</span></td>
+      </tr>
+      <tr>
+        <td class="cat-name">手順方針</td>
+        <td><code>skills/*/SKILL.md</code> 71 本 + <code>rules/*.md</code> 11 本</td>
+        <td>手順・応答方針の構造化文書。手順を変えても Claude Code 本体 (runtime) は 1 バイトも変わらない — note の「SKILL.md = 方針の外部化」そのもの</td>
+        <td><span class="mark mark-pass">外部化済み</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px;">補助として、閾値などのパラメータも環境変数の差し込み口 (例: <code>HOOK_FIRE_REPORT_THRESHOLD</code>) で外から変えられる作りよ。</p>
+
+  <h2><span class="no">03</span>外部化の利得 4 点は実運用されているか</h2>
+  <ul class="plain">
+    <li><b>バージョン管理</b> — ハーネス (<code>~/.claude</code>) 自体が git リポジトリで、GitHub (claude-harness) に遠隔バックアップされてる。方針の全変更履歴が残る。</li>
+    <li><b>diff 一発の方針比較</b> — 方針変更は commit / PR の差分としてレビューされる。「設定ファイルだから diff できる」を毎日運用中。</li>
+    <li><b>監査</b> — 07-11〜07-19 の観測レビューシリーズは、まさに<strong>方針 diff の監査</strong>をセッション横断で回した実績 (変更履歴を 7 つの制約で批評し issue 化)。</li>
+    <li><b>移植</b> — establishing-knowledge-persistence 等の skill が、方針一式を他プロジェクトへ複製 (scaffold) する仕組みを持つ。</li>
+  </ul>
+
+  <h2><span class="no">04</span>note の例 2 つとの照合 — 1 つは実装、1 つは「導入しないと決めた記録」</h2>
+  <div class="card">
+    <h3><span class="sev sev-pass">実装済み</span>「計画フェーズではコードを編集しない」</h3>
+    <p>Claude Code の Plan Mode (計画専用モード、製品機能) + <code>hook_pre_plan_output_convention</code> (計画の出力規約を検査する hook。計画確定の瞬間に発火することは live 実測で証明済み) — 方針が設定と hook の組で存在する。</p>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">意図的見送り</span>「テストが通らなければ commit しない」</h3>
+    <p>これを全 commit に強制するゲートは<strong>無い</strong>。ただし欠落ではなく、<strong>05-30 の gap 分析で「test/lint のグローバル強制は見送る」と決めて記録した判断</strong>よ (学習用サンドボックスにまで一律強制するのは過剰、という理由)。テーマ特化の commit ゲート (ADR 検証ゲート / essence ゲート) は別途稼働中。「導入しない」という方針判断自体が記録に残っている点で、K-2.2 (判断理由の永続化) と筋が通ってる。</p>
+  </div>
+
+  <h2><span class="no">05</span>記事超え — 「検証可能な構造化文書」を機械で強制する</h2>
+  <div class="card">
+    <h3><span class="sev sev-pass">超過</span>設定ファイル自体が hook に検証される</h3>
+    <div class="kv"><b>SKILL.md</b><code>hook_post_skill_frontmatter_schema</code> が冒頭メタ情報欄の形式を機械検証 — 方針文書の書式崩れを機構で防ぐ</div>
+    <div class="kv"><b>CLAUDE.md</b><code>hook_validate_claudemd</code> が参照先 (ポインタ) の実在を検証 — リンク切れ方針を防ぐ</div>
+    <div class="kv"><b>settings.json</b><code>hook_pre_commit_settings_churn_normalize</code> が設定ファイル自体の変更を正規化 — 設定の管理装置</div>
+    <div class="kv"><b>hooks</b>回帰テスト 47 ケース</div>
+  </div>
+  <p>note は「制御方針は実行可能で検証可能な構造化文書として管理する」と言うだけで、検証の実装までは求めてない。ハーネスは<strong>レシピカード自体の品質を機械が検査する</strong>ところまで行ってる — レシピの誤植をオーブンが指摘してくれる状態よ。</p>
+
+  <h2><span class="no">06</span>総評</h2>
+  <div class="quote">
+    K-2.4 は「取り入れ済み・改修見送り」。制御方針は権限 (248 本) / 発火 (50 本) / 判定データ (JSON 3 本) / 手順 (SKILL.md 71 + rules 11) の 4 層で設定側に外部化され、git 管理で diff・監査・移植の利得も実運用されている。「検証可能な構造化文書」は機械検証まで実装され記事水準超え。唯一の不在 (テスト全体ゲート) は意図的見送りの記録済み判断で、gap には数えない。これで K-2 系サブセクション (K-2.1 ポインタ / K-2.2 3層構造 / K-2.3 観測面 / K-2.4 方針外部化) は<strong>全弾確認完了</strong> — 詳細な証跡は studyログ (2026-07-20_k-2-4-config-externalization-adoption-check.md、commit b688546) が正本。
+  </div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.20 09:21 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
