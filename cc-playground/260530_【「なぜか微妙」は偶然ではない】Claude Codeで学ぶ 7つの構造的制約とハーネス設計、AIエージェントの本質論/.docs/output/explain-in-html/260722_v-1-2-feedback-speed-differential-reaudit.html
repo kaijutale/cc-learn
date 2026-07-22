@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V-1.2 差分再監査 — フィードバック速度法則の現在地 (取り入れフェーズ第10弾)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">ADOPTION AUDIT · DIFFERENTIAL · 2026.07.22</div>
+  <h1>V-1.2「フィードバックは速いほど強い」<br><em>差分再監査</em> — 第7弾から 24 時間後の現在地</h1>
+  <div class="meta"><span>2026.07.22</span><span>取り入れフェーズ第10弾</span><span>対象: ~/.claude 差分窓 (07-21 12:22 以降)</span><span>独立検証 3 round 収束</span></div>
+
+  
+
+  
+  <div class="hero grade-a">
+    <div class="grade-box grade-a">
+      <div class="grade-letter">済</div>
+      <div class="grade-pct">hook 層 0 変更</div>
+    </div>
+    <div class="grade-desc">
+      <div class="label">VERDICT — 差分再監査</div>
+      <p>判定は<strong>「取り入れ済み継続」</strong>。第7弾 (07-21 12:22 実測) の全主張が再測定でも成立し、差分窓の変更はむしろ V-1.2 の適用範囲を<strong>意味論検査</strong> (機械の Yes/No 判定にできない、意味の照合が要る検査) へ広げる方向に働いた。残差は Low 2 件のみ。</p>
+    </div>
+  </div>
+
+  <h2><span class="no">01</span>この監査は何か — 差分再監査という形</h2>
+  <p>題材は外部記事 (note 260405) の V-1.2「フィードバックは速いほど強い」。<strong>同じ検査なら、遅い場所で落とすより早い場所で落とす方が修正コストが低い</strong>という「フィードバック速度の法則」の節で、検査のタイミングを「ツール直後 → プリコミット (commit = 変更の確定保存の直前) → CI (自動テスト基盤) → 人間レビュー」の 4 段の階段で捉える。原則は 3 つ — ①同じ検査は最速の場所に置く、②修正者が LLM 自身であるほど速い、③軽量な検査を手前に。</p>
+  <p>この節は第7弾で一度深掘り済み。だから今回は同じ結論をなぞる再確認ではなく <em>差分再監査</em> — 第7弾の実測時点 (07-21 12:22) から今日までの約 24 時間でハーネス (<code>~/.claude</code> = Claude Code の設定・検査スクリプト・skill 群の置き場) の何が変わり、第7弾の判定が今も成立するかだけを掘った。実測は読み取り専用のサブエージェント (別コンテキストで動く子エージェント) に委譲し、書いた判定ログは独立検証 3 巡を通してから確定している (07 節)。</p>
+
+  <h2><span class="no">02</span>構成サマリ</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">差分窓 COMMIT</div><div class="v">8 本 (merge 3)</div></div>
+    <div class="stat"><div class="k">HOOK 層の変更</div><div class="v">0 件</div></div>
+    <div class="stat"><div class="k">第7弾主張の再確証</div><div class="v">4 / 4 成立</div></div>
+    <div class="stat"><div class="k">差分の核心</div><div class="v">skill 層 3 commit</div></div>
+    <div class="stat"><div class="k">独立検証</div><div class="v">3 round で収束</div></div>
+    <div class="stat"><div class="k">検証の指摘推移</div><div class="v">4 → 1 → 0</div></div>
+    <div class="stat"><div class="k">残差</div><div class="v">Low 2 件</div></div>
+    <div class="stat"><div class="k">判定</div><div class="v">取り入れ済み継続</div></div>
+  </div>
+
+  <h2><span class="no">03</span>差分窓で何が変わったか (07-21 12:22 → 07-22 12:39)</h2>
+  <table>
+    <thead><tr><th>COMMIT</th><th>日時</th><th>内容</th><th>層</th></tr></thead>
+    <tbody>
+      <tr><td class="score-cell">21f8e67</td><td class="score-cell">07-21 14:14</td><td>harness-adoption-audit skill 新設 (第7弾執筆の約 2 時間後)</td><td><span class="mark mark-warn">skill</span></td></tr>
+      <tr><td class="score-cell">a0fb306</td><td class="score-cell">07-21 15:48</td><td>worktree 隔離手順書に追記 (V-1.2 とは無関係)</td><td><span class="mark mark-na">doc</span></td></tr>
+      <tr><td class="score-cell">10d30b5</td><td class="score-cell">07-21 15:51</td><td>skill 強化: 検証者の 3 条件明文化・Explore 除外</td><td><span class="mark mark-warn">skill</span></td></tr>
+      <tr><td class="score-cell">89d1a01</td><td class="score-cell">07-21 15:52</td><td>skill 解説 HTML の回収 (成果物置き場へ)</td><td><span class="mark mark-na">doc</span></td></tr>
+      <tr><td class="score-cell">44170ec</td><td class="score-cell">07-21 20:27</td><td>PR #213 の merge</td><td><span class="mark mark-na">merge</span></td></tr>
+      <tr><td class="score-cell">545724c</td><td class="score-cell">07-22 00:49</td><td>PR #214 の merge</td><td><span class="mark mark-na">merge</span></td></tr>
+      <tr><td class="score-cell">28fc0c7</td><td class="score-cell">07-22 09:46</td><td>skill へ HTML 解説 step 追加 (7→8 ステップ化)</td><td><span class="mark mark-warn">skill</span></td></tr>
+      <tr><td class="score-cell">1bcb0ca</td><td class="score-cell">07-22 09:48</td><td>PR #215 の merge</td><td><span class="mark mark-na">merge</span></td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px;"><code>settings.json</code> (検査の配線正本) と <code>hooks/*.sh</code> (検査スクリプト本体) に触れた commit は <em>0 件</em> — つまり第7弾が実測した検査配線の地形は 1 コミットも動いていない。未 commit の追跡変更 2 件 (CLAUDE.md の整形 / model 指定 1 行) と未追跡のセッション生成物 3 件も点検し、いずれも V-1.2 非関与を確認した。</p>
+
+  <h2><span class="no">04</span>第7弾の主張は今も成立するか — 4 点全て成立</h2>
+  <table>
+    <thead><tr><th>第7弾の主張</th><th>今回の再実測</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td>ネイティブ git フック (リポジトリ内蔵の検査置き場) は未使用 — commit 検査は行為の前 (段0) へ畳み込み</td><td class="score-cell">.git/hooks = 14 本全て .sample (雛形のみ)</td><td><span class="mark mark-pass">成立</span></td></tr>
+      <tr><td>CI 段 (段3) の不在は記録済みの構造判断</td><td class="score-cell">.github ディレクトリ自体が不存在</td><td><span class="mark mark-pass">成立</span></td></tr>
+      <tr><td>反例①: CLAUDE.md のパス参照検証は圧縮時のみ配線</td><td class="score-cell">配線 1 箇所 (matcher: compact) のまま</td><td><span class="mark mark-pass">成立 (Low 据え置き)</span></td></tr>
+      <tr><td>反例②: 知識文書の形式検証器はハーネス自身に未配線</td><td class="score-cell">手動コピー配布方式のまま・常設なし</td><td><span class="mark mark-pass">成立 (構造制約)</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="no">05</span>差分の核心 — 意味論検査が commit 前へ引き寄せられた</h2>
+  <p>第7弾の結論はこうだった: 「この事実主張は真か」のような<strong>意味論検査</strong>は、機械が白黒つける決定論の検査 (hook = 決められたタイミングで自動実行される検査スクリプト) にできない。だから最も遅い人間レビュー段に「正しく」住んでいる — 根拠は PR #212 で、捏造された設定値が PR 化後のレビューでようやく捕捉された実例だった。</p>
+  <p>ところがその執筆の約 2 時間後、harness-adoption-audit skill (本監査を回している workflow そのもの) が新設され、step 6「独立トレーサビリティ検証ゲート」が入った。判定ログの全事実主張を、<strong>commit の前に</strong>、fresh な独立サブエージェント (読み取り専用・修正権限なし) が実体と 1 件ずつ突き合わせる仕組みで、指摘ゼロになるまで修正と再投入を繰り返す。</p>
+  <table>
+    <thead><tr><th>比較軸</th><th>#212 (第7弾の根拠例)</th><th>第8弾以降 (step 6 稼働後)</th></tr></thead>
+    <tbody>
+      <tr><td class="cat-name">検出のタイミング</td><td>PR 化後の人間駆動レビュー</td><td><em>commit 前</em></td></tr>
+      <tr><td class="cat-name">検出主体</td><td>人間が起動した多層レビュー内の盲検 LLM</td><td>workflow に組み込まれた独立サブエージェント</td></tr>
+      <tr><td class="cat-name">修正者とコスト</td><td>人間→LLM・大</td><td>LLM・小</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px;">「意味論検査は決定論 hook にできない」は今も真で、今回も hook 化はされていない (確率的な規律 + 最終防波堤は人間)。更新されたのは「ゆえに最遅段に住むしかない」の側 — <em>独立 agent を検証者に立てれば、人間段より手前で回せる</em>。速度の階段に「決定論ゲートと人間レビューの間の中間段」が生えた。これが V-1.2 の原則②「修正者が LLM 自身であるほど速い」の意味論検査への拡張で、本差分監査の最大の発見。</p>
+
+  <h2><span class="no">06</span>反例狩りの収穫 — 残差と記事超え</h2>
+  <div class="card">
+    <h3><span class="sev sev-warn">LOW</span>第7弾トポロジー表の欠落を補正</h3>
+    <div class="kv"><b>事実</b>知識を保存する直前に「裏取りしたか」を注入する助言型 hook (probe-before-persist) は 07-09 から配線済みだったのに、第7弾の段0 一覧 (block 型 6 種) に載っていない。</div>
+    <div class="kv"><b>含意</b>ハーネスの穴ではなく前回監査ログの網羅欠け。段0 には「止める (block)」と「助言する (advisory)」の 2 種がある、と読み替えるのが正確。</div>
+  </div>
+  <div class="card">
+    <h3><span class="sev sev-warn">LOW</span>意味論前倒しは workflow 限定</h3>
+    <div class="kv"><b>事実</b>step 6 ゲートが守るのは、この skill 経由で作る判定ログの commit だけ。一般の commit に LLM 検証を課す仕組みは無い。</div>
+    <div class="kv"><b>含意</b>全 commit への LLM 検証はコスト・決定論性の両面で成立しない — gap ではなくトレードオフとして記録 (既存の規律 + 人間の目が補償)。</div>
+  </div>
+  <p><strong>記事超え点</strong> (note の枠を超えた実装):</p>
+  <ul class="plain">
+    <li><b>意味論検査の中間段の発明</b> — note の 4 段表は意味論検査を「人間レビュー (コスト大)」に置く。ハーネスは独立 agent 検証という中間段を挟み、一部を commit 前へ前倒しした。第7弾の記事超え 4 点への積み増し。</li>
+    <li><b>段0 の advisory という形</b> — 検査そのものを前倒しできないなら、検査の準備 (裏取りの喚起) を最速段に前倒しする。本セッションでも handoff 保存の直前に 2 回発火し、2 回とも外部裏取りを誘発した (セッション実行時の観測)。</li>
+  </ul>
+
+  <h2><span class="no">07</span>このログ自身が通った検証 — 3 round の収束記録</h2>
+  <ul class="plain">
+    <li><b>Round 1: 乖離 2 + 注記 2</b> — .git/hooks を「15 本」と誤記 (スキャン出力の内部矛盾を鵜呑みにした転記。実体 14)、「3 round」の出所齟齬、未 commit 数の過少表現、#212 検出主体の強すぎる断定 → 全て実測裏取りの上で修正。</li>
+    <li><b>Round 2: 過大主張 1</b> — 「差分は全て skill 層」がログ自身の commit 表 (doc 層 2 本) と矛盾 → 数量を明示して言い直し。</li>
+    <li><b>Round 3: 指摘 0</b> — 約 35 の事実主張が全てトレース確証され収束。</li>
+  </ul>
+  <p style="margin-top:14px;">数値誤りが 2 度、commit 前に機械的に止まった — 05 節で述べた「意味論検査の前倒し」の実演が、このログ自身の制作過程でも再現した形になる。</p>
+
+  <h2><span class="no">08</span>総評</h2>
+  <div class="quote">
+    判定は「取り入れ済み継続」。hook 層は 1 commit も動いていないのに差分監査が空振りに終わらなかったのは、変化が skill 層に積まれていたから。V-1.2 の速度法則は、第7弾の「決定論検査は最速段へ・意味論検査は最遅段へ」という二面配置から、「意味論検査も独立検証者を立てれば commit 前へ引ける」という三面配置へ進化した。正本は markdown 判定ログ (.docs/logs/shared/2026-07-22_v-1-2-feedback-speed-differential-reaudit.md) — この HTML と食い違う場合はそちらが勝つ。
+  </div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.22 13:07 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
