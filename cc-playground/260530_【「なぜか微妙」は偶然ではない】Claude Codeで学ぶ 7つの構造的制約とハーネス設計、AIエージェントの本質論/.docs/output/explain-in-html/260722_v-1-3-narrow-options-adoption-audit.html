@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V-1.3 選択肢は推論前に絞る × 自ハーネス照合 (取り入れフェーズ第8弾)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">ADOPTION AUDIT · 取り入れフェーズ第8弾</div>
+  <h1>V-1.3「選択肢は<em>推論前に絞る</em>」× 自ハーネス照合</h1>
+  <div class="meta"><span>2026.07.22</span><span>判定: 取り入れ済み</span><span>対象: ~/.claude</span><span>harness-adoption-audit 初ドッグフード</span></div>
+
+  
+
+  
+<div class="hero grade-a">
+  <div class="grade-box grade-a">
+    <div class="grade-letter">A</div>
+    <div class="grade-pct">取り入れ済み</div>
+  </div>
+  <div class="grade-desc">
+    <div class="label">VERDICT</div>
+    <p>記事 V-1.3「選択肢は推論前に絞る」は自ハーネスに<strong>取り入れ済み</strong>。ツール・skill・エージェントの 3 軸すべてで「入口で絞る」実装を実測確認し、記事の枠を超えた実装も 4 点検出。残差は <em>Medium 1 件</em> (外部テンプレ様式のエージェント 4 本だけツール絞りが無い) と Low 1 件 (明示呼出専用 skill の説明文が入口帯域を常時消費)。</p>
+  </div>
+</div>
+
+<h2><span class="no">01</span>判定サマリ</h2>
+<div class="stats">
+  <div class="stat"><div class="k">判定</div><div class="v">取り入れ済み</div></div>
+  <div class="stat"><div class="k">実装経路</div><div class="v">3 軸 + 記事超え 4 点</div></div>
+  <div class="stat"><div class="k">残差</div><div class="v">Medium 1 · Low 1</div></div>
+  <div class="stat"><div class="k">独立検証</div><div class="v">3 round で収束</div></div>
+  <div class="stat"><div class="k">deny の性格</div><div class="v">177 件中 176 件が条件付き</div></div>
+  <div class="stat"><div class="k">エージェント絞り</div><div class="v">28 / 32 本</div></div>
+  <div class="stat"><div class="k">skill 有効 / 無効</div><div class="v">71 / 28 本</div></div>
+  <div class="stat"><div class="k">遅延ロード対象</div><div class="v">ツール 90 個超</div></div>
+</div>
+
+<h2><span class="no">02</span>記事の主張 (V-1.3)</h2>
+<p>出典はレストランのメニューのたとえ — 売り切れの料理は「注文されてから断る」のではなく「最初からメニューに載せない」。Claude Code のツール選択も同じで、使えない選択肢をコンテキスト (AI が一度に読める作業机) に載せること自体が 3 つの無駄を生む、というのが記事の骨子よ。</p>
+<div class="quote">使えないツールは「呼んでから拒否」ではなく「最初から見せない」</div>
+<p style="margin-top:14px;">防げるもの: ①推論の無駄遣い ②コンテキスト帯域の浪費 (C-1: 作業机の広さは有限でゼロサム) ③報酬ハッキング (C-5: 禁じられた近道が見えていると、そこへ逃げる誘惑が生まれる) 。そして役割分担の明言 —</p>
+<div class="quote">呼び出し時の拒否 (Hook, Permission deny) は最終防衛線であり、主たる制御は推論の入力段階で選択肢を絞ることだ</div>
+
+<h2><span class="no">03</span>ハーネス実装の対応表 (実測)</h2>
+<table>
+  <thead><tr><th>記事の要素</th><th>ハーネス実体</th><th>実測値</th><th>判定</th></tr></thead>
+  <tbody>
+<tr><td class="cat-name">ツールを最初から見せない</td><td><code>ENABLE_TOOL_SEARCH: "true" (deferred tools)</code></td><td>90 個超のツールが「名前のみ・仕様書 (schema) 非搭載」で待機、必要時だけ load (本セッション実測)</td><td><span class="mark mark-pass">実測一致</span></td></tr>
+<tr><td class="cat-name">メニューから消す (補助エージェント)</td><td><code>agents/*.md の tools 指定</code></td><td>32 本中 28 本が明示絞り。レビュー役は書込ツール非付与、最小は 1 ツールのみの agent も</td><td><span class="mark mark-pass">実測一致</span></td></tr>
+<tr><td class="cat-name">メニューから消す (skill)</td><td><code>skills-disabled/ へのディレクトリ移動</code></td><td>有効 71 本 / 無効 28 本 (物理的にメニュー外へ)</td><td><span class="mark mark-pass">実測一致</span></td></tr>
+<tr><td class="cat-name">Plan Mode (記事の実装例)</td><td><code>Plan Mode 本体 + plan 系 hook 5 本</code></td><td>計画確定直前の規約注入 hook 等が補強</td><td><span class="mark mark-pass">実測一致</span></td></tr>
+<tr><td class="cat-name">呼出時拒否 = 最終防衛線</td><td><code>permissions.deny 177 件</code></td><td>内訳: コマンド族 16 + パス条件 160 + MCP ツール全面 deny 1 (未配線サーバへの防御的 1 件のみ)</td><td><span class="mark mark-pass">実測一致</span></td></tr>
+<tr><td class="cat-name">選択肢の知識も遅延注入</td><td><code>Progressive Disclosure 11 ファイル</code></td><td>tool-routing.md は「ツール選択の直前に Read」を明記 — 入口では出さない</td><td><span class="mark mark-pass">実測一致</span></td></tr>
+  </tbody>
+</table>
+
+<h2><span class="no">04</span>反例狩りの収穫 (残差)</h2>
+<p>「問題ゼロを疑う」方針で、入口で絞れるのに絞っていない箇所を能動的に探した結果が以下の 2 件。</p>
+<div class="card">
+  <h3><span class="sev sev-warn">MEDIUM</span>外部テンプレ様式のエージェント 4 本だけツール無指定 (= 全ツール持ち)</h3>
+  <div class="kv"><b>事実</b>context-engineering-agent / frontend-developer / security-devsecops-expert / test-ai-tdd-expert の 4 本は tools 指定行が無く、全ツール (書込含む) を持つ。残り 28 本は全て絞り済み</div>
+  <div class="kv"><b>問題</b>特に security-devsecops-expert は監査役なのに書込権限を持ち、自作のレビュー役は read-only という慣行とも不整合</div>
+  <div class="kv"><b>処方</b>tools 指定の追記だけで閉じられる、実行可能な残差</div>
+</div>
+<div class="card">
+  <h3><span class="sev sev-warn">LOW</span>明示呼出専用 skill の説明文が入口帯域を常時消費</h3>
+  <div class="kv"><b>事実</b>ツールには遅延ロード機構があるのに、skill 71 本の説明文 (description) は毎セッション全文注入される。「明示呼出専用・自動誘発なし」を宣言する fork 系 14 本も同様</div>
+  <div class="kv"><b>切り分け</b>skill 版の遅延機構が無いのは Claude Code 本体側の構造限界 (呼び出すには一覧に載っている必要がある) — gap ではなくトレードオフとして記録</div>
+  <div class="kv"><b>緩和</b>明示呼出専用 skill は自動発火の照合に説明文を使わないのだから、説明文を最小化する余地がある</div>
+</div>
+
+<h2><span class="no">05</span>記事超え点</h2>
+<ul class="plain">
+  <li><b>「消す」より細かい第 3 の形</b> — 記事のメニュー比喩は「載せる/消す」の二値だが、実装は「名前は載せる・仕様書は注文時に出す」遅延ロード。発見可能性を保ったまま帯域を節約する中間形</li>
+  <li><b>知識にも同じ原則</b> — ツール選択の手引き自体を入口から外し「選択の直前に Read」で注入 (Progressive Disclosure 11 ファイル)</li>
+  <li><b>絞りの用途拡張 = 役割境界</b> — 書込ツールを持たせないことでレビュー役の独立性を構造的に保証。本ログの作成過程自体が実例 (実測係も検証係も read-only)</li>
+  <li><b>メニューのメニューも消す</b> — skill 探索補助の skill 2 本まで無効化済み、という徹底</li>
+</ul>
+
+<h2><span class="no">06</span>検証ゲートの実働記録 (skill 初ドッグフード)</h2>
+<p>本ログは harness-adoption-audit skill の初の実走で、commit 前の<strong>独立トレーサビリティ検証</strong> (書いた本人でない read-only の検証係が、全主張をハーネス実体と 1 件ずつ突き合わせる関門) が実際に仕事をした:</p>
+<table>
+  <thead><tr><th>round</th><th>検出</th><th>結果</th></tr></thead>
+  <tbody>
+    <tr><td class="cat-name">round-1</td><td>「ツールを丸ごと消す deny は 0 件」という核心主張が偽と判明 (mcp__supabase__execute_sql が 1 件実在、パス条件へ誤算入していた) ほか計 3 件</td><td><span class="mark mark-fail">要是正</span></td></tr>
+    <tr><td class="cat-name">round-2</td><td>是正 5 件は全て実測一致。ただし是正の 1 つが新たな過剰主張を導入 (マーカー列挙 3/4・1/4 の食い違い)</td><td><span class="mark mark-warn">1 件残</span></td></tr>
+    <tr><td class="cat-name">round-3</td><td>最後の 1 点を検証者の実測値どおりに修正</td><td><span class="mark mark-pass">全主張トレース可</span></td></tr>
+  </tbody>
+</table>
+<p style="margin-top:14px;">書いた本人の自己チェックでは「0 件」の思い込みを素通ししていた — 独立主体による突き合わせが load-bearing な誤り (結論を支えていた誤り) を commit 前に止めた、という関門設計の実証記録でもあるわ。</p>
+
+<h2><span class="no">07</span>総評</h2>
+<div class="quote">「入口で絞る」は 3 軸 (ツール・skill・エージェント) + 知識層まで実装済みで、deny 177 件の使われ方 (176 件が条件付き = ツールを視界に残したままの最終防衛線) が記事の言う二層配置の証拠として読める。残差の本命は外部テンプレ様式エージェント 4 本のツール無指定 — 入口の絞りは「自作分は徹底、輸入分が抜け穴」という分布だった。正本は markdown 判定ログ、本 HTML は閲覧補助の派生物よ。</div>
+
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.22 10:21 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
