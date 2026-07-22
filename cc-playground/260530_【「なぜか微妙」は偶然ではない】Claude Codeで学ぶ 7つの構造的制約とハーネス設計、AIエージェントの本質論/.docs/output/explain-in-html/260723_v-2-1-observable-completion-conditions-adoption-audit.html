@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V-2.1 観測可能な完了条件 — 取り入れ確認 (第11弾)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">ADOPTION AUDIT · 2026.07.23 · V-2.1</div>
+  <h1>観測可能な<em>完了条件</em></h1>
+  <div class="meta"><span>取り入れフェーズ第11弾</span><span>note 260405 V-2.1</span><span>対象: ~/.claude</span></div>
+
+  
+
+  <div class="hero grade-a">
+  <div class="grade-box grade-a">
+    <div class="grade-letter">済</div>
+    <div class="grade-pct">exit-code oracle</div>
+  </div>
+  <div class="grade-desc">
+    <div class="label">VERDICT</div>
+    <p>取り入れ済み — 完了を「ファイル修正」でなく exit code / test pass / curl 200 という観測可能な挙動で定義。 <strong>exit-code oracle 6実装 + AND結合4箇所 + 自己申告→観測置換6実装</strong>。記事超え=exit 2「検証できなかった」の第三状態。残差は observable でない完了の Low×3。独立検証 (step6) 通過。</p>
+  </div>
+</div>
+<div class="stats"><div class="stat"><div class="k">完了の定義</div><div class="v">観測可能な挙動 (exit/test/curl)</div></div><div class="stat"><div class="k">exit-code oracle</div><div class="v">6実装 (代表列挙)</div></div><div class="stat"><div class="k">AND 結合の完了条件</div><div class="v">4箇所</div></div><div class="stat"><div class="k">自己申告→観測置換</div><div class="v">6実装 (C-4対策)</div></div><div class="stat"><div class="k">記事超え</div><div class="v">exit 2 = 第三状態</div></div><div class="stat"><div class="k">残差</div><div class="v">Low × 3</div></div><div class="stat"><div class="k">step6 独立検証</div><div class="v">捏造ゼロ / citation 5件訂正</div></div><div class="stat"><div class="k">正本定義</div><div class="v">agent-essence.md L120-121</div></div></div>
+<h2><span class="no">01</span>note V-2.1 が求めるもの</h2>
+<p>一行サマリー: <strong>「ファイルを修正した」ではなく「curl で200が返る」「テストが pass する」で完了を定義する</strong>。C-4「LLM の『完了しました』は信頼できない」の具体化じゃ。</p>
+<p>「ファイルを修正しました」は完了の証拠にならない。「API が200を返す」は証拠になる。exit code は物理的事実であり偽造できない。現実の完了条件は複数を AND 結合する:</p>
+<pre>npm run build → exit 0  AND  npm test → exit 0  AND  curl /health → 200</pre>
+<h2><span class="no">02</span>ハーネスの実装マッピング</h2>
+<table><thead><tr><th>note 要素</th><th>実体</th><th>判定</th><th>実測</th></tr></thead><tbody><tr><td class="cat-name">exit code = 物理的完了条件</td><td><code>oracle 群 (代表6)</code></td><td><span class="mark mark-pass">OK</span></td><td>verify-adr / assert-coverage / assert-tests-unchanged / assert-loop-budget / assert-no-cycles + coder.md 配線。exit 0/1/2</td></tr><tr><td class="cat-name">複数条件の AND 結合</td><td><code>4箇所 (代表列挙)</code></td><td><span class="mark mark-pass">OK</span></td><td>orchestrating (behavior∧structure + review AND直列) / coder (GREEN∧改ざん無∧coverage) / verify-test-fork (Unit∧E2E∧integrity) / designing-frontends (色距離∧閾値)</td></tr><tr><td class="cat-name">自己申告を観測に置換</td><td><code>6実装</code></td><td><span class="mark mark-pass">OK</span></td><td>assert-tests-unchanged (git hash 物理指紋) / record-loop-iteration (in-memory を物理ファイル化) / verify-test-fork (親の独立再実行) 等。うち4本が C-4 を逐語引用</td></tr><tr><td class="cat-name">状態変更の独立確認</td><td><code>rule</code></td><td><span class="mark mark-pass">OK</span></td><td>critical-thinking-checklist「成功メッセージを信じず HEAD hash/ファイル存在/件数で landed 検証」</td></tr><tr><td class="cat-name">hook 層の観測可能 gate</td><td><code>3 hook</code></td><td><span class="mark mark-pass">OK</span></td><td>adr-gate (verify-adr exit で approve/deny) / essence-gate (変更hook のテスト赤→deny) / post-lint (tsc --noEmit / eslint exit で閉ループ)</td></tr></tbody></table>
+<h2><span class="no">03</span>個別照合 (実測確証)</h2>
+<div class="card"><h3><span class="sev sev-pass">照合1</span>完了を観測可能な挙動で定義</h3><div class="kv"><b>実体</b>判定根拠は「exit code (機械判定) のみ。エージェントの『成功しました』報告は証拠にしない」(orchestrating-team-dev L216 逐語)。設計原則は verify-adr L7「検証できなかったを合格に化けさせない」。</div></div>
+<div class="card"><h3><span class="sev sev-pass">照合2</span>AND 結合</h3><div class="kv"><b>実体</b>orchestrating は behavior oracle (テスト全PASS ∧ lint exit 0 ∧ branch-validator Missing=0) と structure oracle を両方通過して初めて合格。さらに team-reviewer ∧ gep-review の AND 直列ゲート。</div></div>
+<div class="card"><h3><span class="sev sev-pass">照合3</span>C-4 自己申告の観測置換</h3><div class="kv"><b>実体</b>6実装のうち4本が C-4 を逐語引用。in-memory 自己申告 (coder のループカウンタ) を物理ファイルへ外部化し第三者が照合。verify-test-fork は「真の gate は親 coder の独立再実行、孫の自己申告だけに完了を委ねない」= 実行者と判定者の分離。</div></div>
+<h2><span class="no">04</span>記事超え点</h2>
+<ul class="plain"><li><b>exit 2 = 「検証できなかった」の第三状態</b> — note は exit code を pass/fail の二値で使う。全 oracle は exit 2 (実行不能/config error) を持ち、走らなかった検査を「合格」に化けさせない (verify-adr L7)。観測可能条件が満たすべき「偽の観測」への防御。</li><li><b>自己申告構造の物理外部化</b> — in-memory の自己申告カウンタを record-loop-iteration が物理ファイルへ外部化し、assert-loop-budget が git 外の物理記録から照合。自己申告の構造そのものを分解。</li><li><b>実行者と判定者の分離</b> — 孫の Observability は self-report (可視化) に留め、真の gate は親 coder の独立再実行。誰が観測するかまで設計。</li><li><b>V-2.1 を意味論的品質へ適用</b> — designing-beautiful-frontends は「distinctive」(主観的品質) を色ヒストグラム距離という観測可能な数値に置換し「V-2.1 observable completion gate」と明示ラベル。</li><li><b>本セッションの自己実証</b> — 本監査自体が critical-thinking-checklist を実践。commit landed を HEAD hash で検証し、git 異常を成功メッセージでなく git merge-base の機械判定で解決した。</li></ul>
+<h2><span class="no">05</span>反例狩り / 残差 (観測可能でない完了)</h2>
+<p>scan §7 の「self-report で closed にしている箇所」を裁定。fork の self-report ブロックは「真の gate は親の独立再実行」で mitigated、review ルーブリックの列挙は診断側の awareness ゆえ gap でない。真の残差は Low×3:</p>
+<div class="card"><h3><span class="sev sev-warn">Low</span>handoff の完了 = ファイル書込</h3><div class="kv"><b>内容</b>完了トリガは handoff-state.md への Write そのもので、書込後の YAML パース健全性の assert が無い (pickup/Stop hook が yq/awk で機械パースするのに)。note の「ファイル修正は証拠でない」の影。ただし git status 観測 + 成果物がファイル自体ゆえ Low、壊れた handoff は次 pickup が検出。</div></div>
+<div class="card"><h3><span class="sev sev-warn">Low</span>essence-gate の verdict 源が Lead 自己申告</h3><div class="kv"><b>内容</b>commit gate が採用する critical_count が Lead 自己申告で、原則11 の非対称性を残す。ただし validate-verdict-consistency (L93-96 で count 突合、L120 で MISMATCH) が機械補償。</div></div>
+<div class="card"><h3><span class="sev sev-warn">Low</span>soft-K 発火の事後検証不能</h3><div class="kv"><b>内容</b>review 系 skill が「soft-K『真に余地なし』分岐は内的正当化に留まりレポートに痕跡が残らず、走らせたかを事後の機械検証で区別できない」と自認。観測可能でない完了判定の自認された死角。</div></div>
+<h2><span class="no">06</span>独立検証 (step6)</h2>
+<p>fresh な read-only reviewer が全 load-bearing 主張を実ファイルと1件ずつ照合。 <strong>捏造・存在しない主張はゼロ</strong>。ただし verdict=要修正 ── 行番号引用の誤りと量化子の過大を5件検出し、各修正を直接 Read で裏取りして反映済み:</p>
+<ul class="plain"><li><b>[Medium] verify-adr 逐語の行番号</b> — 記事超え①の設計原則を L28 と記載したが実際は L7 (L28 は区切り線)。ログ4箇所の反復を全訂正。内容は真、行番号のみ誤り。</li><li><b>[Low-Medium] 「6実装すべて逐語」の過大</b> — 実際は 4/6 が逐語、2/6 は C-4 ラベル参照 → 訂正。</li><li><b>[Low] 行番号・行ズレ2件</b> — validate-verdict-consistency の count 突合 (L93-96/L120) / assert-coverage の fail-closed 逐語 (L25) → 訂正。</li><li><b>[Low] 計数の census 表示</b> — 「6実装/4箇所」は確定計数でなく代表列挙 (列挙インスタンスは全て実在)。網羅性の僅かな過大表示を開示。</li></ul>
+<h2><span class="no">07</span>総評</h2>
+<div class="quote">V-2.1「観測可能な完了条件」は exit-code oracle 群として深く実装され、判定根拠を「exit code のみ、成功しました報告は証拠にしない」と明文化している。ハーネスはさらに exit 2 という「検証できなかった」の第三状態を持ち、走らなかった検査が緑を返す偽の観測を塞ぐ ── note の一段上。反例として挙がった observable でない完了は、独立再実行や機械突合で mitigated、または自認された死角で、真の残差は Low×3。判定は取り入れ済み。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.23 03:14 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
