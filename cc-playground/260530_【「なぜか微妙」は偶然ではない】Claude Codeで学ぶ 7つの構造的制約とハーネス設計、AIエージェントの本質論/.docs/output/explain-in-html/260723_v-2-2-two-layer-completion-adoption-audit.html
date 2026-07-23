@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V-2.2 behavior と structure の二層完了判定 — 取り入れ確認 (第12弾)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">ADOPTION AUDIT · 2026.07.23 · V-2.2 (V章 最終)</div>
+  <h1>完了判定を<em>二層</em>にする</h1>
+  <div class="meta"><span>取り入れフェーズ第12弾</span><span>note 260405 V-2.2</span><span>対象: ~/.claude</span></div>
+
+  
+
+  <div class="hero grade-a">
+  <div class="grade-box grade-a">
+    <div class="grade-letter">済</div>
+    <div class="grade-pct">V章 完走</div>
+  </div>
+  <div class="grade-desc">
+    <div class="label">VERDICT</div>
+    <p>取り入れ済み — note の構造チェック具体例3種 (500行/循環依存/配置) すべてに実装が実在し、二層 AND は「検証の二層構成 (V-2.2)」の名で正典化。 <strong>片方のみ pass は不完了</strong> を明記し、担い手も agent 分離。残差は「structure 側の機械 gate が behavior 側より弱い」非対称 Low×4 (自認済みロードマップ)。独立検証 (step6) 通過。これで V章 全7ユニットの深掘りが完了。</p>
+  </div>
+</div>
+<div class="stats"><div class="stat"><div class="k">note の具体例3種</div><div class="v">すべて実装実在</div></div><div class="stat"><div class="k">二層 AND の正典</div><div class="v">orchestrating SKILL (V-2.2 節)</div></div><div class="stat"><div class="k">担い手の分離</div><div class="v">tester=behavior / reviewer=structure</div></div><div class="stat"><div class="k">残差</div><div class="v">Low×4 + 観測1</div></div><div class="stat"><div class="k">記事超え</div><div class="v">強制度の勾配 / メタ層拡張</div></div><div class="stat"><div class="k">500行超の実測</div><div class="v">6本 (最長 809行)</div></div><div class="stat"><div class="k">step6 独立検証</div><div class="v">捏造ゼロ / 引用精度5件訂正</div></div><div class="stat"><div class="k">V章 進捗</div><div class="v">7/7 ユニット完了</div></div></div>
+<h2><span class="no">01</span>note V-2.2 が求めるもの</h2>
+<p>一行サマリー: <strong>「テストが通る」だけでなく「コードが保守しやすい構造か」も完了条件に入れる</strong>。たとえは建築の完了検査 ── 機能検査 (水が出る・電気がつく) と構造検査 (耐震基準・配管が図面どおり) の二層。機能検査だけ通っても構造検査に落ちる建物は「完成」ではない。</p>
+<p>定量根拠: Needle in the Repo (arXiv:2603.27745) ── 13.3% のケースで機能テスト合格だが構造チェック不合格。7件に1件は「動くが保守できない」コードが生成されている。</p>
+<table><thead><tr><th>チェック</th><th>問い</th><th>具体例</th></tr></thead><tbody><tr><td class="cat-name">動作 (behavior)</td><td>仕様どおり動くか</td><td><code>npm test</code> exit 0, <code>curl /health</code> → 200</td></tr><tr><td class="cat-name">構造 (structure)</td><td>将来も保守できるか</td><td>1ファイル500行以下、循環依存なし、既存ディレクトリ構造に準拠</td></tr></tbody></table>
+<h2><span class="no">02</span>ハーネスの実装マッピング (具体例3種 1:1 対応)</h2>
+<table><thead><tr><th>note 要素</th><th>実体</th><th>型</th><th>実測</th></tr></thead><tbody><tr><td class="cat-name">500行制限</td><td><code>hook_post_file_line_limit.sh</code></td><td><span class="mark mark-warn">warn</span></td><td>PostToolUse。LIMIT=500。warn 型 (block しない) — 「分割は凝集度で判断。行数は合図であって上限ではない」(L50)</td></tr><tr><td class="cat-name">循環依存 (コード)</td><td><code>assert-no-cycles.sh</code></td><td><span class="mark mark-pass">OK</span></td><td>import グラフを DFS 三色で物理検出。exit 0/1/2。madge は任意補完で自前 DFS が authoritative</td></tr><tr><td class="cat-name">循環依存 (文書)</td><td><code>validate-knowledge.py</code></td><td><span class="mark mark-pass">OK</span></td><td>ticket depends_on グラフの DFS (detect_dependency_cycles) — structure 概念を知識ベースへ拡張</td></tr><tr><td class="cat-name">配置準拠</td><td><code>hook_pre_plans_redirect.sh</code></td><td><span class="mark mark-pass">OK</span></td><td>block 型 — 誤配置の書込を exit 2 で reject し正しいパスを再指示</td></tr><tr><td class="cat-name">二層 AND の正典</td><td><code>orchestrating-team-development</code></td><td><span class="mark mark-pass">OK</span></td><td>節名「検証の二層構成 (V-2.2)」。behavior oracle ∧ structure oracle、「片方のみ pass は不完了」(L203)</td></tr><tr><td class="cat-name">担い手の分離</td><td><code>team-tester / team-reviewer</code></td><td><span class="mark mark-pass">OK</span></td><td>tester=behavior (実装を読まない) / reviewer=structure (Edit/Write 非所持で構造的 read-only)</td></tr><tr><td class="cat-name">structure 層 commit gate</td><td><code>hook_pre_commit_essence_gate.sh</code></td><td><span class="mark mark-pass">OK</span></td><td>skill/agent/hook 改修 commit に essence verdict (Critical=0 ∧ High=0) を要求。block 分岐 12 種</td></tr></tbody></table>
+<h2><span class="no">03</span>記事超え点</h2>
+<ul class="plain"><li><b>強制度の勾配</b> — note は構造チェックを一律「CI や Hook で自動実行」と説くが、ハーネスはチェックの決定可能性で強制度を変える: 配置準拠 (パスの正誤=決定論) は block+再指示、行数 (分割すべきかは凝集度=意味論判断) は warn。決定論/意味論境界を構造チェック内部にも適用。</li><li><b>structure 概念のメタ層拡張</b> — コードのメトリクスに加え、設計原則層 (essence verdict が skill/agent/hook の commit を gate = ハーネス自身の保守可能性) と文書グラフ層 (ticket 循環検出 = 知識ベースの構造健全性) へ二層判定を延長。</li><li><b>madge 非依存の自前 DFS</b> — note は npx madge --circular を名指すが、実装は無依存の自前 DFS が authoritative で madge は任意補完。npm 依存なしで動く物理検出 = 検証手段の可搬性。</li><li><b>差し戻し分岐の設計織込み</b> — 「13.3% が機能合格・構造不合格」に対し、behavior pass 後に structure oracle で実装者へ差し戻す明文ルールを workflow に装備 (「behavior pass でも構造退行は不完了」)。</li></ul>
+<h2><span class="no">04</span>反例狩り / 残差 (二層のどちらかが欠ける経路)</h2>
+<p>scan の6候補を裁定。500行 warn は意図的設計 (凝集度は意味論判断)、一般アプリコードが essence_gate 適用外なのは役割分担 (アプリの二層は workflow 層が担う) で gap でない。真の残差は「structure 側の機械 gate が behavior 側より系統的に弱い」非対称:</p>
+<div class="card"><h3><span class="sev sev-warn">Low</span>structure oracle の機械エントリポイント不在</h3><div class="kv"><b>内容</b>behavior 側には run-behavior-oracle.sh (exit 0/1/2 機械判定) が在るが、対になる run-structure-oracle.sh 相当は不在 (find/grep 実測)。structure oracle の実行は orchestrator の運用依存。ただし正典自身が「完全自動化は次段階」と自認 = 記録されたロードマップ。</div></div>
+<div class="card"><h3><span class="sev sev-warn">Low</span>循環依存検出が commit hook 未配線 / coverage 任意</h3><div class="kv"><b>内容</b>assert-no-cycles.sh はどの commit hook にも配線されず workflow 手順のみ。coverage validation も「coder サイクル完了後の任意計測」。いずれも behavior (GREEN) だけで完了しうる経路だが、自認済み。</div></div>
+<div class="card"><h3><span class="sev sev-warn">Low</span>essence_gate の逆非対称 + 500行超6本の観測</h3><div class="kv"><b>内容</b>essence_gate は structure 層 (verdict) を要求するが behavior 層は部分的 (変更 hook のテストが赤なら block、テスト不在は warn 止まり)。またハーネス自身に 500行超が6本 (最長 = essence_gate 809行) — 「合図」設計ゆえ違反ではないが、構造チェックの実装自身に分割検討の合図が最も強く鳴る緊張として記録。</div></div>
+<h2><span class="no">05</span>独立検証 (step6)</h2>
+<p>fresh な read-only reviewer が全 load-bearing 主張を実ファイルと照合。 <strong>捏造・誇張・トレース不能ゼロ</strong> ── 計数主張「500行超6本」は awk 実測で内訳まで完全一致、run-structure-oracle 不在も独立確認。指摘は引用精度5件 (行番号ズレ4 [L52→L50 / L193→L194 / L2→L3] + 対応表の行数+1×3本 [56/69/207 が真値] + block 分岐 11→12) で、各修正を裏取りして反映済み。</p>
+<h2><span class="no">06</span>総評</h2>
+<div class="quote">V-2.2 は note の具体例 3 種すべてに実装が実在し、二層 AND は note の節番号を自覚的に冠した正典節として明文化、担い手 (tester/reviewer) の分離まで揃う ── 取り入れ済み。ハーネスは強制度の勾配 (配置=block / 行数=warn) と structure 概念のメタ層拡張で note の一段上を行く。残差は structure 側機械化の非対称 Low×4 で、正典自身が「完全自動化は次段階」と自認するロードマップ。本ユニットの完了により、V章 (V-1〜V-2.2) 全 7 ユニットの深掘りが完走した。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.23 12:50 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
