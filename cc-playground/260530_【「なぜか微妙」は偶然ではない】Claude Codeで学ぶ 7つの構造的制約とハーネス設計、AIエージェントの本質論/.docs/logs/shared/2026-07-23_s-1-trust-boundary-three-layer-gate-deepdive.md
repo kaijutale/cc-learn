@@ -68,8 +68,8 @@ related_log: [.docs/logs/shared/2026-07-20_s-chapter-trust-boundary-permissions-
 
 ### 残差 / 改善候補
 
-- **[Medium] essence-docs の L1 非保護**: 閉じるなら `Edit(~/.claude/.docs/essence/**)` の deny 追加だが、proposing-essence-updates の PR フローとの両立設計が要る (例: worktree/branch 内のみ許可 = L2 条件付き許可への移設が筋か)。issue 化の判断はかいじゅうへ
-- **[Medium] hooks/lib の界面隙間**: `Edit(~/.claude/hooks/**)` 化 or lib 明示 deny の 1 行で閉じられる。essence gate の自壊経路ゆえ 2 件の中では優先度高。issue 化の判断はかいじゅうへ
+- **[Medium → issue #222] essence-docs の L1 非保護**: 閉じるなら `Edit(~/.claude/.docs/essence/**)` の deny 追加だが、proposing-essence-updates の PR フローとの両立設計が要る (例: worktree/branch 内のみ許可 = L2 条件付き許可への移設が筋か)。**かいじゅう判断で issue #222 (kaijutale/claude-harness) 化。#173 が残した .docs/essence/ の継ぎ目として系譜接続**
+- **[Medium 下方 → issue #223] hooks/lib の界面隙間**: `Edit(~/.claude/hooks/**)` 化 or lib 明示 deny の 1 行で閉じられる (glob 再帰仕様は #186 方式で裏取り要)。**かいじゅう判断で issue #223 化。#173 の hooks 非対称の残りとして系譜接続**
 - [Low] 2 件は監査ログ記録で足りる (字句層のスコープは意図的選択の可能性 / TDD 外テスト編集は運用上まれ)
 - 意味論注記: S章バッチの警句「配備≠実効」が本深掘りでも再演された — deny は**書いた範囲**しか守らない (glob の `*` と `**` の 1 文字差が界面の穴になる)。「権限は書いたら終わりでなく観測して直す」運用層 (記事超え④) の実例がまた 2 つ増えた形
 
