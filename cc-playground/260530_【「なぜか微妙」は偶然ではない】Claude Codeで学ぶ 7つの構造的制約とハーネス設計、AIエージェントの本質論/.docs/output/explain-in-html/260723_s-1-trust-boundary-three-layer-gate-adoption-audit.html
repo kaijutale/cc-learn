@@ -1,0 +1,234 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S-1 信頼境界と3層権限ゲート — 取り入れ確認 (第13弾)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">ADOPTION AUDIT · 2026.07.23 · S-1 (S章 初弾)</div>
+  <h1>信頼境界と<em>3層権限ゲート</em></h1>
+  <div class="meta"><span>取り入れフェーズ第13弾</span><span>note 260405 S-1</span><span>対象: ~/.claude</span></div>
+
+  
+
+  <div class="hero grade-a">
+  <div class="grade-box grade-a">
+    <div class="grade-letter">済</div>
+    <div class="grade-pct">3層すべて実在</div>
+  </div>
+  <div class="grade-desc">
+    <div class="label">VERDICT</div>
+    <p>取り入れ済み — note の3層権限ゲート (宣言的禁止 / 条件付き許可 / 人間承認) すべてが実装実在し、評価基準保護は記事の例と 1:1 対応 + ハーネス全体へ拡張。 <strong>設計差=テスト deny の意図的不採用 (予防→検出へ移設)</strong>。反例狩りで deny 境界の継ぎ目 Medium×2 (essence-docs 非保護 / hooks-lib の隙間) を検出。独立検証 (step6) 通過。S章深掘りの初弾。</p>
+  </div>
+</div>
+<div class="stats"><div class="stat"><div class="k">L1 宣言的禁止 (deny)</div><div class="v">177 項目</div></div><div class="stat"><div class="k">L2 条件付き許可 (hook)</div><div class="v">PreToolUse 11 配線</div></div><div class="stat"><div class="k">L3 人間承認 (ask)</div><div class="v">30 + push=人間のみ</div></div><div class="stat"><div class="k">評価基準保護</div><div class="v">note の例と 1:1 (+全体)</div></div><div class="stat"><div class="k">設計差</div><div class="v">テスト deny 不採用</div></div><div class="stat"><div class="k">残差 (deny 境界の継ぎ目)</div><div class="v">Medium×2 + Low×2</div></div><div class="stat"><div class="k">step6 独立検証</div><div class="v">計数2件+誇張を訂正</div></div><div class="stat"><div class="k">S章の既知テーマ</div><div class="v">配備 ≠ 実効</div></div></div>
+<h2><span class="no">01</span>note S-1 が求めるもの</h2>
+<p>一行サマリー: Claude Code が触れるファイル・操作の範囲を意図的に制限する。たとえは「鍵付きの金庫と机の引き出し」── 信頼しているかどうかではなく、万が一のリスクを構造で抑える。守る相手は悪意ではなく <strong>善意の間違い</strong>。</p>
+<p>核心の論理 (→C-5): どれだけ精密なレビューを組んでも、生成エージェントがレビュー基準を書き換えられるなら検証は無意味。だから「正しい行動以外の経路を物理的に閉じる」── プロンプトのお願いは車線、deny はガードレールじゃ。3層はこう積む:</p>
+<ul class="plain"><li><b>L1 宣言的禁止</b> — Permissions / settings.json。判断を介さない静的制御。例: Edit(.eslintrc*) → deny</li><li><b>L2 条件付き許可</b> — Hooks / PreToolUse。スクリプトが条件を評価し pass/fail。例: git push は main 以外のみ</li><li><b>L3 人間承認</b> — Permission Mode / 対話的確認。不可逆・外部影響のある操作に適用</li></ul>
+<h2><span class="no">02</span>ハーネスの実装マッピング</h2>
+<table><thead><tr><th>note の層</th><th>実体</th><th>実測</th></tr></thead><tbody><tr><td class="cat-name">L1 宣言的禁止</td><td><code>permissions.deny 177 項目</code></td><td>評価基準保護 10 (eslintrc=note の例と 1:1、tsconfig/vitest/jest/prettier/biome/CI) + ハーネス自己保護 11 + secret 139 + コマンド 17</td></tr><tr><td class="cat-name">L2 条件付き許可</td><td><code>PreToolUse hook 11 配線</code></td><td>worktree write guard (段階武装) / commit gate 群 (essence verdict・adr) / hook_pre_commands = deny が届かない Bash 経路を字句で塞ぐ層</td></tr><tr><td class="cat-name">L3 人間承認</td><td><code>ask 30 + defaultMode default</code></td><td>eval 系 / git 破壊系 / Keychain 等を ask。push=人間のみ (git-workflow.md 明文)</td></tr></tbody></table>
+<h2><span class="no">03</span>設計差の核心 — 報酬ハッキング2経路の閉じ方</h2>
+<div class="card"><h3><span class="sev sev-pass">経路A</span>.eslintrc 書き換え → L1 で物理的に閉じる (note と同一)</h3><div class="kv"><b>実体</b>Edit(**/.eslintrc*) + 設定ファイル群 10 項目。note の代表例がそのまま実在する。</div></div>
+<div class="card"><h3><span class="sev sev-warn">経路B</span>テスト書き換え → L1 deny は意図的に不採用 (note と異なる解法)</h3><div class="kv"><b>事実</b>テスト本体の deny = 0 件 (.test./.spec./__tests__ の grep 実測)。</div><div class="kv"><b>理由</b>oracle 自身の設計宣言: 「テストを書く瞬間 (RED) は止めない (一律 deny は RED を壊す) - 照合は verify 時」。ハーネスは TDD でエージェント自身がテストを書く (team-tester) ため、一律 deny は運用と両立しない。</div><div class="kv"><b>代替</b>予防でなく検出へ移設 ── RED 直後に git hash-object SHA を baseline 凍結し、verify 時に照合。SHA 変化=改ざんとして exit 1 (偽 GREEN 失敗扱い)。判定材料は捏造不能な物理量。射程は TDD の verify を通る場合のみ。</div></div>
+<h2><span class="no">04</span>記事超え点</h2>
+<ul class="plain"><li><b>テスト deny の意図的不採用 (予防→検出移設)</b> — note の代表例をあえて外し、TDD (エージェントがテストを書く運用) と C-5 対策を両立。「書けるが、書き換えたら必ずバレる」構造。</li><li><b>L2 の字句照合層</b> — hook_pre_commands が「deny の届かない Bash 経路」(echo リダイレクト・tee・cp 等での保護ファイル書込) を字句で塞ぐ。Edit ツール経路=L1 / Bash 経路=L2 字句、の経路別多重化。</li><li><b>段階武装 (fail-open→fail-closed)</b> — worktree write guard は通常セッションでは素通し、worktree 文脈を検出すると武装し fail-closed 化。条件付き許可の条件自体が動的。</li><li><b>「配備≠実効」を観測して直す運用層</b> — deny を書いたら終わりでなく実効性を観測し修正した履歴 (#178 Write形式25個失効→Edit形へ / #186 sandbox層 dead config 実測 / #157 worktree guard 無条件allow の Critical 修正)。権限設計を生きたシステムとして保守する層は記事に無い。</li></ul>
+<h2><span class="no">05</span>反例狩り / 残差 (deny 境界の継ぎ目)</h2>
+<p>oracle 群・rubric・SKILL は skills/** の deny で保護されている (守られている側)。真の残差は「書いた範囲しか守らない」glob 界面の継ぎ目:</p>
+<div class="card"><h3><span class="sev sev-warn">Medium</span>essence-docs (評価基準の正本) が L1 非保護</h3><div class="kv"><b>内容</b>harness/skill/ui-essentials + agent-essence の4本+README は deny 対象外 (.docs 配下の deny は progressive-disclosure/** のみ)。通常セッションで編集を止める物理層が無い。</div><div class="kv"><b>補償の弱さ</b>commit 段の essence-sync gate は原則見出し数の突合のみ ── 数を変えない文言弱体化は素通り。S-1 自身の論理「検証基準を書き換えられたら検証は無意味」が、ハーネス最上位の評価基準に完全適用されていない非対称 (独立検証で実証・正確)。</div></div>
+<div class="card"><h3><span class="sev sev-warn">Medium (下方)</span>hooks/lib が deny 界面の隙間</h3><div class="kv"><b>内容</b>Edit(~/.claude/hooks/*) の単一 * は直下のみで hooks/lib/ に届かない (rules/* が別途明示されている事実が非再帰を裏付け)。lib 8本のうち essence gate が source する ~4本が Edit ツール経路で編集可能 (Bash 経路は字句層でカバー済)。gate 本体は deny 済みなのに依存 lib が非 deny という保護境界の非対称。</div><div class="kv"><b>誇張の訂正</b>「1手で中和」は誤り ── gate は fail-closed 設計ゆえ雑な編集は gate を止める方向に倒れる。fail-open 化には述語の精密書換 + commit 時の hook-test gate 掻い潜りの標的化攻撃が要る。worktree guard は vendored copy を持ち lib に非依存。deny を hooks/** 化 or lib 明示で閉じられる (glob 再帰仕様は実マッチャ裏取り要)。</div></div>
+<p>その他 [Low]: Bash 書込の字句層が skills/agents/essence-docs を非カバー / TDD 外のテスト直接編集は検出層の射程外。継続 (既知開示済): sandbox 層は dead config で評価基準保護は permission 層に単独依存 (#186)。</p>
+<h2><span class="no">06</span>独立検証 (step6)</h2>
+<p>fresh な read-only reviewer が全 load-bearing 主張を照合。verdict=要修正で、セキュリティ主張 Medium×2 を両方向 (穴は実在するか / 別層でカバー済みでないか) から厳格検証。 <strong>Medium(A) essence-docs 非保護は正確 (補償見落とし無し)</strong>。訂正は計数確定エラー2件 (deny 178→177 / ask 31→30、ログ自身の行範囲と矛盾していた) + Medium(B) の3点 (worktree guard の lib 依存は誤り=vendored copy / 「述語正本8本」は過大 / 「1手で中和」は fail-closed を無視した誇張) を裏取りして反映済み。判定「取り入れ済み」の骨格は不変。</p>
+<h2><span class="no">07</span>総評</h2>
+<div class="quote">S-1 の3層権限ゲートは全層が実装実在し、評価基準保護は note の例と 1:1 対応した上でハーネス全体へ拡張、L2 の字句層・段階武装、L3 の push 人間限定まで揃う ── 取り入れ済み。note の代表例 (テスト deny) を意図的に外し予防→検出へ移したのは TDD 両立のための正当な設計差。反例狩りは「書いた範囲しか守らない」glob 界面の継ぎ目を2つ (essence-docs 非保護 / hooks-lib 隙間) 掘り当てた ── これは S章の既知テーマ『配備≠実効』の新規実例で、権限を書いたら終わりでなく観測して直す運用層 (記事超え④) の次の材料でもある。独立検証が計数エラーと過大主張を捕捉し、セキュリティ判断の温度を実測どおり下方修正した点も、この監査シリーズの二層検証 (書く側と検証する側の分離) が効いた実例じゃ。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.23 20:58 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
