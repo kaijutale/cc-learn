@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S-1.1 記憶の出所と露出先を追跡する — 取り入れ確認 (第14弾)</title>
+<style>
+  :root{
+    --bg:#141413; --surface:#1d1b18; --surface-2:#262320; --line:#3a362e;
+    --text:#ece8df; --muted:#9b948a; --red:#E63946; --amber:#D9A05B; --green:#7FB069;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(230,57,70,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(217,160,91,.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:15px; line-height:1.8;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:56px 32px 88px;}
+  .kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.34em;color:var(--red);margin-bottom:14px;}
+  h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-size:40px;line-height:1.25;font-weight:700;margin-bottom:10px;}
+  h1 em{font-style:normal;color:var(--red);}
+  .meta{color:var(--muted);font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-bottom:36px;}
+  .meta span{margin-right:18px;}
+
+  .hero{display:flex;gap:28px;align-items:stretch;margin-bottom:40px;}
+  .grade-box{
+    min-width:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--surface);padding:22px 18px;
+  }
+  .grade-letter{font-family:ui-serif,Georgia,serif;font-size:84px;line-height:1;font-weight:700;}
+  .grade-s .grade-letter{color:var(--amber);}
+  .grade-a .grade-letter{color:var(--green);}
+  .grade-b .grade-letter{color:#c9c2b4;}
+  .grade-c .grade-letter{color:var(--amber);}
+  .grade-d .grade-letter,.grade-e .grade-letter{color:var(--red);}
+  .grade-pct{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--muted);margin-top:8px;}
+  .grade-desc{flex:1;border:1px solid var(--line);background:var(--surface);padding:22px 26px;}
+  .grade-desc .label{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;}
+  .grade-desc p{font-size:15px;}
+  .grade-desc strong{color:var(--amber);font-weight:700;}
+
+  h2{
+    font-family:ui-serif,Georgia,serif;font-size:24px;font-weight:700;
+    margin:48px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  h2 .no{color:var(--red);font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-right:12px;letter-spacing:.1em;}
+
+  p{margin:0 0 14px;}
+  p:last-child{margin-bottom:0;}
+  strong{color:var(--amber);font-weight:700;}
+  em{font-style:normal;color:var(--red);font-weight:700;}
+  a{color:var(--amber);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;color:var(--amber);background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .k{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+  .stat .v{font-size:14px;font-weight:700;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);font-weight:400;padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:var(--surface);}
+  .cat-name{font-weight:700;white-space:nowrap;}
+  .score-cell{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+
+  .mark{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    padding:2px 7px;margin-right:5px;border:1px solid var(--line);
+  }
+  .mark-pass{color:var(--green);border-color:rgba(127,176,105,.45);}
+  .mark-warn{color:var(--amber);border-color:rgba(217,160,91,.5);}
+  .mark-fail{color:var(--red);border-color:rgba(230,57,70,.55);font-weight:700;}
+  .mark-na{color:var(--muted);}
+
+  .bar{height:6px;background:var(--surface-2);margin-top:6px;width:120px;}
+  .bar i{display:block;height:100%;background:var(--amber);}
+  .bar.low i{background:var(--red);}
+  .bar.high i{background:var(--green);}
+
+  .card{border:1px solid var(--line);background:var(--surface);padding:20px 24px;margin-bottom:18px;}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:10px;}
+  .sev{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;
+    padding:2px 9px;margin-right:10px;font-weight:700;
+  }
+  .sev-fail{color:#fff;background:var(--red);}
+  .sev-warn{color:#141413;background:var(--amber);}
+  .sev-pass{color:#141413;background:var(--green);}
+  .kv{margin:6px 0;font-size:14px;}
+  .kv b{color:var(--amber);font-weight:700;margin-right:6px;}
+  pre{
+    background:#0e0d0c;border:1px solid var(--line);padding:14px 40px 14px 16px;margin:12px 0 4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;
+    overflow-x:auto;color:#d8d3c8;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;letter-spacing:.06em;color:var(--amber);background:var(--surface);
+    border:1px solid var(--line);padding:2px 9px;cursor:pointer;
+  }
+  .copy-btn:hover{border-color:rgba(217,160,91,.55);color:var(--text);}
+  .copy-btn.done{color:var(--green);border-color:rgba(127,176,105,.5);}
+  .chip{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    color:var(--amber);border:1px solid rgba(217,160,91,.5);padding:1px 8px;margin-left:10px;
+  }
+  ul.plain{list-style:none;}
+  ul.plain li{padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--line);}
+  ul.plain li::before{content:"";position:absolute;left:0;top:17px;width:10px;height:2px;background:var(--red);}
+
+  .quote{
+    border-left:3px solid var(--red);background:var(--surface);padding:20px 26px;
+    font-family:ui-serif,Georgia,serif;font-size:17px;line-height:1.9;
+  }
+
+  /* diff (before/after, GitHub PR "Files changed" 風 unified view) */
+  .diff{border:1px solid var(--line);background:#0e0d0c;margin:14px 0 18px;}
+  .diff-head{
+    display:flex;justify-content:space-between;gap:12px;padding:8px 14px;
+    border-bottom:1px solid var(--line);background:var(--surface);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  }
+  .diff-head .file{color:var(--text);font-weight:700;}
+  .diff-head .tally .add{color:var(--green);}
+  .diff-head .tally .del{color:var(--red);margin-left:8px;}
+  .diff-body{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;
+  }
+  .diff-row{display:flex;white-space:pre;min-width:max-content;}
+  .diff-row .ln{flex:0 0 auto;width:34px;padding:0 8px;text-align:right;color:var(--muted);user-select:none;}
+  .diff-row .ln.new{border-right:1px solid var(--line);}
+  .diff-row .mk{flex:0 0 auto;width:20px;text-align:center;color:var(--muted);user-select:none;}
+  .diff-row .code{flex:1;padding:0 12px 0 8px;color:#d8d3c8;}
+  .diff-row.del{background:rgba(230,57,70,.12);}
+  .diff-row.del .mk{color:var(--red);font-weight:700;}
+  .diff-row.add{background:rgba(127,176,105,.12);}
+  .diff-row.add .mk{color:var(--green);font-weight:700;}
+  .diff-hunk{
+    padding:2px 14px;color:var(--muted);background:var(--surface-2);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  }
+
+  footer{
+    margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;
+  }
+  @media print{
+    body{background:#fff;color:#1a1a1a;}
+    .wrap{padding:20px;}
+  }
+  @media (max-width:720px){
+    .hero{flex-direction:column;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  
+  <div class="kicker">ADOPTION AUDIT · 2026.07.24 · S-1.1</div>
+  <h1>記憶の<em>出所と露出先</em>を追跡する</h1>
+  <div class="meta"><span>取り入れフェーズ第14弾</span><span>note 260405 S-1.1</span><span>対象: ~/.claude</span></div>
+
+  
+
+  <div class="hero grade-a">
+  <div class="grade-box grade-a">
+    <div class="grade-letter">済</div>
+    <div class="grade-pct">①② 機構あり</div>
+  </div>
+  <div class="grade-desc">
+    <div class="label">VERDICT</div>
+    <p>取り入れ済み — サブエージェント隔離 + ①出所明記 (出所タグの決定論注入) + ②外部検証 (probe) は機構が実在。 <strong>③有効期限は「gap」でなく essence が意図的に棄却した設計判断</strong> (per-doc 有効期限を退け staleness+定期クリーンアップ+原則3 で吸収)。この反転は step6 独立検証が「初稿の改修提案=棄却済み候補の再導入」を捕捉して起きた。issue化なし。</p>
+  </div>
+</div>
+<div class="stats"><div class="stat"><div class="k">サブエージェント隔離</div><div class="v">context:fork 44 + research 外部化</div></div><div class="stat"><div class="k">①出所を明記</div><div class="v">出所タグ hook (決定論注入)</div></div><div class="stat"><div class="k">②外部検証</div><div class="v">probe-before-persist (決定論発火)</div></div><div class="stat"><div class="k">③有効期限</div><div class="v">意図的に棄却 (アンチパターン)</div></div><div class="stat"><div class="k">直接注入</div><div class="v">autoMemoryEnabled: false</div></div><div class="stat"><div class="k">残差</div><div class="v">Low×2 + 観測1</div></div><div class="stat"><div class="k">step6 の反転</div><div class="v">gap → 意図的棄却</div></div><div class="stat"><div class="k">issue化</div><div class="v">なし (棄却済み・再提案せず)</div></div></div>
+<h2><span class="no">01</span>note S-1.1 が求めるもの</h2>
+<p>たとえは「出所不明の USB メモリを挿す」── まず隔離環境で中身を確認し、安全と分かってから使う。WebSearch/MCP/バックグラウンド出力もすべて「外部から来た情報」で、出所ラベルなしにメイン文脈や長期記憶へ混ぜると影響範囲を追跡できなくなる。</p>
+<p>3つのリスク: ①プロンプトインジェクション ②情報汚染の伝播 ③出所の消失。対策は (I) サブエージェント隔離 (外部データを fork 検疫→ファイル書出→メインはファイル経由) と (II) 長期記憶への昇格3ルール:</p>
+<ul class="plain"><li><b>①出所を明記</b> — 「WebSearch 2026-03-29 取得」のように出所を記録</li><li><b>②外部検証</b> — コードで裏取り・複数ソースで確認</li><li><b>③有効期限を設定</b> — 「次回リリースで再確認」という time-based の再確認</li></ul>
+<h2><span class="no">02</span>ハーネスの実装マッピング</h2>
+<table><thead><tr><th>note の要素</th><th>実体</th><th>判定</th><th>実測</th></tr></thead><tbody><tr><td class="cat-name">サブエージェント隔離</td><td><code>context:fork + conducting-research-phase</code></td><td><span class="mark mark-pass">OK</span></td><td>fork は親の会話履歴を子に引き継がない。raw 外部データを .docs/research/ へ書出しメインは summary のみ受領 = ファイル検疫ゲート</td></tr><tr><td class="cat-name">①出所を明記</td><td><code>hook_post_external_input_notify / mcp_notify</code></td><td><span class="mark mark-pass">OK</span></td><td>WebFetch/MCP 出力に出所タグを additionalContext で自動注入 (決定論)。ただし notify で block しない。citation-format rule は機械 gate 未配線 (確率的)</td></tr><tr><td class="cat-name">②外部検証</td><td><code>hook_pre_probe_before_persist</code></td><td><span class="mark mark-pass">OK</span></td><td>knowledge/handoff の Write 直前に probe を注入 (決定論発火)。rule は ADR/CLAUDE.md も対象に挙げるが hook 射程は knowledge+handoff のみ (rule&gt;hook)</td></tr><tr><td class="cat-name">③有効期限</td><td><code>意図的に棄却</code></td><td><span class="mark mark-warn">warn</span></td><td>essence 棄却候補表「知識doc有効期限=README アンチパターン+原則3吸収」。per-doc 有効期限でなく staleness+定期クリーンアップで吸収する別解</td></tr></tbody></table>
+<h2><span class="no">03</span>本監査の核心 — 「gap」ではなく「意図的棄却」だった</h2>
+<div class="card"><h3><span class="sev sev-warn">反転</span>③有効期限は棄却された設計判断</h3><div class="kv"><b>初稿</b>③を「構造的 gap」と捉え、反例狩りで「knowledge/ADR frontmatter に review_by/valid_until を足せ」と改修提案していた。</div><div class="kv"><b>step6 の発見</b>独立検証者が「全域 grep 0件」を再実行 → 再現せず essence-sources に4件ヒット。その4件は essence の棄却候補表で、「知識ドキュメントの有効期限」が README アンチパターン (古い前提を残置→判断を歪める) + 原則3吸収として意図的に棄却された documented 判断だった。</div><div class="kv"><b>含意</b>初稿の改修提案は棄却済み候補の再導入だった。ハーネスは per-doc 有効期限を退け、staleness (定期クリーンアップ) + 原則3 で吸収する別解を採用済み。→ gap でなく documented divergence。issue化は取り下げ。</div><div class="kv"><b>meta</b>本監査自身が proposing-essence-updates の vs_rejected (棄却済み候補の再提案防止) の実効例になった。棄却証跡を独立検証が拾わなければ、棄却済みアンチパターンを issue 化していた。書く側と検証する側を分離した二層検証が効いた。</div></div>
+<h2><span class="no">04</span>予習所見の補正 (Q&A → 深掘りで精密化)</h2>
+<ul class="plain"><li><b>補正1: subagent 出力の中和は ~/.claude に決定論機構なし</b> — Q&amp;A で platform 中和を挙げたが、~/.claude 側には Task 出力への PostToolUse hook も instruction 検知・中和 hook も不在 (SubagentStop は音/通知/echo のみ)。中和は platform 側のサニタイズで、ハーネス自前の injection 検知防御は prose 規律 + notify タグ + 下流の S-1 action gate に依存 (S-1.2「安全判定を機械化しない」と整合)。</li><li><b>補正2: citation-format は未配線</b> — 決定論なのは取込み時の出所タグまで。永続化文書の citation 強制は rule 止まり (機械 gate ゼロ)。</li><li><b>補正3: ③は「実装候補」でなく「意図的棄却」</b> — Q&amp;A では③を実装候補と述べたが、深掘りで棄却証跡が判明し反転。</li></ul>
+<h2><span class="no">05</span>残差 (Low×2 + 観測1)</h2>
+<div class="card"><h3><span class="sev sev-warn">Low</span>probe hook の scope gap</h3><div class="kv"><b>内容</b>probe hook の発火は knowledge + handoff のみ。直接 WebFetch → .docs/research/ や spec への Write は probe を発火させず素通り (logs は rule が明示的に対象外)。research/spec の補償は薄い。</div></div>
+<div class="card"><h3><span class="sev sev-warn">Low</span>citation-format 未配線</h3><div class="kv"><b>内容</b>永続化文書の出所表記は確率的規律。取込み時タグは決定論ゆえ出所自体は捕捉されるが、文書内 citation の機械強制は無い。</div></div>
+<div class="card"><h3><span class="sev sev-pass">観測</span>injection 検知中和は platform 依存</h3><div class="kv"><b>内容</b>ハーネス自前の決定論検知機構は無い (設計として正しい — 意味論検知は機械化しない)。injection の実行結果を止めるのは下流の S-1 action gate に一元依存。gap ではなく設計方針の記録。</div></div>
+<h2><span class="no">06</span>独立検証 (step6)</h2>
+<p>fresh な read-only reviewer が「無い」ことの証明を厳格に (別名/別形の見落とし探索を含めて) 検証。verdict=要修正。 <strong>最重要は substance の反転1件</strong>: ③を「gap+要 issue化」とした初稿を、棄却証跡の発見で「意図的棄却」へ反転させた。副次4件 (grep 0件の scope 訂正 / 未来日付 validator の誤推論削除 / SessionStart 4→6 / review-memory 引用の skill 名) も裏取り訂正。citation 未配線・probe scope の2主張は完全に正確と確認。</p>
+<h2><span class="no">07</span>総評</h2>
+<div class="quote">S-1.1 は取り入れ済み ── サブエージェント隔離と①出所明記・②外部検証は機構が実在する。だが本監査の核心は③にあった。初稿は③有効期限を「gap」と断じ改修を提案したが、step6 独立検証が essence の棄却証跡を掘り当て、③が「note の time-based 有効期限を評価した上で退け、staleness+定期クリーンアップ+原則3 で吸収した設計判断」であることを露呈した。gap でなく documented divergence であり、初稿の改修提案は棄却済みアンチパターンの再導入だった。書く側と検証する側を分離した二層検証がなければ、棄却済み候補を issue 化していた ── これは監査シリーズが繰り返し依拠してきた「生成と批評の物理分離」が、自分自身の過ちを止めた実例じゃ。</div>
+
+  <footer>
+    Generated by explain-in-html skill / Claude Code<br>
+    2026.07.24 03:41 JST
+  </footer>
+
+</div>
+<script>
+/* code/pre ブロックに copy ボタンを付与する最小 JS (clipboard 用、kaiju 指定 2026-06-30)。
+   innerText を button 追加前に捕捉し、コピー文字列に "copy" が混入しないようにする。
+   self-contained を維持 (外部依存なし)。clipboard 以外の interactive JS は引き続き不使用。 */
+document.querySelectorAll("pre").forEach(function(pre){
+  var text = pre.innerText;
+  var b = document.createElement("button");
+  b.className = "copy-btn"; b.type = "button"; b.textContent = "copy";
+  b.addEventListener("click", function(){
+    navigator.clipboard.writeText(text).then(function(){
+      b.textContent = "copied"; b.classList.add("done");
+      setTimeout(function(){ b.textContent = "copy"; b.classList.remove("done"); }, 1200);
+    });
+  });
+  pre.style.position = "relative";
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
